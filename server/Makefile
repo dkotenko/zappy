@@ -6,7 +6,7 @@
 #    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/16 17:20:36 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/09/16 19:47:07 by gmelisan         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
@@ -17,10 +17,10 @@ CFLAGS = -g -Wall -Wextra
 
 SRCDIR = src
 SRC = $(addprefix $(SRCDIR)/, \
-main.c logger.c)
+main.c server.c logger.c utils.c)
 
 HEADER = $(addprefix $(SRCDIR)/, \
-server.h logger.h)
+server.h logger.h utils.h)
 
 OBJ = $(SRC:.c=.o)
 
@@ -31,7 +31,7 @@ $(NAME): $(OBJ)
 
 $(OBJ): $(HEADER)
 
-%.o : %.cpp
+%.o : %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
