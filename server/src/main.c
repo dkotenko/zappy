@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/16 18:42:27 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/16 19:23:33 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,14 +71,6 @@ static void parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	parse_args(argc, argv);
-	log_info("Starting server");
-	log_info("port = %d", g_main_config.port);
-	log_info("width = %d", g_main_config.world_width);
-	log_info("height = %d", g_main_config.world_height);
-	log_info("client_number_at_start = %d", g_main_config.clients_number_at_start);
-	log_info("t = %d", g_main_config.t);
-	for (int i = 0; i < g_main_config.teams_count; ++i) {
-		log_info("team %d: %s", i, g_main_config.teams[i]);
-	}
+	srv_start();
 	return 0;
 }
