@@ -6,14 +6,16 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:43 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/16 21:53:19 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/17 17:34:47 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CIRCBUF_H
 # define CIRCBUF_H
 
-# define CIRCBUF_SIZE		128
+# include <stdlib.h>
+
+# define CIRCBUF_SIZE		256
 
 typedef struct s_circbuf {
 	char buf[CIRCBUF_SIZE];
@@ -23,16 +25,16 @@ typedef struct s_circbuf {
 } t_circbuf;
 
 /* push one byte */
-void circbuf_push1(t_circbuf circbuf, char data);
+void circbuf_push1(t_circbuf *circbuf, char data);
 
 /* push `size' bytes from `data' array */
-void circbuf_push(t_circbuf circbuf, char *data, size_t size);
+void circbuf_push(t_circbuf *circbuf, char *data, size_t size);
 
 /* pop one byte, return 0 if no data */
-size_t circbuf_pop1(t_circbuf circbuf, char *data);
+char circbuf_pop1(t_circbuf *circbuf);
 
 /* pop all data to `data', return poped size, 0 if no data */
-size_t circbuf_pop(t_circbuf circbuf, char **data);
+char *circbuf_pop(t_circbuf *circbuf);
 
 
 /*

@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/16 20:37:14 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/17 17:43:23 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,9 @@
 #include "server.h"
 #include "utils.h"
 #include "logger.h"
+#include "circbuf.h"
 
-#define BUF_SIZE		4096
+#define BUF_SIZE		128
 
 enum e_type {
 	FD_FREE,
@@ -37,8 +38,10 @@ typedef struct s_fd {
 	enum e_type type;
 	void (*fct_read)();
 	void (*fct_write)();
-	char buf_read[BUF_SIZE + 1];
-	char buf_write[BUF_SIZE + 1];
+	/* char buf_read[BUF_SIZE + 1]; */
+	/* char buf_write[BUF_SIZE + 1]; */
+	t_circbuf buf_read;
+	t_circbuf buf_write;
 } t_fd;
 
 typedef struct s_env {
@@ -61,14 +64,18 @@ static void clean_fd(t_fd *fd)
 
 static void	client_read(int cs)
 {
-  int	r;
-  
-  r = recv(cs, env.fds[cs].buf_read, BUF_SIZE, 0);
+  int r;
+  char buf[BUF_SIZE + 1];
+
+  r = recv(cs, buf, BUF_SIZE, 0);
   if (r <= 0) {
       close(cs);
       clean_fd(&env.fds[cs]);
       log_info("Client #%d gone away", cs);
+	  return ;
   }
+  circbuf_push(&env.fds[cs].buf_read, buf, r);
+  log_info("Got '%s' from #%d", circbuf_pop(&env.fds[cs].buf_read), cs);
 }
 
 static void check_fd()
@@ -96,7 +103,7 @@ static void init_fd()
 	for (int i = 0; i < env.maxfd; ++i) {
 		if (env.fds[i].type != FD_FREE) {
 			FD_SET(i, &env.fd_read);
-			if (strlen(env.fds[i].buf_write) > 0)
+			if ((env.fds[i].buf_write.len) > 0)
 				FD_SET(i, &env.fd_write);
 			env.max = (env.max > i ? env.max : i);
 		}
