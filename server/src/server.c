@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/17 17:43:23 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/21 16:48:06 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,8 @@
 #include "logger.h"
 #include "circbuf.h"
 
-#define BUF_SIZE		128
+#define CIRCBUF_SIZE		16
+#define CIRCBUF_ITEM_SIZE	32
 
 enum e_type {
 	FD_FREE,
@@ -64,18 +65,28 @@ static void clean_fd(t_fd *fd)
 
 static void	client_read(int cs)
 {
-  int r;
-  char buf[BUF_SIZE + 1];
+  int r = 1;
+  char buf[CIRCBUF_ITEM_SIZE];
+  char *p_newline;
 
-  r = recv(cs, buf, BUF_SIZE, 0);
-  if (r <= 0) {
-      close(cs);
-      clean_fd(&env.fds[cs]);
-      log_info("Client #%d gone away", cs);
-	  return ;
-  }
-  circbuf_push(&env.fds[cs].buf_read, buf, r);
-  log_info("Got '%s' from #%d", circbuf_pop(&env.fds[cs].buf_read), cs);
+  do {
+	  r = recv(cs, buf, sizeof(buf), 0);
+	  if (r <= 0) {
+		  close(cs);
+		  clean_fd(&env.fds[cs]);
+		  circbuf_clear(&env.fds[cs].buf_read);
+		  circbuf_clear(&env.fds[cs].buf_write);
+		  log_info("Client #%d gone away", cs);
+		  return ;
+	  }
+	  circbuf_push(&env.fds[cs].buf_read, buf);
+  } while ((p_newline = strchr(buf, '\n')) == NULL);
+  char *command = circbuf_pop_all(&env.fds[cs].buf_read);
+  *strchr(command, '\n') = 0;
+  log_info("got command '%s'", command);
+  free(command);
+  if (strcmp(command, "stop server") == 0)
+	  exit(0);
 }
 
 static void check_fd()
@@ -124,6 +135,8 @@ static void srv_accept(int s)
 	env.fds[cs].type = FD_CLIENT;
 	env.fds[cs].fct_read = client_read;
 	env.fds[cs].fct_write = NULL;
+	env.fds[cs].buf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].buf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 }
 
 static void srv_create()
@@ -161,12 +174,14 @@ static void srv_init()
 static void sigh(int n) {
 	(void)n;
 	free(env.fds);
+	
 	log_info("Exit");
 	exit(0);
 }
 
 void srv_start()
 {
+	g_circbuf_debug = 1;
 	log_info("Start");
 	signal(SIGINT, sigh);
 	srv_init();
