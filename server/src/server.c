@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/21 16:48:06 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/21 18:48:13 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,10 +39,10 @@ typedef struct s_fd {
 	enum e_type type;
 	void (*fct_read)();
 	void (*fct_write)();
-	/* char buf_read[BUF_SIZE + 1]; */
-	/* char buf_write[BUF_SIZE + 1]; */
-	t_circbuf buf_read;
-	t_circbuf buf_write;
+	char buf_read[CIRCBUF_ITEM_SIZE]; // push to circbuf_read when full
+	size_t buf_read_pos;
+	t_circbuf circbuf_read;
+	t_circbuf circbuf_write;
 } t_fd;
 
 typedef struct s_env {
@@ -52,6 +52,7 @@ typedef struct s_env {
 	int r;
 	fd_set fd_read;
 	fd_set fd_write;
+	struct timeval timeout;
 } t_env;
 
 static t_env env;
@@ -63,30 +64,150 @@ static void clean_fd(t_fd *fd)
 	fd->fct_write = NULL;
 }
 
+static void client_gone(int cs)
+{
+	close(cs);
+	clean_fd(&env.fds[cs]);
+	circbuf_clear(&env.fds[cs].circbuf_read);
+	circbuf_clear(&env.fds[cs].circbuf_write);
+	log_info("Client #%d gone away", cs);
+}
+
 static void	client_read(int cs)
 {
-  int r = 1;
-  char buf[CIRCBUF_ITEM_SIZE];
-  char *p_newline;
+	size_t r = 0;
+	char buf[CIRCBUF_ITEM_SIZE];
+	//char *p_newline;
+	//size_t i = 0;
 
-  do {
-	  r = recv(cs, buf, sizeof(buf), 0);
-	  if (r <= 0) {
-		  close(cs);
-		  clean_fd(&env.fds[cs]);
-		  circbuf_clear(&env.fds[cs].buf_read);
-		  circbuf_clear(&env.fds[cs].buf_write);
-		  log_info("Client #%d gone away", cs);
-		  return ;
-	  }
-	  circbuf_push(&env.fds[cs].buf_read, buf);
-  } while ((p_newline = strchr(buf, '\n')) == NULL);
-  char *command = circbuf_pop_all(&env.fds[cs].buf_read);
-  *strchr(command, '\n') = 0;
-  log_info("got command '%s'", command);
-  free(command);
-  if (strcmp(command, "stop server") == 0)
-	  exit(0);
+	t_fd *client = &env.fds[cs];
+
+	// hel_lowo_rld\n
+	// -> hel
+	// [....] (item_size = 4)
+	// [hel.], pos = 3
+	// -> lowo
+	// [hell][....]
+	// [hell][owo.]
+	// -> rld\n
+	// [hell][owor][ld\n.]
+	
+
+	r = recv(cs, buf, sizeof(buf), 0);
+	if (r <= 0) {
+		client_gone(cs);
+		return ;
+	}
+	size_t right_part = sizeof(client->buf_read) - client->buf_read_pos;
+	if (r >= right_part) {
+		char *copy_to = client->buf_read + client->buf_read_pos;
+		memcpy(copy_to, buf, right_part);
+		circbuf_push(&client->circbuf_read, client->buf_read);
+		memcpy(client->buf_read, buf + right_part, sizeof(client->buf_read) - right_part);
+		client->buf_read_pos = sizeof(client->buf_read) - right_part;
+	} else {
+		char *copy_to = client->buf_read + client->buf_read_pos;
+		memcpy(copy_to, buf, r);
+		client->buf_read_pos += r;
+	}
+
+	if (strchr(buf, '\n') != NULL) {
+		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
+		*strchr(command, '\n') = 0;
+		log_info("got command '%s'", command);
+	
+		if (strcmp(command, "stop server") == 0)
+			exit(0);
+		//circbuf_push_string(&env.fds[cs].circbuf_write, command);
+	
+		free(command);
+		
+	}
+	
+
+	// -> lowor
+	// r = 4
+	//  01234
+	// [hel..]
+	// pos = 3
+	// size = 5
+	// memcpy(3, "lowor", 5-3)
+	// [hello]
+	// memcpy(0, "wor", 3)
+	
+
+
+	
+	
+
+
+	/*
+	client->buf_read_pos += r;
+	if (client->buf_read_pos >= CIRCBUF_ITEM_SIZE) {
+		circbuf_push(client->circbuf_read, client->buf_read);
+		client->buf_read_pos =
+	}
+
+	*/
+	
+	
+
+
+
+
+	
+/*
+	while (1) {
+		r = recv(cs, buf + i, sizeof(buf), 0);
+		if (r <= 0) {
+			client_gone(cs);
+			return ;
+		}
+		p_newline = strchr(buf, '\n');
+		if (p_newline) {
+			circbuf_push(&env.fds[cs].circbuf_read, buf);
+			break ;
+		}
+		if (i + r < sizeof(buf)) {
+			i += r;
+		} else {
+			i = 0;
+			memset(buf, 0, CIRCBUF_ITEM_SIZE);
+		}
+	}
+*/	
+
+	
+/*
+	do {
+		r = recv(cs, buf, sizeof(buf), 0);
+		if (r <= 0) {
+			client_gone(cs);
+			return ;
+		}
+		circbuf_push(&env.fds[cs].circbuf_read, buf);
+	} while ((p_newline = strchr(buf, '\n')) == NULL);
+*/
+
+/*
+	char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
+	*strchr(command, '\n') = 0;
+	log_info("got command '%s'", command);
+	
+	if (strcmp(command, "stop server") == 0)
+		exit(0);
+	//circbuf_push_string(&env.fds[cs].circbuf_write, command);
+	
+	free(command);
+*/
+}
+
+static void client_write(int cs)
+{
+	while (env.fds[cs].circbuf_write.len) {
+		send(cs, "abc\n", 3, 0);
+		break ;
+	}
 }
 
 static void check_fd()
@@ -114,7 +235,7 @@ static void init_fd()
 	for (int i = 0; i < env.maxfd; ++i) {
 		if (env.fds[i].type != FD_FREE) {
 			FD_SET(i, &env.fd_read);
-			if ((env.fds[i].buf_write.len) > 0)
+			if ((env.fds[i].circbuf_write.len) > 0)
 				FD_SET(i, &env.fd_write);
 			env.max = (env.max > i ? env.max : i);
 		}
@@ -134,9 +255,9 @@ static void srv_accept(int s)
 	clean_fd(&env.fds[cs]);
 	env.fds[cs].type = FD_CLIENT;
 	env.fds[cs].fct_read = client_read;
-	env.fds[cs].fct_write = NULL;
-	env.fds[cs].buf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].buf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].fct_write = client_write;
+	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 }
 
 static void srv_create()

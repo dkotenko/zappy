@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:51 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/21 16:47:26 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/21 17:21:31 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,9 +67,31 @@ void circbuf_push(t_circbuf *circbuf, void *data)
 		log_debug("circbuf_push: iwrite = %zu, len = %zu",
 				  circbuf->iwrite, circbuf->len);
 		circbuf_debug_print(circbuf);
-	}
-			 
+	}		 
 }
+
+void circbuf_push_string(t_circbuf *circbuf, char *str)
+{
+	int i = 0;
+	int len = strlen(str);
+	while (i + circbuf->data_size <= len) {
+		circbuf_push(circbuf, str + i);
+		i += circbuf->data_size;
+	}
+	char *buf = (char *)malloc(circbuf->data_size);
+	xassert(buf != NULL, "malloc");
+	strcpy(buf, str + i);
+	circbuf_push(circbuf, buf);
+	free(buf);
+}
+
+
+// data_size = 5
+// .....,,,,,@@@@
+// 012345678901
+// hello,world!
+
+
 
 void *circbuf_pop(t_circbuf *circbuf)
 {
@@ -92,7 +114,7 @@ void *circbuf_pop(t_circbuf *circbuf)
 	return pop_buf;
 }
 
-char *circbuf_pop_all(t_circbuf *circbuf)
+char *circbuf_pop_string(t_circbuf *circbuf)
 {
 	char *pop_buf;
 	int i = 0;
