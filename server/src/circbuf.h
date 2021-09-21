@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:43 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/17 17:34:47 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/21 15:00:12 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,27 +15,33 @@
 
 # include <stdlib.h>
 
-# define CIRCBUF_SIZE		256
+extern int g_circbuf_debug;		/* set to 1 for additional debug */
 
 typedef struct s_circbuf {
-	char buf[CIRCBUF_SIZE];
-	int iread;
-	int iwrite;
-	int len;
+	size_t data_size; /* size of 1 element */
+	size_t size;	  /* number of elements */
+	char *buf;		  
+	size_t buf_size;  /* data_size * size */
+	size_t iread;
+	size_t iwrite;
+	size_t len;
 } t_circbuf;
 
-/* push one byte */
-void circbuf_push1(t_circbuf *circbuf, char data);
 
-/* push `size' bytes from `data' array */
-void circbuf_push(t_circbuf *circbuf, char *data, size_t size);
+/* Allocates circular buffer with `size' items `data_size' bytes each */
+t_circbuf circbuf_init(size_t size, size_t data_size);
 
-/* pop one byte, return 0 if no data */
-char circbuf_pop1(t_circbuf *circbuf);
+/* Clears circular buffer */
+void circbuf_clear(t_circbuf *circbuf);
 
-/* pop all data to `data', return poped size, 0 if no data */
-char *circbuf_pop(t_circbuf *circbuf);
+/* Push one item from `data' to circular buffer */
+void circbuf_push(t_circbuf *circbuf, void *data);
 
+/* Pop one item from circular buffer. Use free() after work */
+void *circbuf_pop(t_circbuf *circbuf);
+
+/* Pop all items and concatenate items as string. Use free() after work */
+char *circbuf_pop_all(t_circbuf *circbuf);
 
 /*
 Usage example:
