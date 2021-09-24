@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/24 17:30:08 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 20:58:51 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include "server.h"
 #include "utils.h"
@@ -54,7 +55,9 @@ typedef struct s_env {
 	int r;
 	fd_set fd_read;
 	fd_set fd_write;
-	struct timeval timeout;
+	struct timeval t;			/* last update() time */
+	struct timeval tu;			/* time unit */
+	struct timeval to;			/* timeout for select() */
 } t_env;
 
 t_env env;
@@ -91,7 +94,7 @@ static void	client_read(int cs)
 
 	if (strchr(buf, '\n') != NULL) {
 		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
-		*strchr(command, '\n') = 0;
+		*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
 		
 		log_info("got command '%s'", command);
 		queue_push(&client->commands, command);
@@ -134,10 +137,91 @@ static void check_fd()
 	}
 }
 
+
+/* 
+
+tu: 1/2 = 0, 500'000 us
+start: 12345, 000000 us
+
+select(..., 0; 500'000)
+r: returned at 12345, 200'000 us
+
+-> new_command()
+
+a = r - start = 200'000 us - how long select waited
+b = tu - a = 300'000 us - how long need to wait on next select
+
+select(..., b)
+r: returned at 12345, 500,001 us
+
+a = r - start = 500'001 - how long select waited
+a > tu
+
+-> update()
+
+
+ */
+
+
+static void time_init()
+{
+	xassert(gettimeofday(&env.t) != -1, "gettimeofday");
+	if (g_main_config.t == 1)
+		tu.tv_sec = 1;
+	else
+		tu.tv_usec = 1000000 / g_main_config.t;
+
+	timeradd(to, env.tu, to);	
+}
+
+
+static struct timeval get_select_timeout()
+{
+	struct timeval t;			/* current time */
+	struct timeval to;			/* timeout for select */
+	struct timeval tmp;
+	
+	xassert(gettimeofday(&t) != -1, "gettimeofday");
+
+	timersub(t, env.t, tmp);
+	if (timercmp(tmp, tu, >=)) {
+		timeradd(t, env.tu, to);
+		// update()
+		return to;
+	}
+	
+	
+	// new_command()
+	return to;
+}
+
 static void do_select()
 {
-	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, NULL);
+	struct timeval t;			/* current time */
+	struct timeval to;			/* timeout for select */
+	struct timeval tmp;
+	
+	xassert(gettimeofday(&t) != -1, "gettimeofday");
+	
+	
+	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
+
 }
+
+
+// Nt - n-th time unit
+// a2 - command a lasts 2 time units
+// ae - end of command a
+//
+// t    * *  *  * * ** *    *       - program returns from select at these times
+// |---------------------------
+//      ^ |  ^  | ^ || ^    ^
+//      1t|  2t | 3t|| 4t   5t
+//        ^     |   ^|
+//       a2     ^  ae^
+//              b1   be
+
+
 
 static void init_fd()
 {
