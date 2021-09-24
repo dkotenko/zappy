@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/16 19:23:33 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 18:05:02 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@
 
 t_main_config g_main_config;
 
+// TODO validate arguments
 static void parse_args(int argc, char **argv)
 {
 	int c;
