@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/21 18:48:13 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 16:40:52 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,6 @@ typedef struct s_fd {
 	enum e_type type;
 	void (*fct_read)();
 	void (*fct_write)();
-	char buf_read[CIRCBUF_ITEM_SIZE]; // push to circbuf_read when full
-	size_t buf_read_pos;
 	t_circbuf circbuf_read;
 	t_circbuf circbuf_write;
 } t_fd;
@@ -76,40 +74,15 @@ static void client_gone(int cs)
 static void	client_read(int cs)
 {
 	size_t r = 0;
-	char buf[CIRCBUF_ITEM_SIZE];
-	//char *p_newline;
-	//size_t i = 0;
-
+	char buf[CIRCBUF_ITEM_SIZE] = {0};
 	t_fd *client = &env.fds[cs];
-
-	// hel_lowo_rld\n
-	// -> hel
-	// [....] (item_size = 4)
-	// [hel.], pos = 3
-	// -> lowo
-	// [hell][....]
-	// [hell][owo.]
-	// -> rld\n
-	// [hell][owor][ld\n.]
 	
-
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
 		client_gone(cs);
 		return ;
 	}
-	size_t right_part = sizeof(client->buf_read) - client->buf_read_pos;
-	if (r >= right_part) {
-		char *copy_to = client->buf_read + client->buf_read_pos;
-		memcpy(copy_to, buf, right_part);
-		circbuf_push(&client->circbuf_read, client->buf_read);
-		memcpy(client->buf_read, buf + right_part, sizeof(client->buf_read) - right_part);
-		client->buf_read_pos = sizeof(client->buf_read) - right_part;
-	} else {
-		char *copy_to = client->buf_read + client->buf_read_pos;
-		memcpy(copy_to, buf, r);
-		client->buf_read_pos += r;
-	}
+	circbuf_push(&client->circbuf_read, buf);
 
 	if (strchr(buf, '\n') != NULL) {
 		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
@@ -118,95 +91,23 @@ static void	client_read(int cs)
 	
 		if (strcmp(command, "stop server") == 0)
 			exit(0);
-		//circbuf_push_string(&env.fds[cs].circbuf_write, command);
+		circbuf_push_string(&env.fds[cs].circbuf_write, "You wrote:\n");
+		circbuf_push_string(&env.fds[cs].circbuf_write, command);
+		circbuf_push_string(&env.fds[cs].circbuf_write, "\n");
 	
 		free(command);
 		
 	}
 	
-
-	// -> lowor
-	// r = 4
-	//  01234
-	// [hel..]
-	// pos = 3
-	// size = 5
-	// memcpy(3, "lowor", 5-3)
-	// [hello]
-	// memcpy(0, "wor", 3)
-	
-
-
-	
-	
-
-
-	/*
-	client->buf_read_pos += r;
-	if (client->buf_read_pos >= CIRCBUF_ITEM_SIZE) {
-		circbuf_push(client->circbuf_read, client->buf_read);
-		client->buf_read_pos =
-	}
-
-	*/
-	
-	
-
-
-
-
-	
-/*
-	while (1) {
-		r = recv(cs, buf + i, sizeof(buf), 0);
-		if (r <= 0) {
-			client_gone(cs);
-			return ;
-		}
-		p_newline = strchr(buf, '\n');
-		if (p_newline) {
-			circbuf_push(&env.fds[cs].circbuf_read, buf);
-			break ;
-		}
-		if (i + r < sizeof(buf)) {
-			i += r;
-		} else {
-			i = 0;
-			memset(buf, 0, CIRCBUF_ITEM_SIZE);
-		}
-	}
-*/	
-
-	
-/*
-	do {
-		r = recv(cs, buf, sizeof(buf), 0);
-		if (r <= 0) {
-			client_gone(cs);
-			return ;
-		}
-		circbuf_push(&env.fds[cs].circbuf_read, buf);
-	} while ((p_newline = strchr(buf, '\n')) == NULL);
-*/
-
-/*
-	char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
-	*strchr(command, '\n') = 0;
-	log_info("got command '%s'", command);
-	
-	if (strcmp(command, "stop server") == 0)
-		exit(0);
-	//circbuf_push_string(&env.fds[cs].circbuf_write, command);
-	
-	free(command);
-*/
 }
 
 static void client_write(int cs)
 {
+	void *data;
+	
 	while (env.fds[cs].circbuf_write.len) {
-		send(cs, "abc\n", 3, 0);
-		break ;
+		data = circbuf_pop(&env.fds[cs].circbuf_write);
+		send(cs, data, CIRCBUF_ITEM_SIZE, 0);
 	}
 }
 
@@ -302,7 +203,6 @@ static void sigh(int n) {
 
 void srv_start()
 {
-	g_circbuf_debug = 1;
 	log_info("Start");
 	signal(SIGINT, sigh);
 	srv_init();
@@ -315,4 +215,5 @@ void srv_start()
 
 }
 
-#undef BUF_SIZE
+#undef CIRCBUF_SIZE
+#undef CIRCBUF_ITEM_SIZE

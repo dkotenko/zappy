@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:51 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/21 17:21:31 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 16:38:58 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,9 +54,13 @@ void circbuf_clear(t_circbuf *circbuf)
 
 void circbuf_push(t_circbuf *circbuf, void *data)
 {
+	if (g_circbuf_debug) {
+		log_debug("circbuf_push: iwrite = %zu",
+				  circbuf->iwrite / circbuf->data_size);
+	}
 	if (circbuf->len == circbuf->size)
 		log_warning("Circular buffer lost data");
-	memcpy(&circbuf->buf[circbuf->iwrite], data, circbuf->data_size);
+	memcpy(circbuf->buf + circbuf->iwrite, data, circbuf->data_size);
 	++circbuf->len;
 	circbuf->iwrite += circbuf->data_size;
 	if (circbuf->iwrite >= circbuf->buf_size)
@@ -65,33 +69,31 @@ void circbuf_push(t_circbuf *circbuf, void *data)
 		circbuf->len = circbuf->len;
 	if (g_circbuf_debug) {
 		log_debug("circbuf_push: iwrite = %zu, len = %zu",
-				  circbuf->iwrite, circbuf->len);
+				  circbuf->iwrite / circbuf->data_size, circbuf->len);
 		circbuf_debug_print(circbuf);
 	}		 
 }
 
 void circbuf_push_string(t_circbuf *circbuf, char *str)
 {
-	int i = 0;
-	int len = strlen(str);
+	size_t i = 0;
+	size_t len = strlen(str);
+	char *buf;
+
+	if (g_circbuf_debug)
+		log_debug("circbuf_push_string");
+	
 	while (i + circbuf->data_size <= len) {
 		circbuf_push(circbuf, str + i);
 		i += circbuf->data_size;
 	}
-	char *buf = (char *)malloc(circbuf->data_size);
+	buf = (char *)malloc(circbuf->data_size);
+	memset(buf, 0, circbuf->data_size);
 	xassert(buf != NULL, "malloc");
 	strcpy(buf, str + i);
 	circbuf_push(circbuf, buf);
 	free(buf);
 }
-
-
-// data_size = 5
-// .....,,,,,@@@@
-// 012345678901
-// hello,world!
-
-
 
 void *circbuf_pop(t_circbuf *circbuf)
 {
@@ -99,6 +101,11 @@ void *circbuf_pop(t_circbuf *circbuf)
 
 	if (circbuf->len == 0)
 		return NULL;
+	if (g_circbuf_debug) {
+		log_debug("circbuf_pop: iread = %zu",
+				  circbuf->iread / circbuf->data_size);
+	}
+	
 	pop_buf = malloc(circbuf->data_size);
 	xassert(pop_buf != NULL, "malloc");
 	memcpy(pop_buf, circbuf->buf + circbuf->iread, circbuf->data_size);
@@ -108,7 +115,7 @@ void *circbuf_pop(t_circbuf *circbuf)
 		circbuf->iread = 0;
 	if (g_circbuf_debug) {
 		log_debug("circbuf_pop: iread = %zu, len = %zu",
-				  circbuf->iread, circbuf->len);
+				  circbuf->iread / circbuf->data_size, circbuf->len);
 		circbuf_debug_print(circbuf);
 	}
 	return pop_buf;
@@ -117,19 +124,20 @@ void *circbuf_pop(t_circbuf *circbuf)
 char *circbuf_pop_string(t_circbuf *circbuf)
 {
 	char *pop_buf;
-	int i = 0;
+	void *item;
+	char *p;
+
+	if (g_circbuf_debug)
+		log_debug("circbuf_pop_string");
 	
 	pop_buf = (char *)malloc(circbuf->buf_size + 1);
+	p = pop_buf;
 	xassert(pop_buf != NULL, "malloc");
 	memset(pop_buf, 0, circbuf->buf_size + 1);
 	while (circbuf->len) {
-		void *item = circbuf_pop(circbuf);
-		memcpy(pop_buf + i, item, circbuf->data_size);
+		item = circbuf_pop(circbuf);
+		p = stpncpy(p, item, circbuf->data_size);
 		free(item);
-		i += circbuf->data_size;
-	}
-	if (g_circbuf_debug) {
-		log_debug("circbuf_pop_all: return '%s'", pop_buf);
 	}
 	return pop_buf;
 }
