@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/24 16:40:52 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 17:30:08 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,9 +25,12 @@
 #include "utils.h"
 #include "logger.h"
 #include "circbuf.h"
+#include "queue.h"
 
-#define CIRCBUF_SIZE		16
-#define CIRCBUF_ITEM_SIZE	32
+#define CIRCBUF_SIZE				16
+#define CIRCBUF_ITEM_SIZE			32
+#define COMMANDS_QUEUE_SIZE			10
+#define COMMANDS_QUEUE_ITEM_SIZE	1024
 
 enum e_type {
 	FD_FREE,
@@ -41,6 +44,7 @@ typedef struct s_fd {
 	void (*fct_write)();
 	t_circbuf circbuf_read;
 	t_circbuf circbuf_write;
+	t_queue commands;
 } t_fd;
 
 typedef struct s_env {
@@ -53,7 +57,7 @@ typedef struct s_env {
 	struct timeval timeout;
 } t_env;
 
-static t_env env;
+t_env env;
 
 static void clean_fd(t_fd *fd)
 {
@@ -68,6 +72,7 @@ static void client_gone(int cs)
 	clean_fd(&env.fds[cs]);
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
+	queue_clear(&env.fds[cs].commands);
 	log_info("Client #%d gone away", cs);
 }
 
@@ -87,13 +92,19 @@ static void	client_read(int cs)
 	if (strchr(buf, '\n') != NULL) {
 		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
 		*strchr(command, '\n') = 0;
+		
 		log_info("got command '%s'", command);
+		queue_push(&client->commands, command);
 	
 		if (strcmp(command, "stop server") == 0)
 			exit(0);
-		circbuf_push_string(&env.fds[cs].circbuf_write, "You wrote:\n");
-		circbuf_push_string(&env.fds[cs].circbuf_write, command);
-		circbuf_push_string(&env.fds[cs].circbuf_write, "\n");
+		char *popd;
+		if (strcmp(command, "pop") == 0) {
+			popd = queue_pop(&client->commands);
+			circbuf_push_string(&env.fds[cs].circbuf_write, "You poped:\n");
+			circbuf_push_string(&env.fds[cs].circbuf_write, popd);
+			circbuf_push_string(&env.fds[cs].circbuf_write, "\n");
+		}
 	
 		free(command);
 		
@@ -159,6 +170,7 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].commands = queue_init(COMMANDS_QUEUE_SIZE, COMMANDS_QUEUE_ITEM_SIZE);
 }
 
 static void srv_create()

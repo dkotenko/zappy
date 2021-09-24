@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:43 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/21 18:06:10 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/24 17:18:07 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 # include <stdlib.h>
 
-extern int g_circbuf_debug;		/* set to 1 for additional debug */
+
 
 typedef struct s_circbuf {
 	size_t data_size; /* size of 1 element */
@@ -25,6 +25,7 @@ typedef struct s_circbuf {
 	size_t iread;
 	size_t iwrite;
 	size_t len;
+	int debug;		  /* set to 1 for debug messages*/
 } t_circbuf;
 
 
