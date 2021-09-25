@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:23:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 06:29:29 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 20:54:52 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ t_btree_avl			*ft_btree_avl_insert(t_btree_avl *root,
 										int (*cmpf)(void *, void *));
 t_btree_avl			*ft_btree_avl_remove(t_btree_avl *root,
 										void *content,
-										int (*cmpf)(void *, void *));
+										int (*cmpf)(void *, void *),
+										void (*delf)(void *));
 
 #endif

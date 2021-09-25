@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/24 18:05:02 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 16:58:28 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,13 @@
 	"  -t time unit divider (the greater t is, the faster the game will go)\n" \
 	"  -n team_name_1 team_name2 ...\n"
 
-t_main_config g_main_config;
+t_main_config g_main_config = {
+	.port = 9876,
+	.world_width = 10,
+	.world_height = 10,
+	.clients_number_at_start = 1,
+	.t = 1
+};
 
 // TODO validate arguments
 static void parse_args(int argc, char **argv)

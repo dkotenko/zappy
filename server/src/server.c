@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 07:38:10 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 22:01:37 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 #include "circbuf.h"
 #include "queue.h"
 #include "commands.h"
+#include "logic.h"
 
 #define CIRCBUF_SIZE				16
 #define CIRCBUF_ITEM_SIZE			32
@@ -55,9 +56,8 @@ typedef struct s_env {
 	int r;
 	fd_set fd_read;
 	fd_set fd_write;
-	struct timeval t;			/* last update() time */
+	struct timeval t;			/* time after select */
 	struct timeval tu;			/* time unit */
-	struct timeval to;			/* timeout for select() */
 } t_env;
 
 t_env env;
@@ -78,6 +78,18 @@ static void client_gone(int cs)
 	log_info("Client #%d gone away", cs);
 }
 
+struct timeval tu2tv(int tu)
+{
+	struct timeval t;
+	extern t_env env;
+
+	memset(&t, 0, sizeof(t));
+	for (int i = 0; i < tu; ++i)
+		timeradd(&t, &env.tu, &t);
+	return t;
+}
+
+
 static void	client_read(int cs)
 {
 	size_t r = 0;
@@ -95,12 +107,27 @@ static void	client_read(int cs)
 		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
 		*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
 		
+		int dur = lgc_get_command_duration(command);
+		if (dur == -1) {
+			log_warning("unknown command '%s'", command);
+			free(command);
+			return ;
+		}
 		log_info("got command '%s'", command);
+		if (dur == 0) {
+			t_command *cmd = command_new(env.t, command, cs);
+			lgc_execute_command(cmd);
+			command_del(cmd);
+			return ;
+		}
+		struct timeval t = tu2tv(dur);
+		timeradd(&t, &env.t, &t);
+		commands_push(command_new(t, command, cs));
 	
 		if (strcmp(command, "stop server") == 0)
 			exit(0);
 	
-		free(command);
+		//free(command);
 		
 	}
 }
@@ -150,21 +177,70 @@ a > tu
 -> update()
 
 
+TC - time current
+TU - time unit (1/t)
+TO - timeout for select
+
+(TC = 00:00)
+0. push 0 with time TC + TU		[00:01, 0]
+	TO = TU
+1. r = select(..., TO)
+	(TC = 00:01.5)
+2. if r == 0:
+	pop
+	exec
+	if command 0:
+		push poped T+TU	[00:02, 0]
+	
+else
+	detect new command (duration 7/t)	
+	push (TC + duration)	[00:01, 0] [00:07.5, 1]
+
+3. pop. TO = poped T-TC
+4. goto 1
+
+
  */
+
+
 
 
 static void do_select()
 {
+	struct timeval tc;
+	static struct timeval to;
 	struct timeval t;
+	t_command *command;
 
-	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
+	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
+	//timerprint(log_debug, &tc, "gettimeofday");
 	
 	if (commands_empty()) {
-		timeradd(&t, &env.tu, &t);
+		log_debug("commands_empty");
+		timeradd(&tc, &env.tu, &t);
 		commands_push(command_new(t, NULL, 0));
+		to = env.tu;
+	} else {
+		command = commands_min();
+		timersub(&command->t, &tc, &to);
+	}
+	//timerprint(log_debug, &to, "select, to");
+	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
+	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
+	env.t = tc;
+	//timerprint(log_debug, &tc, "gettimeofday");
+	command = commands_min();
+	if (env.r == 0) {
+		if (command->data == NULL) {
+			lgc_update();
+			timeradd(&command->t, &env.tu, &t);
+			commands_push(command_new(t, NULL, 0));						  
+		} else {
+			lgc_execute_command(command);
+		}
+		commands_pop(command);
 	}
 	
-	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, NULL);
 }
 
 
@@ -233,11 +309,12 @@ static void srv_create()
 	env.fds[s].fct_read = srv_accept;
 
 	if (g_main_config.t == 1)
-		env.t.tv_sec = 1;
-	else if (g_main_config.t > 1 && g_main_config <= 1000000)
-		env.t.tv_usec = 1000000 / t;
+		env.tu.tv_sec = 1;
+	else if (g_main_config.t > 1 && g_main_config.t <= 1000000)
+		env.tu.tv_usec = 1000000 / g_main_config.t;
 	else
 		log_fatal("Invalid time unit: %d", g_main_config.t);
+	timerprint(log_debug, &env.tu, "tu");
 }
 
 static void srv_init()
@@ -274,6 +351,11 @@ void srv_start()
 		check_fd();
 	}
 
+}
+
+void srv_reply_client(int client_nb, char *msg)
+{
+	circbuf_push_string(&env.fds[client_nb].circbuf_write, msg);
 }
 
 #undef CIRCBUF_SIZE

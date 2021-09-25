@@ -6,7 +6,7 @@
 #    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/25 06:27:03 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/09/25 21:01:38 by gmelisan         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
@@ -17,10 +17,10 @@ CFLAGS = -g -Wall -Wextra
 
 SRCDIR = src
 SRC = $(addprefix $(SRCDIR)/, \
-main.c server.c logger.c utils.c circbuf.c ft_btree.c)
+main.c server.c logger.c utils.c circbuf.c ft_btree.c commands.c logic.c)
 
 HEADER = $(addprefix $(SRCDIR)/, \
-server.h logger.h utils.h circbuf.h ft_btree.h)
+server.h logger.h utils.h circbuf.h ft_btree.h commands.h logic.h)
 
 OBJ = $(SRC:.c=.o)
 
