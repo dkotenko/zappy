@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 22:01:37 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 22:19:08 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,14 +26,11 @@
 #include "utils.h"
 #include "logger.h"
 #include "circbuf.h"
-#include "queue.h"
 #include "commands.h"
 #include "logic.h"
 
 #define CIRCBUF_SIZE				16
 #define CIRCBUF_ITEM_SIZE			32
-#define COMMANDS_QUEUE_SIZE			10
-#define COMMANDS_QUEUE_ITEM_SIZE	1024
 
 enum e_type {
 	FD_FREE,
