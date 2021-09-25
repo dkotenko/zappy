@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:23:11 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 06:26:43 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 21:00:28 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,8 @@ static t_btree_avl	*remove_min(t_btree_avl *root)
 
 t_btree_avl			*ft_btree_avl_remove(t_btree_avl *root,
 										void *content,
-										int (*cmpf)(void *, void *))
+										int (*cmpf)(void *, void *),
+										void (*delf)(void *))
 {
 	t_btree_avl *left;
 	t_btree_avl *right;
@@ -184,14 +185,14 @@ t_btree_avl			*ft_btree_avl_remove(t_btree_avl *root,
 	if (!root)
 		return (NULL);
 	if (cmpf(content, root->content) < 0)
-		root->left = ft_btree_avl_remove(root->left, content, cmpf);
+		root->left = ft_btree_avl_remove(root->left, content, cmpf, delf);
 	else if (cmpf(content, root->content) > 0)
-		root->right = ft_btree_avl_remove(root->right, content, cmpf);
+		root->right = ft_btree_avl_remove(root->right, content, cmpf, delf);
 	else
 	{
 		left = root->left;
 		right = root->right;
-		free(root->content);
+		delf(root->content);
 		free(root);
 		if (!right)
 			return (left);
