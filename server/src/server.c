@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 22:19:08 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 22:36:12 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,8 @@
 #include "commands.h"
 #include "logic.h"
 
+#define MAX_PENDING_COMMANDS		10
+
 #define CIRCBUF_SIZE				16
 #define CIRCBUF_ITEM_SIZE			32
 
@@ -44,6 +46,8 @@ typedef struct s_fd {
 	void (*fct_write)();
 	t_circbuf circbuf_read;
 	t_circbuf circbuf_write;
+	int pending_commands;
+	t_command *last_command;
 } t_fd;
 
 typedef struct s_env {
@@ -92,6 +96,7 @@ static void	client_read(int cs)
 	size_t r = 0;
 	char buf[CIRCBUF_ITEM_SIZE] = {0};
 	t_fd *client = &env.fds[cs];
+	t_command *cmd;
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
@@ -100,33 +105,39 @@ static void	client_read(int cs)
 	}
 	circbuf_push(&client->circbuf_read, buf);
 
-	if (strchr(buf, '\n') != NULL) {
-		char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
-		*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
-		
-		int dur = lgc_get_command_duration(command);
-		if (dur == -1) {
-			log_warning("unknown command '%s'", command);
-			free(command);
-			return ;
-		}
-		log_info("got command '%s'", command);
-		if (dur == 0) {
-			t_command *cmd = command_new(env.t, command, cs);
-			lgc_execute_command(cmd);
-			command_del(cmd);
-			return ;
-		}
-		struct timeval t = tu2tv(dur);
-		timeradd(&t, &env.t, &t);
-		commands_push(command_new(t, command, cs));
-	
-		if (strcmp(command, "stop server") == 0)
-			exit(0);
-	
-		//free(command);
-		
+	if (strchr(buf, '\n') == NULL)
+		return ;
+	char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
+	*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
+	if (client->pending_commands == MAX_PENDING_COMMANDS) {
+		log_warning("drop command '%s': queue is full", command);
+		free(command);
+		return ;
 	}
+	
+	int dur = lgc_get_command_duration(command);
+	if (dur == -1) {
+		log_warning("unknown command '%s'", command);
+		free(command);
+		return ;
+	}
+	log_info("got command '%s'", command);
+	if (dur == 0) {
+		cmd = command_new(env.t, command, cs);
+		lgc_execute_command(cmd);
+		command_del(cmd);
+		return ;
+	}
+	struct timeval t = tu2tv(dur);
+	if (client->pending_commands) {
+		timeradd(&t, &client->last_command->t, &t);
+	} else {
+		timeradd(&t, &env.t, &t);
+	}
+	cmd = command_new(t, command, cs);
+	commands_push(cmd);
+	client->last_command = cmd;
+	++client->pending_commands;
 }
 
 static void client_write(int cs)
@@ -196,8 +207,25 @@ else
 3. pop. TO = poped T-TC
 4. goto 1
 
+*/
 
- */
+
+
+
+/*
+ Nt - n-th time unit
+ a2 - command a lasts 2 time units
+ ae - end of command a
+
+ t    * *  *  * * ** *    *       - program returns from select at these times
+ |---------------------------
+      ^ |  ^  | ^ || ^    ^
+      1t|  2t | 3t|| 4t   5t
+        ^     |   ^|
+       a2     ^  ae^
+              b1   be
+*/
+
 
 
 
@@ -210,10 +238,8 @@ static void do_select()
 	t_command *command;
 
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
-	//timerprint(log_debug, &tc, "gettimeofday");
 	
 	if (commands_empty()) {
-		log_debug("commands_empty");
 		timeradd(&tc, &env.tu, &t);
 		commands_push(command_new(t, NULL, 0));
 		to = env.tu;
@@ -221,11 +247,9 @@ static void do_select()
 		command = commands_min();
 		timersub(&command->t, &tc, &to);
 	}
-	//timerprint(log_debug, &to, "select, to");
 	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	env.t = tc;
-	//timerprint(log_debug, &tc, "gettimeofday");
 	command = commands_min();
 	if (env.r == 0) {
 		if (command->data == NULL) {
@@ -234,26 +258,12 @@ static void do_select()
 			commands_push(command_new(t, NULL, 0));						  
 		} else {
 			lgc_execute_command(command);
+			--env.fds[command->client_nb].pending_commands;
 		}
 		commands_pop(command);
 	}
 	
 }
-
-
-// Nt - n-th time unit
-// a2 - command a lasts 2 time units
-// ae - end of command a
-//
-// t    * *  *  * * ** *    *       - program returns from select at these times
-// |---------------------------
-//      ^ |  ^  | ^ || ^    ^
-//      1t|  2t | 3t|| 4t   5t
-//        ^     |   ^|
-//       a2     ^  ae^
-//              b1   be
-
-
 
 static void init_fd()
 {
