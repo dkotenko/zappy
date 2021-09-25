@@ -6,16 +6,18 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:04:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/16 17:45:45 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 22:06:49 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdarg.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "server.h"
 #include "logger.h"
+#include "utils.h"
 
 #define COLOR_GRAY		"\e[1;30m"
 #define COLOR_RED		"\e[0;31m"
@@ -26,24 +28,44 @@
 
 static char *get_time()
 {
-	time_t rawtime;
+	struct timeval t;
 	struct tm *timeinfo;
 	static char buf[80];
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
+	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
+	timeinfo = localtime(&t.tv_sec);
 	strftime(buf, 80, "%d.%m.%Y %H:%M:%S", timeinfo);
+	sprintf(strchr(buf, '\0'), ".%03ld", t.tv_usec / 1000);
 	return buf;
 }
+
+static int g_tick;
 
 static void log_print(FILE *f, const char *format, va_list ap, const char *prefix)
 {
 	if (g_main_config.quiet)
 		return ;
+	if (g_tick) {
+		fprintf(f, "\n");
+		g_tick = 0;
+	}
 	fprintf(f, "[%s] ", get_time());
 	fprintf(f, "[%s] ", prefix);
 	vfprintf(f, format, ap);
 	fprintf(f, "\n");
+}
+
+void log_tick(void)
+{
+#ifndef DEBUG
+	return ;
+#endif
+	static int tick = 1;
+	g_tick = 1;
+
+	fprintf(stderr, "               \r");
+	fprintf(stderr, "tick %d", tick);
+	++tick;
 }
 
 void log_debug(const char *format, ...)
