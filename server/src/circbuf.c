@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:51 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/24 17:22:29 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 05:47:59 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,14 +39,15 @@ t_circbuf circbuf_init(size_t size, size_t data_size)
 	circbuf.buf = (char *)malloc(circbuf.buf_size);
 	xassert(circbuf.buf != NULL, "malloc");
 	memset(circbuf.buf, 0, circbuf.buf_size);
-	circbuf.debug = 1;
+	//circbuf.debug = 1;
 	return circbuf;
 }
 
 void circbuf_clear(t_circbuf *circbuf)
 {
 	free(circbuf->buf);
-	log_debug("%p circbuf_clear", circbuf);
+	if (circbuf->debug)
+		log_debug("%p circbuf_clear", circbuf);
 }
 
 void circbuf_push(t_circbuf *circbuf, void *data)
@@ -62,8 +63,8 @@ void circbuf_push(t_circbuf *circbuf, void *data)
 	circbuf->iwrite += circbuf->data_size;
 	if (circbuf->iwrite >= circbuf->buf_size)
 		circbuf->iwrite = 0;
-	if (circbuf->len > circbuf->len)
-		circbuf->len = circbuf->len;
+	if (circbuf->len > circbuf->size)
+		circbuf->len = circbuf->size;
 	if (circbuf->debug) {
 		log_debug("%p circbuf_push: iwrite = %zu, len = %zu", circbuf,
 				  circbuf->iwrite / circbuf->data_size, circbuf->len);

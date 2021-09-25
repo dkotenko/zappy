@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/24 20:58:51 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/25 07:38:10 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "circbuf.h"
 #include "queue.h"
+#include "commands.h"
 
 #define CIRCBUF_SIZE				16
 #define CIRCBUF_ITEM_SIZE			32
@@ -45,7 +46,6 @@ typedef struct s_fd {
 	void (*fct_write)();
 	t_circbuf circbuf_read;
 	t_circbuf circbuf_write;
-	t_queue commands;
 } t_fd;
 
 typedef struct s_env {
@@ -75,7 +75,6 @@ static void client_gone(int cs)
 	clean_fd(&env.fds[cs]);
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
-	queue_clear(&env.fds[cs].commands);
 	log_info("Client #%d gone away", cs);
 }
 
@@ -97,22 +96,13 @@ static void	client_read(int cs)
 		*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
 		
 		log_info("got command '%s'", command);
-		queue_push(&client->commands, command);
 	
 		if (strcmp(command, "stop server") == 0)
 			exit(0);
-		char *popd;
-		if (strcmp(command, "pop") == 0) {
-			popd = queue_pop(&client->commands);
-			circbuf_push_string(&env.fds[cs].circbuf_write, "You poped:\n");
-			circbuf_push_string(&env.fds[cs].circbuf_write, popd);
-			circbuf_push_string(&env.fds[cs].circbuf_write, "\n");
-		}
 	
 		free(command);
 		
 	}
-	
 }
 
 static void client_write(int cs)
@@ -163,49 +153,18 @@ a > tu
  */
 
 
-static void time_init()
-{
-	xassert(gettimeofday(&env.t) != -1, "gettimeofday");
-	if (g_main_config.t == 1)
-		tu.tv_sec = 1;
-	else
-		tu.tv_usec = 1000000 / g_main_config.t;
-
-	timeradd(to, env.tu, to);	
-}
-
-
-static struct timeval get_select_timeout()
-{
-	struct timeval t;			/* current time */
-	struct timeval to;			/* timeout for select */
-	struct timeval tmp;
-	
-	xassert(gettimeofday(&t) != -1, "gettimeofday");
-
-	timersub(t, env.t, tmp);
-	if (timercmp(tmp, tu, >=)) {
-		timeradd(t, env.tu, to);
-		// update()
-		return to;
-	}
-	
-	
-	// new_command()
-	return to;
-}
-
 static void do_select()
 {
-	struct timeval t;			/* current time */
-	struct timeval to;			/* timeout for select */
-	struct timeval tmp;
-	
-	xassert(gettimeofday(&t) != -1, "gettimeofday");
-	
-	
-	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
+	struct timeval t;
 
+	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
+	
+	if (commands_empty()) {
+		timeradd(&t, &env.tu, &t);
+		commands_push(command_new(t, NULL, 0));
+	}
+	
+	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, NULL);
 }
 
 
@@ -254,7 +213,6 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].commands = queue_init(COMMANDS_QUEUE_SIZE, COMMANDS_QUEUE_ITEM_SIZE);
 }
 
 static void srv_create()
@@ -273,6 +231,13 @@ static void srv_create()
 	log_info("Listen on port %d", g_main_config.port);
 	env.fds[s].type = FD_SERV;
 	env.fds[s].fct_read = srv_accept;
+
+	if (g_main_config.t == 1)
+		env.t.tv_sec = 1;
+	else if (g_main_config.t > 1 && g_main_config <= 1000000)
+		env.t.tv_usec = 1000000 / t;
+	else
+		log_fatal("Invalid time unit: %d", g_main_config.t);
 }
 
 static void srv_init()
