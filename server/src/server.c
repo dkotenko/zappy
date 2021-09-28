@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 10:53:19 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 14:04:59 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <errno.h>
 
 #include "server.h"
 #include "utils.h"
@@ -104,6 +105,7 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
+		lgc_client_gone(cs);
 		client_gone(cs);
 		return ;
 	}
@@ -221,22 +223,32 @@ static void do_select()
 	struct timeval t;			/* tmp */
 	t_command *command;
 
-	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
+	memset(&to, 0, sizeof(to));
+	command = commands_min(); /* minimal by time, what we should execute after select */
+	if (commands_is_empty())
+		lgc_init();
 	
+	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	if (commands_is_empty()) {	/* init */
 		timeradd(&tc, &env.tu, &t); /* wake up from select after env.tu (1/t) */
-		commands_push(command_new(t, NULL, 0)); /* command without client is lgc_update */
+		command = command_new(t, NULL, 0); /* command without client is lgc_update */
+		commands_push(command);
 		to = env.tu;
 	} else {
-		command = commands_min();
-		timersub(&command->t, &tc, &to);
+		if (timercmp(&command->t, &tc, >)) {
+			timersub(&command->t, &tc, &to);
+		} else {
+			memset(&to, 0, sizeof(to));
+			log_warning("Out of time on command execution");
+		}
 	}
 	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
-	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
-	env.t = tc;
-	command = commands_min();	/* minimal by time, what we should execute now */
+	if (env.r == -1)
+		log_warning("select: %s", strerror(errno));
+	xassert(gettimeofday(&env.t, NULL) != -1, "gettimeofday");
 	if (env.r == 0) {			/* select woke up for command, not for read/write */
 		if (command->data == NULL) {
+			log_tick(&to);
 			lgc_update();
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
@@ -246,7 +258,6 @@ static void do_select()
 		}
 		commands_pop(command);
 	}
-	
 }
 
 static void init_fd()

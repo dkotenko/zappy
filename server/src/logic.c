@@ -6,24 +6,40 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 10:56:23 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 14:06:48 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <string.h>
+#include <unistd.h>
 
 #include "server.h"
 #include "logger.h"
 #include "logic.h"
 
+void lgc_init(void)
+{
+	log_info("logic: Setup world");
+}
+
+void lgc_new_client(int client_nb, char *team)
+{
+	log_info("logic: Add client #%d (team '%s')", client_nb, team);
+}
+
+void lgc_client_gone(int client_nb)
+{
+	log_info("logic: Remove client #%d", client_nb);
+}
+
 void lgc_update(void)
 {
-	log_tick();
 }
 
 void lgc_execute_command(t_command *command)
 {
-	log_info("execute command '%s' from #%d", command->data, command->client_nb);
+	log_info("logic: Execute command '%s' from #%d", command->data, command->client_nb);
+	//usleep(1000);
 	srv_reply_client(command->client_nb, command->data);
 	srv_reply_client(command->client_nb, "\nreply ok\n");
 }

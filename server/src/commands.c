@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:46:02 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 09:58:14 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 13:42:08 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,8 @@ void commands_push(t_command *cmd)
 
 static t_btree_avl *find_min(t_btree_avl *root)
 {
+	if (!root)
+		return root;
 	return (root->left ? find_min(root->left) : root);
 }
 
@@ -78,9 +80,9 @@ t_command *commands_min(void)
 	t_btree_avl *min;
 
 	min = find_min(commands.tree);
-	if (g_commands_debug)
+	if (g_commands_debug && min)
 		timerprint(log_debug, &((t_command *)min->content)->t, "commands_min");
-	return (t_command *)min->content;
+	return (min ? min->content : NULL);
 }
 
 void commands_pop(t_command *cmd)
