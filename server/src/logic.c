@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 14:06:48 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 18:51:16 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include "server.h"
 #include "logger.h"
 #include "logic.h"
+#include "utils.h"
 
 void lgc_init(void)
 {
@@ -34,21 +35,13 @@ void lgc_client_gone(int client_nb)
 
 void lgc_update(void)
 {
+	usleep(100);
 }
 
-void lgc_execute_command(t_command *command)
+void lgc_execute_command(int client_nb, char *cmd)
 {
-	log_info("logic: Execute command '%s' from #%d", command->data, command->client_nb);
-	//usleep(1000);
-	srv_reply_client(command->client_nb, command->data);
-	srv_reply_client(command->client_nb, "\nreply ok\n");
-}
-
-static int str_starts_with(char *str, char *with)
-{
-	if (strncmp(str, with, strlen(with)) == 0)
-		return 1;
-	return 0;
+	log_info("logic: Execute command '%s' from #%d", cmd, client_nb);
+	srv_reply_client(client_nb, "%s - ok\n", cmd);
 }
 
 int lgc_get_command_duration(char *cmd)
