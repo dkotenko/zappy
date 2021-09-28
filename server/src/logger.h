@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:01:17 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 21:37:47 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 13:15:31 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,9 @@
 # define LOGGER_H
 
 # include <stdio.h>
+# include <sys/time.h>
 
-void log_tick(void);
+void log_tick(struct timeval *select_timeout);
 void log_debug(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void log_info(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void log_warning(const char *format, ...) __attribute__ ((format (printf, 1, 2)));

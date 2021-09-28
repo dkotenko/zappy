@@ -6,21 +6,24 @@
 #    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/25 21:01:38 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/09/28 18:08:07 by gmelisan         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
 NAME = server
 
 CC = clang
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra #-O3
 
 SRCDIR = src
 SRC = $(addprefix $(SRCDIR)/, \
-main.c server.c logger.c utils.c circbuf.c ft_btree.c commands.c logic.c)
+main.c \
+server.c logger.c utils.c circbuf.c \
+ft_btree.c commands.c logic.c reception.c)
 
 HEADER = $(addprefix $(SRCDIR)/, \
-server.h logger.h utils.h circbuf.h ft_btree.h commands.h logic.h)
+server.h logger.h utils.h circbuf.h \
+ft_btree.h commands.h logic.h reception.h)
 
 OBJ = $(SRC:.c=.o)
 

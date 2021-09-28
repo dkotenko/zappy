@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:04:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 22:06:49 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 14:46:57 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ static char *get_time()
 	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
 	timeinfo = localtime(&t.tv_sec);
 	strftime(buf, 80, "%d.%m.%Y %H:%M:%S", timeinfo);
-	sprintf(strchr(buf, '\0'), ".%03ld", t.tv_usec / 1000);
+	sprintf(strchr(buf, '\0'), ".%06d", t.tv_usec);
 	return buf;
 }
 
@@ -55,7 +55,7 @@ static void log_print(FILE *f, const char *format, va_list ap, const char *prefi
 	fprintf(f, "\n");
 }
 
-void log_tick(void)
+void log_tick(struct timeval *select_timeout)
 {
 #ifndef DEBUG
 	return ;
@@ -63,8 +63,11 @@ void log_tick(void)
 	static int tick = 1;
 	g_tick = 1;
 
-	fprintf(stderr, "               \r");
-	fprintf(stderr, "tick %d", tick);
+	//if (tick == 10000)
+	//	exit(0);
+
+	fprintf(stderr, "[%s] tick %d (select timeout %zu.%06d)\r",
+			get_time(), tick, select_timeout->tv_sec, select_timeout->tv_usec);
 	++tick;
 }
 

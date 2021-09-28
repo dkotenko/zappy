@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 21:54:45 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 17:36:32 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,8 @@ typedef struct s_main_config {
 	int world_width;
 	int world_height;
 	char **teams; // pointer to first team in argv
-	int teams_count; // teams + teams_count -- pointer to last team
-	int clients_number_at_start;
+	int teams_count; // size of `teams'
+	int max_clients_at_team;
 	int t;
 	int quiet;
 
@@ -30,6 +30,7 @@ typedef struct s_main_config {
 extern t_main_config g_main_config;
 
 void srv_start(void);
-void srv_reply_client(int client_nb, char *msg);
+void srv_reply_client(int client_nb, char *msg, ...) __attribute__ ((format (printf, 2, 3)));
+void srv_client_died(int client_nb);
 
 #endif
