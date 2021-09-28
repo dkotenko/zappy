@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 14:04:59 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 18:33:44 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <stdarg.h>
 
 #include "server.h"
 #include "utils.h"
@@ -29,6 +30,7 @@
 #include "circbuf.h"
 #include "commands.h"
 #include "logic.h"
+#include "reception.h"
 
 #define MAX_PENDING_COMMANDS		10
 
@@ -43,8 +45,9 @@ enum e_type {
 
 typedef struct s_fd {
 	enum e_type type;
-	void (*fct_read)();			/* read data if client, accept if server */
-	void (*fct_write)();
+	void (*fct_read)(int);			/* read data if client, accept if server */
+	void (*fct_write)(int);
+	int (*fct_handle)(int, char *);
 	t_circbuf circbuf_read;		/* raw data from client socket goes here */
 	t_circbuf circbuf_write;	/* raw data to be written to client goes here */
 	int pending_commands;		/* how many commands for this client in `commands' */
@@ -71,6 +74,7 @@ static void clean_fd(t_fd *fd)
 	fd->type = FD_FREE;
 	fd->fct_read = NULL;
 	fd->fct_write = NULL;
+	fd->fct_handle = NULL;
 	fd->pending_commands = 0;
 	fd->last_command = NULL;
 }
@@ -81,10 +85,11 @@ static void client_gone(int cs)
 	clean_fd(&env.fds[cs]);
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
+	reception_remove_client(cs);
 	log_info("Client #%d gone away", cs);
 }
 
-struct timeval tu2tv(int tu)
+static struct timeval tu2tv(int tu)
 {
 	struct timeval t;
 	extern t_env env;
@@ -95,13 +100,48 @@ struct timeval tu2tv(int tu)
 	return t;
 }
 
+static int client_handle_command(int cs, char *command)
+{
+	t_fd *client = &env.fds[cs];
+	t_command *cmd;
+	
+	if (client->pending_commands == MAX_PENDING_COMMANDS) {
+		log_warning("drop command '%s': queue is full", command);
+		return 0;
+	}
+	
+	int dur = lgc_get_command_duration(command);
+	if (dur == -1) {
+		log_warning("unknown command '%s'", command);
+		return 0;
+	}
+	log_info("got command '%s'", command);
+	if (dur == 0) {
+		cmd = command_new(env.t, strdup(command), cs);
+		lgc_execute_command(cs, command);
+		command_del(cmd);
+		return 0;
+	}
+	struct timeval t = tu2tv(dur);
+	if (client->pending_commands) {
+		log_debug("client->pending_commands: %d", client->pending_commands);
+		timeradd(&t, &client->last_command->t, &t);
+	} else {
+		timeradd(&t, &env.t, &t);
+	}
+	cmd = command_new(t, strdup(command), cs);
+	commands_push(cmd);
+	client->last_command = cmd;
+	++client->pending_commands;
+	return 0;
+}
 
 static void	client_read(int cs)
 {
 	size_t r = 0;
 	char buf[CIRCBUF_ITEM_SIZE] = {0};
 	t_fd *client = &env.fds[cs];
-	t_command *cmd;
+	int handle_result;
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
@@ -115,36 +155,25 @@ static void	client_read(int cs)
 		return ;
 	char *command = circbuf_pop_string(&env.fds[cs].circbuf_read);
 	*strchr(command, '\n') = 0; // TODO this split loses part of next command if any
-	if (client->pending_commands == MAX_PENDING_COMMANDS) {
-		log_warning("drop command '%s': queue is full", command);
-		free(command);
+	handle_result = client->fct_handle(cs, command);
+	free(command);
+	if (client->fct_handle != reception_chat)
 		return ;
+	switch (handle_result) {
+	case RECEPTION_ROUTE_EXIT:
+		srv_client_died(cs);
+		break ;
+	case RECEPTION_ROUTE_CLIENT:
+		client->fct_handle = client_handle_command;
+		lgc_new_client(cs, reception_find_client_team(cs));
+		break ;
+	case RECEPTION_ROUTE_GFX:
+		client->fct_handle = reception_gfx_chat;
+		break ;
+	case RECEPTION_ROUTE_ADMIN:
+		client->fct_handle = reception_admin_chat;
+		break ;
 	}
-	
-	int dur = lgc_get_command_duration(command);
-	if (dur == -1) {
-		log_warning("unknown command '%s'", command);
-		free(command);
-		return ;
-	}
-	log_info("got command '%s'", command);
-	if (dur == 0) {
-		cmd = command_new(env.t, command, cs);
-		lgc_execute_command(cmd);
-		command_del(cmd);
-		return ;
-	}
-	struct timeval t = tu2tv(dur);
-	if (client->pending_commands) {
-		log_debug("client->pending_commands: %d", client->pending_commands);
-		timeradd(&t, &client->last_command->t, &t);
-	} else {
-		timeradd(&t, &env.t, &t);
-	}
-	cmd = command_new(t, command, cs);
-	commands_push(cmd);
-	client->last_command = cmd;
-	++client->pending_commands;
 }
 
 static void client_write(int cs)
@@ -253,7 +282,7 @@ static void do_select()
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
 		} else {
-			lgc_execute_command(command);
+			lgc_execute_command(command->client_nb, command->data);
 			--env.fds[command->client_nb].pending_commands;
 		}
 		commands_pop(command);
@@ -288,8 +317,11 @@ static void srv_accept(int s)
 	env.fds[cs].type = FD_CLIENT;
 	env.fds[cs].fct_read = client_read;
 	env.fds[cs].fct_write = client_write;
+	env.fds[cs].fct_handle = reception_chat;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+
+	env.fds[cs].fct_handle(cs, NULL);
 }
 
 static void srv_create()
@@ -338,6 +370,7 @@ static void sigh(int n) {
 	free(env.fds);
 	free(env.deadbodies);
 	commands_destroy();
+	reception_clear();
 	log_info("Exit");
 	exit(0);
 }
@@ -348,6 +381,7 @@ void srv_start()
 	signal(SIGINT, sigh);
 	srv_init();
 	srv_create();
+	reception_init(env.maxfd);
 	while (21) {
 		init_fd();
 		do_select();
@@ -356,16 +390,22 @@ void srv_start()
 
 }
 
-void srv_reply_client(int client_nb, char *msg)
+void srv_reply_client(int client_nb, char *msg, ...)
 {
-	circbuf_push_string(&env.fds[client_nb].circbuf_write, msg);
+	char *buf;
+	va_list ap;
+
+	va_start(ap, msg);
+	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
+	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+	free(buf);
+	va_end(ap);
 }
 
 void srv_client_died(int client_nb)
 {
 	int i = 0;
 	
-	circbuf_push_string(&env.fds[client_nb].circbuf_write, "mort\n");
 	while (env.deadbodies[i] != 0 && i <= env.maxfd)
 		++i;
 	env.deadbodies[i] = client_nb;

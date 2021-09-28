@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/24 17:34:22 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 12:22:53 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 14:37:25 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ void lgc_update(void);
 int lgc_get_command_duration(char *cmd);
 
 /* Calls when command should be executed */
-void lgc_execute_command(t_command *cmd);
+void lgc_execute_command(int client_nb, char *cmd);
 
 
 #endif
