@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:51 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 05:47:59 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 18:29:31 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,8 @@ void circbuf_push(t_circbuf *circbuf, void *data)
 	}		 
 }
 
+
+/* TODO push to previous item as well if has space */
 void circbuf_push_string(t_circbuf *circbuf, char *str)
 {
 	size_t i = 0;
