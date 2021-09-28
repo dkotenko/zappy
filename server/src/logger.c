@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:04:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 22:06:49 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 09:42:05 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ static char *get_time()
 	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
 	timeinfo = localtime(&t.tv_sec);
 	strftime(buf, 80, "%d.%m.%Y %H:%M:%S", timeinfo);
-	sprintf(strchr(buf, '\0'), ".%03ld", t.tv_usec / 1000);
+	sprintf(strchr(buf, '\0'), ".%03d", t.tv_usec / 1000);
 	return buf;
 }
 

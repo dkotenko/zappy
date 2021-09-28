@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 22:36:12 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 10:53:19 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,23 +42,25 @@ enum e_type {
 
 typedef struct s_fd {
 	enum e_type type;
-	void (*fct_read)();
+	void (*fct_read)();			/* read data if client, accept if server */
 	void (*fct_write)();
-	t_circbuf circbuf_read;
-	t_circbuf circbuf_write;
-	int pending_commands;
-	t_command *last_command;
+	t_circbuf circbuf_read;		/* raw data from client socket goes here */
+	t_circbuf circbuf_write;	/* raw data to be written to client goes here */
+	int pending_commands;		/* how many commands for this client in `commands' */
+	t_command *last_command;	/* next pending command execution time should be
+													 calculated from last command */
 } t_fd;
 
 typedef struct s_env {
-	t_fd *fds;
-	int maxfd;
-	int max;
-	int r;
-	fd_set fd_read;
-	fd_set fd_write;
+	t_fd *fds;					/* each client is represented as fd */
+	int maxfd;					/* max fd in system, size of fds */
+	int max;					/* first argument of select (-1) */
+	int r;						/* return value of select */
+	fd_set fd_read;				/* second argument of select */
+	fd_set fd_write;			/* third argument of select */
 	struct timeval t;			/* time after select */
 	struct timeval tu;			/* time unit */
+	int *deadbodies;			/* array with same size of fds */
 } t_env;
 
 t_env env;
@@ -68,6 +70,8 @@ static void clean_fd(t_fd *fd)
 	fd->type = FD_FREE;
 	fd->fct_read = NULL;
 	fd->fct_write = NULL;
+	fd->pending_commands = 0;
+	fd->last_command = NULL;
 }
 
 static void client_gone(int cs)
@@ -130,6 +134,7 @@ static void	client_read(int cs)
 	}
 	struct timeval t = tu2tv(dur);
 	if (client->pending_commands) {
+		log_debug("client->pending_commands: %d", client->pending_commands);
 		timeradd(&t, &client->last_command->t, &t);
 	} else {
 		timeradd(&t, &env.t, &t);
@@ -152,7 +157,9 @@ static void client_write(int cs)
 
 static void check_fd()
 {
-	for (int i = 0; i < env.maxfd && env.r > 0; ++i) {
+	int i;
+	
+	for (i = 0; i <= env.maxfd && env.r > 0; ++i) {
 		if (FD_ISSET(i, &env.fd_read))
 			env.fds[i].fct_read(i);
 		if (FD_ISSET(i, &env.fd_write))
@@ -160,30 +167,15 @@ static void check_fd()
 		if (FD_ISSET(i, &env.fd_read) || FD_ISSET(i, &env.fd_write))
 			--env.r;
 	}
+	for (i = 0; env.deadbodies[i] != 0 && i <= env.maxfd; ++i) {
+		client_write(env.deadbodies[i]);
+		client_gone(env.deadbodies[i]);
+		env.deadbodies[i] = 0;
+	}
 }
 
 
-/* 
-
-tu: 1/2 = 0, 500'000 us
-start: 12345, 000000 us
-
-select(..., 0; 500'000)
-r: returned at 12345, 200'000 us
-
--> new_command()
-
-a = r - start = 200'000 us - how long select waited
-b = tu - a = 300'000 us - how long need to wait on next select
-
-select(..., b)
-r: returned at 12345, 500,001 us
-
-a = r - start = 500'001 - how long select waited
-a > tu
-
--> update()
-
+/*
 
 TC - time current
 TU - time unit (1/t)
@@ -207,12 +199,8 @@ else
 3. pop. TO = poped T-TC
 4. goto 1
 
-*/
+--------------------------------------
 
-
-
-
-/*
  Nt - n-th time unit
  a2 - command a lasts 2 time units
  ae - end of command a
@@ -226,22 +214,18 @@ else
               b1   be
 */
 
-
-
-
-
 static void do_select()
 {
-	struct timeval tc;
-	static struct timeval to;
-	struct timeval t;
+	struct timeval tc;			/* time current */
+	static struct timeval to;	/* timeout */
+	struct timeval t;			/* tmp */
 	t_command *command;
 
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	
-	if (commands_empty()) {
-		timeradd(&tc, &env.tu, &t);
-		commands_push(command_new(t, NULL, 0));
+	if (commands_is_empty()) {	/* init */
+		timeradd(&tc, &env.tu, &t); /* wake up from select after env.tu (1/t) */
+		commands_push(command_new(t, NULL, 0)); /* command without client is lgc_update */
 		to = env.tu;
 	} else {
 		command = commands_min();
@@ -250,12 +234,12 @@ static void do_select()
 	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	env.t = tc;
-	command = commands_min();
-	if (env.r == 0) {
+	command = commands_min();	/* minimal by time, what we should execute now */
+	if (env.r == 0) {			/* select woke up for command, not for read/write */
 		if (command->data == NULL) {
 			lgc_update();
 			timeradd(&command->t, &env.tu, &t);
-			commands_push(command_new(t, NULL, 0));						  
+			commands_push(command_new(t, NULL, 0));
 		} else {
 			lgc_execute_command(command);
 			--env.fds[command->client_nb].pending_commands;
@@ -278,7 +262,6 @@ static void init_fd()
 			env.max = (env.max > i ? env.max : i);
 		}
 	}
-
 }
 
 static void srv_accept(int s)
@@ -331,17 +314,19 @@ static void srv_init()
 	xassert(getrlimit(RLIMIT_NOFILE, &rlp) != -1, "getrlimit");
 	env.maxfd = rlp.rlim_cur;
 	log_debug("maxfd = %d", env.maxfd);
-	env.fds = malloc(sizeof(t_fd) * env.maxfd);
+	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
 	for (int i = 0; i < env.maxfd; ++i) {
 		clean_fd(env.fds + i);
 	}
+	env.deadbodies = (int *)calloc(sizeof(int), env.maxfd);	
 }
 
 static void sigh(int n) {
 	(void)n;
 	free(env.fds);
-	
+	free(env.deadbodies);
+	commands_destroy();
 	log_info("Exit");
 	exit(0);
 }
@@ -363,6 +348,16 @@ void srv_start()
 void srv_reply_client(int client_nb, char *msg)
 {
 	circbuf_push_string(&env.fds[client_nb].circbuf_write, msg);
+}
+
+void srv_client_died(int client_nb)
+{
+	int i = 0;
+	
+	circbuf_push_string(&env.fds[client_nb].circbuf_write, "mort\n");
+	while (env.deadbodies[i] != 0 && i <= env.maxfd)
+		++i;
+	env.deadbodies[i] = client_nb;
 }
 
 #undef CIRCBUF_SIZE
