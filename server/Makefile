@@ -6,14 +6,14 @@
 #    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/25 21:01:38 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/09/28 13:26:02 by gmelisan         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
 NAME = server
 
 CC = clang
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra -O3
 
 SRCDIR = src
 SRC = $(addprefix $(SRCDIR)/, \

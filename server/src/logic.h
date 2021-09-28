@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/24 17:34:22 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 21:55:54 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 12:22:53 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,15 @@
 # define LOGIC_H
 
 # include "commands.h"
+
+/* Calls at the very beginning */
+void lgc_init(void);
+
+/* Calls on new client connection */
+void lgc_new_client(int client_nb, char *team);
+
+/* Calls when client self-disconnected */
+void lgc_client_gone(int client_nb);
 
 /* Calls when one time unit elapsed (1/t) */
 void lgc_update(void);
