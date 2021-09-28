@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 21:54:45 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 09:59:33 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,5 +31,6 @@ extern t_main_config g_main_config;
 
 void srv_start(void);
 void srv_reply_client(int client_nb, char *msg);
+void srv_client_died(int client_nb);
 
 #endif

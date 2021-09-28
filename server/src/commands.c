@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:46:02 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/25 21:50:03 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/28 09:58:14 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,13 @@ static int cmpf(void *a, void *b)
 		return 1;
 	if (timercmp(&c1->t, &c2->t, <))
 		return -1;
+	return 0;
+}
+
+static int cmpf_always_true(void *a, void *b)
+{
+	(void)a;
+	(void)b;
 	return 0;
 }
 
@@ -83,7 +90,14 @@ void commands_pop(t_command *cmd)
 	commands.tree = ft_btree_avl_remove(commands.tree, cmd, cmpf, delf);
 }
 
-int commands_empty(void)
+int commands_is_empty(void)
 {
 	return commands.tree == NULL;
+}
+
+void commands_destroy(void)
+{
+	while (commands.tree) {
+		commands.tree = ft_btree_avl_remove(commands.tree, NULL, cmpf_always_true, delf);
+	}
 }
