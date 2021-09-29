@@ -6,7 +6,7 @@
 #    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/28 18:08:07 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/09/29 11:52:29 by gmelisan         ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
@@ -19,11 +19,13 @@ SRCDIR = src
 SRC = $(addprefix $(SRCDIR)/, \
 main.c \
 server.c logger.c utils.c circbuf.c \
-ft_btree.c commands.c logic.c reception.c)
+ft_btree.c commands.c logic.c reception.c \
+graphic.c)
 
 HEADER = $(addprefix $(SRCDIR)/, \
 server.h logger.h utils.h circbuf.h \
-ft_btree.h commands.h logic.h reception.h)
+ft_btree.h commands.h logic.h reception.h \
+graphic.h)
 
 OBJ = $(SRC:.c=.o)
 

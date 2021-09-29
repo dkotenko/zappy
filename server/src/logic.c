@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:51:16 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 14:40:08 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,12 @@ void lgc_init(void)
 	log_info("logic: Setup world");
 }
 
-void lgc_new_client(int client_nb, char *team)
+void lgc_new_player(int client_nb, char *team)
 {
-	log_info("logic: Add client #%d (team '%s')", client_nb, team);
+	log_info("logic: Add player #%d (team '%s')", client_nb, team);
 }
 
-void lgc_client_gone(int client_nb)
+void lgc_player_gone(int client_nb)
 {
 	log_info("logic: Remove client #%d", client_nb);
 }
@@ -72,3 +72,43 @@ int lgc_get_command_duration(char *cmd)
 		return 0;
 	return -1;
 }
+
+int lgc_get_cell_resources(int x, int y, int resources[7])
+{
+	if (x < 0 || y < 0)
+		return -1;
+	for (int i = 0; i < 7; ++i)
+		resources[i] = i;
+	return 1;
+}
+
+int lgc_get_player_position(int client_nb, int *x, int *y, int *o)
+{
+	if (client_nb < 0)
+		return -1;
+	*x = 12;
+	*y = 34;
+	*o = 2;
+	return 0;
+}
+
+int lgc_get_player_level(int client_nb)
+{
+	if (client_nb < 0)
+		return -1;
+	return 1;
+}
+
+int lgc_get_player_inventory(int client_nb, int *x, int *y, int resources[7])
+{
+	if (client_nb < 0)
+		return -1;
+	*x = 34;
+	*y = 56;
+
+	for (int i = 0; i < 7; ++i)
+		resources[i] = i + 1;
+	return 0;
+}
+
+

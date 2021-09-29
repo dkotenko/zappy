@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 15:10:18 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:53:47 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 15:20:40 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include "reception.h"
 #include "utils.h"
 #include "logger.h"
+#include "graphic.h"
 
 static t_reception reception;
 
@@ -113,8 +114,10 @@ int reception_chat(int client_nb, char *message)
 		srv_reply_client(client_nb, "BIENVENUE\n");
 		return RECEPTION_ROUTE_NONE;
 	case RECEPTION_STATE_WELCOME:
-		if (strcmp(message, "GRAPHIC") == 0)
-			return reception_gfx_chat(client_nb, NULL);
+		if (strcmp(message, "GRAPHIC") == 0) {
+			graphic_chat(client_nb, NULL);
+			return RECEPTION_ROUTE_GFX;
+		}
 		if (strcmp(message, "ADMIN") == 0)
 			return reception_admin_chat(client_nb, NULL);
 		if ((team_index = get_team_index(message)) == -1) {
@@ -136,24 +139,6 @@ int reception_chat(int client_nb, char *message)
 		return RECEPTION_ROUTE_CLIENT;
 	}
 	return RECEPTION_ROUTE_NONE;
-}
-
-int reception_gfx_chat(int client_nb, char *message)
-{
-	if (!message) {
-		srv_reply_client(client_nb, "msz %d %d\n",
-						 g_main_config.world_width, g_main_config.world_height);
-		srv_reply_client(client_nb, "sgt %d\n",
-						 g_main_config.t);
-	} else {
-		if (strcmp(message, "msz") == 0) {
-			srv_reply_client(client_nb, "msz %d %d\n",
-							 g_main_config.world_width, g_main_config.world_height);
-		} else {
-			srv_reply_client(client_nb, "Currently not supported\n");
-		}
-	}
-	return RECEPTION_ROUTE_GFX;
 }
 
 int reception_admin_chat(int client_nb, char *message)
