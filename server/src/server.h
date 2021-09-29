@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 15:28:34 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 16:10:35 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,5 +34,6 @@ void srv_reply_client(int client_nb, char *msg, ...) __attribute__ ((format (pri
 void srv_flush_client(int client_nb);
 void srv_client_died(int client_nb);
 int srv_update_t(int t);
+void srv_event(char *msg, ...) __attribute__ ((format (printf, 1, 2)));
 
 #endif

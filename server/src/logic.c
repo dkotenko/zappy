@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 14:40:08 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 16:21:21 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,12 @@ void lgc_init(void)
 void lgc_new_player(int client_nb, char *team)
 {
 	log_info("logic: Add player #%d (team '%s')", client_nb, team);
+	int x = 0;
+	int y = 0;
+	int o = 2;
+	int l = 1;
+	
+	srv_event("pnw %d %d %d %d %d %s\n", client_nb, x, y, o, l, team);
 }
 
 void lgc_player_gone(int client_nb)
