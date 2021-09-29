@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:33:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 15:34:37 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,11 @@
 #include "commands.h"
 #include "logic.h"
 #include "reception.h"
+#include "graphic.h"
 
 #define MAX_PENDING_COMMANDS		10
 
-#define CIRCBUF_SIZE				16
+#define CIRCBUF_SIZE				64
 #define CIRCBUF_ITEM_SIZE			32
 
 enum e_type {
@@ -145,7 +146,7 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		lgc_client_gone(cs);
+		lgc_player_gone(cs);
 		client_gone(cs);
 		return ;
 	}
@@ -165,10 +166,10 @@ static void	client_read(int cs)
 		break ;
 	case RECEPTION_ROUTE_CLIENT:
 		client->fct_handle = client_handle_command;
-		lgc_new_client(cs, reception_find_client_team(cs));
+		lgc_new_player(cs, reception_find_client_team(cs));
 		break ;
 	case RECEPTION_ROUTE_GFX:
-		client->fct_handle = reception_gfx_chat;
+		client->fct_handle = graphic_chat;
 		break ;
 	case RECEPTION_ROUTE_ADMIN:
 		client->fct_handle = reception_admin_chat;
@@ -319,7 +320,7 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].fct_handle = reception_chat;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_main_config.world_width, CIRCBUF_ITEM_SIZE);
 
 	env.fds[cs].fct_handle(cs, NULL);
 }
@@ -341,11 +342,7 @@ static void srv_create()
 	env.fds[s].type = FD_SERV;
 	env.fds[s].fct_read = srv_accept;
 
-	if (g_main_config.t == 1)
-		env.tu.tv_sec = 1;
-	else if (g_main_config.t > 1 && g_main_config.t <= 1000000)
-		env.tu.tv_usec = 1000000 / g_main_config.t;
-	else
+	if (srv_update_t(g_main_config.t) == -1)
 		log_fatal("Invalid time unit: %d", g_main_config.t);
 	timerprint(log_debug, &env.tu, "tu");
 }
@@ -402,6 +399,12 @@ void srv_reply_client(int client_nb, char *msg, ...)
 	va_end(ap);
 }
 
+void srv_flush_client(int client_nb)
+{
+	if ((env.fds[client_nb].circbuf_write.len) > 0)
+		env.fds[client_nb].fct_write(client_nb);
+}
+
 void srv_client_died(int client_nb)
 {
 	int i = 0;
@@ -409,6 +412,22 @@ void srv_client_died(int client_nb)
 	while (env.deadbodies[i] != 0 && i <= env.maxfd)
 		++i;
 	env.deadbodies[i] = client_nb;
+}
+
+int srv_update_t(int t)
+{
+	struct timeval tmp;
+
+	memset(&tmp, 0, sizeof(tmp));
+	
+	if (t == 1)
+		tmp.tv_sec = 1;
+	else if (t > 1 && t <= 1000000)
+		tmp.tv_usec = 1000000 / t;
+	else
+		return -1;
+	env.tu = tmp;
+	return t;
 }
 
 #undef CIRCBUF_SIZE

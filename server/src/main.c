@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 12:43:52 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 15:33:06 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,8 @@ static char *default_teams[] = {"team1", "team2", "team3"};
 
 t_main_config g_main_config = {
 	.port = 9876,
-	.world_width = 50,
-	.world_height = 50,
+	.world_width = 20,
+	.world_height = 20,
 	.teams = default_teams,
 	.teams_count = 3,
 	.max_clients_at_team = 5,
