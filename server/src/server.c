@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 15:34:37 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 16:27:29 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,8 @@
 enum e_type {
 	FD_FREE,
 	FD_SERV,
-	FD_CLIENT
+	FD_CLIENT,
+	FD_GFX
 };
 
 typedef struct s_fd {
@@ -66,6 +67,7 @@ typedef struct s_env {
 	struct timeval t;			/* time after select */
 	struct timeval tu;			/* time unit */
 	int *deadbodies;			/* array with same size of fds */
+	t_circbuf circbuf_events;	/* date to be written to gfx clients */
 } t_env;
 
 t_env env;
@@ -170,6 +172,7 @@ static void	client_read(int cs)
 		break ;
 	case RECEPTION_ROUTE_GFX:
 		client->fct_handle = graphic_chat;
+		client->type = FD_GFX;
 		break ;
 	case RECEPTION_ROUTE_ADMIN:
 		client->fct_handle = reception_admin_chat;
@@ -302,7 +305,13 @@ static void init_fd()
 				FD_SET(i, &env.fd_write);
 			env.max = (env.max > i ? env.max : i);
 		}
+		if (env.fds[i].type == FD_GFX) {
+			circbuf_concat(&env.fds[i].circbuf_write, &env.circbuf_events);
+			if ((env.fds[i].circbuf_write.len) > 0)
+				FD_SET(i, &env.fd_write);
+		}
 	}
+	circbuf_reset(&env.circbuf_events);
 }
 
 static void srv_accept(int s)
@@ -359,7 +368,8 @@ static void srv_init()
 	for (int i = 0; i < env.maxfd; ++i) {
 		clean_fd(env.fds + i);
 	}
-	env.deadbodies = (int *)calloc(sizeof(int), env.maxfd);	
+	env.deadbodies = (int *)calloc(sizeof(int), env.maxfd);
+	env.circbuf_events = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 }
 
 static void sigh(int n) {
@@ -385,6 +395,18 @@ void srv_start()
 		check_fd();
 	}
 
+}
+
+void srv_event(char *msg, ...)
+{
+	char *buf;
+	va_list ap;
+	
+	va_start(ap, msg);
+	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
+	circbuf_push_string(&env.circbuf_events, buf);
+	free(buf);
+	va_end(ap);
 }
 
 void srv_reply_client(int client_nb, char *msg, ...)
