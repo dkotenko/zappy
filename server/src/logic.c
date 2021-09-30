@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:44:16 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 19:54:31 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 #include "logic.h"
 #include "utils.h"
 #include "reception.h"
+
+/*
 
 void lgc_init(void)
 {
@@ -56,34 +58,7 @@ void lgc_execute_command(int client_nb, char *cmd)
 	}
 }
 
-int lgc_get_command_duration(char *cmd)
-{
-	if (strcmp(cmd, "avance") == 0)
-		return 7;
-	if (strcmp(cmd, "droite") == 0)
-		return 7;
-	if (strcmp(cmd, "gauche") == 0)
-		return 7;
-	if (strcmp(cmd, "voir") == 0)
-		return 7;
-	if (strcmp(cmd, "inventaire") == 0)
-		return 1;
-	if (strcmp(cmd, "prend") == 0)
-		return 7;
-	if (strcmp(cmd, "pose") == 0)
-		return 7;
-	if (strcmp(cmd, "expulse") == 0)
-		return 7;
-	if (strcmp(cmd, "broadcast") == 0)
-		return 7;
-	if (strcmp(cmd, "incantation") == 0)
-		return 300;
-	if (strcmp(cmd, "fork") == 0)
-		return 42;
-	if (strcmp(cmd, "connect_nbr") == 0)
-		return 0;
-	return -1;
-}
+
 
 int lgc_get_cell_resources(int x, int y, int resources[7])
 {
@@ -124,3 +99,4 @@ int lgc_get_player_inventory(int client_nb, int *x, int *y, int resources[7])
 }
 
 
+*/
