@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 14:20:59 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:06:32 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:35:38 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ void reception_init(int max_clients);
 void reception_clear(void);
 void reception_remove_client(int client_nb);
 char *reception_find_client_team(int client_nb);
+int reception_slots_in_team(char *team);
 
 /* Calls in server for all clients by default */
 /* Returns e_reception_route */

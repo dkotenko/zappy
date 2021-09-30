@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:28:51 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:52:34 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,8 @@ static int client_handle_command(int cs, char *command)
 {
 	t_fd *client = &env.fds[cs];
 	t_command *cmd;
-	
+
+	log_debug("#%d -> srv: '%s'", cs, command);
 	if (client->pending_commands == MAX_PENDING_COMMANDS) {
 		log_warning("drop command '%s': queue is full", command);
 		return 0;
@@ -117,10 +118,9 @@ static int client_handle_command(int cs, char *command)
 	
 	int dur = lgc_get_command_duration(command);
 	if (dur == -1) {
-		log_warning("unknown command '%s'", command);
+		log_warning("unknown command '%s' from #%d", command, cs);
 		return 0;
 	}
-	log_info("got command '%s'", command);
 	if (dur == 0) {
 		cmd = command_new(env.t, strdup(command), cs);
 		lgc_execute_command(cs, command);

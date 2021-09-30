@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 15:10:18 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:06:23 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:43:40 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,15 @@ static int get_team_index(const char *team)
 			return i;
 	}
 	return -1;
+}
+
+int reception_slots_in_team(char *team)
+{
+	int team_index = get_team_index(team);
+	if (team_index == -1)
+		return -1;
+	int clients_in_team = count_clients_in_team(team_index);
+	return g_main_config.max_clients_at_team - clients_in_team;
 }
 
 int reception_chat(int client_nb, char *message)

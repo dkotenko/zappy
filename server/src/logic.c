@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 20:38:23 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 16:21:21 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:44:16 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include "logger.h"
 #include "logic.h"
 #include "utils.h"
+#include "reception.h"
 
 void lgc_init(void)
 {
@@ -30,7 +31,6 @@ void lgc_new_player(int client_nb, char *team)
 	int y = 0;
 	int o = 2;
 	int l = 1;
-	
 	srv_event("pnw %d %d %d %d %d %s\n", client_nb, x, y, o, l, team);
 }
 
@@ -46,35 +46,41 @@ void lgc_update(void)
 
 void lgc_execute_command(int client_nb, char *cmd)
 {
-	log_info("logic: Execute command '%s' from #%d", cmd, client_nb);
-	srv_reply_client(client_nb, "%s - ok\n", cmd);
+	if (strcmp(cmd, "connect_nbr") == 0) {
+		// TODO get team name from logic, not from reception (search is long)
+		srv_reply_client(client_nb, "%d\n",
+						 reception_slots_in_team(reception_find_client_team(client_nb)));
+	} else {
+		log_info("logic: Execute command '%s' from #%d", cmd, client_nb);
+		srv_reply_client(client_nb, "%s - ok\n", cmd);
+	}
 }
 
 int lgc_get_command_duration(char *cmd)
 {
-	if (str_starts_with(cmd, "avance"))
+	if (strcmp(cmd, "avance") == 0)
 		return 7;
-	if (str_starts_with(cmd, "droite"))
+	if (strcmp(cmd, "droite") == 0)
 		return 7;
-	if (str_starts_with(cmd, "gauche"))
+	if (strcmp(cmd, "gauche") == 0)
 		return 7;
-	if (str_starts_with(cmd, "voir"))
+	if (strcmp(cmd, "voir") == 0)
 		return 7;
-	if (str_starts_with(cmd, "inventaire"))
+	if (strcmp(cmd, "inventaire") == 0)
 		return 1;
-	if (str_starts_with(cmd, "prend"))
+	if (strcmp(cmd, "prend") == 0)
 		return 7;
-	if (str_starts_with(cmd, "pose"))
+	if (strcmp(cmd, "pose") == 0)
 		return 7;
-	if (str_starts_with(cmd, "expulse"))
+	if (strcmp(cmd, "expulse") == 0)
 		return 7;
-	if (str_starts_with(cmd, "broadcast"))
+	if (strcmp(cmd, "broadcast") == 0)
 		return 7;
-	if (str_starts_with(cmd, "incantation"))
+	if (strcmp(cmd, "incantation") == 0)
 		return 300;
-	if (str_starts_with(cmd, "fork"))
+	if (strcmp(cmd, "fork") == 0)
 		return 42;
-	if (str_starts_with(cmd, "connect_nbr"))
+	if (strcmp(cmd, "connect_nbr") == 0)
 		return 0;
 	return -1;
 }
