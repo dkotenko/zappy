@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/24 17:34:22 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 14:32:51 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 16:32:28 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,5 +52,6 @@ int lgc_get_player_level(int client_nb);
 /* Get player position and inventory 
 Returns 0 if good, -1 if wrong client_nb*/
 int lgc_get_player_inventory(int client_nb, int *x, int *y, int resources[7]);
+
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 15:10:18 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 15:20:40 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:06:23 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "logger.h"
 #include "graphic.h"
+#include "admin.h"
 
 static t_reception reception;
 
@@ -118,8 +119,10 @@ int reception_chat(int client_nb, char *message)
 			graphic_chat(client_nb, NULL);
 			return RECEPTION_ROUTE_GFX;
 		}
-		if (strcmp(message, "ADMIN") == 0)
-			return reception_admin_chat(client_nb, NULL);
+		if (strcmp(message, "ADMIN") == 0) {
+			admin_chat(client_nb, NULL);
+			return RECEPTION_ROUTE_ADMIN;
+		}
 		if ((team_index = get_team_index(message)) == -1) {
 			reception.client_states[client_nb] = 0;
 			srv_reply_client(client_nb, "Invalid team name\n");
@@ -139,18 +142,4 @@ int reception_chat(int client_nb, char *message)
 		return RECEPTION_ROUTE_CLIENT;
 	}
 	return RECEPTION_ROUTE_NONE;
-}
-
-int reception_admin_chat(int client_nb, char *message)
-{
-	if (!message) {
-		srv_reply_client(client_nb, "Welcome, admin\n");
-	} else {
-		if (strcmp(message, "help") == 0) {
-			srv_reply_client(client_nb, "You can do nothing\n");
-		} else {
-			srv_reply_client(client_nb, "You're weak\n");
-		}
-	}
-	return RECEPTION_ROUTE_ADMIN;
 }
