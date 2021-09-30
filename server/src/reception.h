@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 14:20:59 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:32:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:06:32 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,5 @@ char *reception_find_client_team(int client_nb);
 /* Calls in server for all clients by default */
 /* Returns e_reception_route */
 int reception_chat(int client_nb, char *message);
-int reception_gfx_chat(int client_nb, char *message);
-int reception_admin_chat(int client_nb, char *message);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 15:33:06 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 16:15:20 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,8 +61,7 @@ static void validate_args(void)
 		validate_arg(g_main_config.teams[i][0] != 0, "Team name must not be empty");
 	validate_arg(g_main_config.max_clients_at_team > 0,
 				 "Number of clients in team must be positive");
-	validate_arg(g_main_config.t >= 1 && g_main_config.t <= 1000,
-				 "Time unit must be in range [1, 1000].");
+	/* g_main_config.t will be checked in srv_create() */
 }
 
 static void parse_args(int argc, char **argv)

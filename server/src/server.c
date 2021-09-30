@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 16:27:29 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:28:51 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,9 @@
 #include "logic.h"
 #include "reception.h"
 #include "graphic.h"
+#include "admin.h"
 
+# define T_MAX						1000
 #define MAX_PENDING_COMMANDS		10
 
 #define CIRCBUF_SIZE				64
@@ -175,7 +177,7 @@ static void	client_read(int cs)
 		client->type = FD_GFX;
 		break ;
 	case RECEPTION_ROUTE_ADMIN:
-		client->fct_handle = reception_admin_chat;
+		client->fct_handle = admin_chat;
 		break ;
 	}
 }
@@ -187,6 +189,7 @@ static void client_write(int cs)
 	while (env.fds[cs].circbuf_write.len) {
 		data = circbuf_pop(&env.fds[cs].circbuf_write);
 		send(cs, data, CIRCBUF_ITEM_SIZE, 0);
+		free(data);
 	}
 }
 
@@ -352,8 +355,8 @@ static void srv_create()
 	env.fds[s].fct_read = srv_accept;
 
 	if (srv_update_t(g_main_config.t) == -1)
-		log_fatal("Invalid time unit: %d", g_main_config.t);
-	timerprint(log_debug, &env.tu, "tu");
+		log_fatal("Invalid time unit (%d): "
+				  "must be in range [1, %d]", g_main_config.t, T_MAX);
 }
 
 static void srv_init()
@@ -362,7 +365,7 @@ static void srv_init()
 	
 	xassert(getrlimit(RLIMIT_NOFILE, &rlp) != -1, "getrlimit");
 	env.maxfd = rlp.rlim_cur;
-	log_debug("maxfd = %d", env.maxfd);
+	log_info("Maximum clients: %d", env.maxfd);
 	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
 	for (int i = 0; i < env.maxfd; ++i) {
@@ -374,12 +377,7 @@ static void srv_init()
 
 static void sigh(int n) {
 	(void)n;
-	free(env.fds);
-	free(env.deadbodies);
-	commands_destroy();
-	reception_clear();
-	log_info("Exit");
-	exit(0);
+	srv_stop();
 }
 
 void srv_start()
@@ -394,7 +392,22 @@ void srv_start()
 		do_select();
 		check_fd();
 	}
+}
 
+void srv_stop()
+{
+	commands_destroy();
+	reception_clear();
+	for (int i = 0; i < env.maxfd; ++i)
+		if (env.fds[i].type != FD_FREE && env.fds[i].type != FD_SERV) {
+			circbuf_clear(&env.fds[i].circbuf_read);
+			circbuf_clear(&env.fds[i].circbuf_write);
+		}
+	circbuf_clear(&env.circbuf_events);
+	free(env.fds);
+	free(env.deadbodies);
+	log_info("Exit");
+	exit(0);
 }
 
 void srv_event(char *msg, ...)
@@ -444,7 +457,7 @@ int srv_update_t(int t)
 	
 	if (t == 1)
 		tmp.tv_sec = 1;
-	else if (t > 1 && t <= 1000000)
+	else if (t > 1 && t <= T_MAX)
 		tmp.tv_usec = 1000000 / t;
 	else
 		return -1;

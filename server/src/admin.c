@@ -1,0 +1,57 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   admin.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/09/30 16:35:53 by gmelisan          #+#    #+#             */
+/*   Updated: 2021/09/30 17:05:44 by gmelisan         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include <string.h>
+
+#include "server.h"
+#include "admin.h"
+
+// TODO implement hash algo or use library (it's bonus so why not)
+#define ADMIN_PASSWORD	"zappy"
+
+enum e_admin_chat_state {
+	ADMIN_CHAT_STATE_PASSWORD,
+	ADMIN_CHAT_STATE_DEFAULT
+};
+
+static void welcome(int client_nb)
+{
+	srv_reply_client(client_nb, "Welcome, admin. You can use following commands:\n");
+	srv_reply_client(client_nb, "stop server - shutting down the server\n");
+}
+
+int admin_chat(int client_nb, char *message)
+{
+	static int state = ADMIN_CHAT_STATE_PASSWORD;
+	
+	if (!message) {
+		srv_reply_client(client_nb, "Please enter password:\n");
+		return 0;
+	}
+	switch (state) {
+	case ADMIN_CHAT_STATE_PASSWORD:
+		if (strcmp(message, ADMIN_PASSWORD) == 0) {
+			welcome(client_nb);
+			state = ADMIN_CHAT_STATE_DEFAULT;
+		} else {
+			srv_reply_client(client_nb, "Wrong password, try again:\n");
+		}	
+		break ;
+	case ADMIN_CHAT_STATE_DEFAULT:
+		if (strcmp(message, "stop server") == 0)
+			srv_stop();
+		else
+			srv_reply_client(client_nb, "Unknown command\n");
+		break ;
+	}
+	return 0;
+}
