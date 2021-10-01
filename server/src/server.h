@@ -27,7 +27,7 @@ typedef struct s_main_config {
 
 } t_main_config;
 
-extern t_main_config g_main_config;
+extern t_main_config g_cfg;
 
 void srv_start(void);
 void srv_stop(void);

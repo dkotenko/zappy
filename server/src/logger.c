@@ -43,7 +43,7 @@ static int g_tick;
 
 static void log_print(FILE *f, const char *format, va_list ap, const char *prefix)
 {
-	if (g_main_config.quiet)
+	if (g_cfg.quiet)
 		return ;
 	if (g_tick) {
 		fprintf(f, "\n");

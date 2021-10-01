@@ -4,7 +4,8 @@
 #define min(a,b) (((a) > (b)) ? (b) : (a))
 
 t_config config;
-void	get_forward_coords(t_client *client, int *new_x, int *new_y);
+
+void	get_forward_coords(t_player *player, int *new_x, int *new_y);
 
 int		get_x(int coord)
 {
@@ -28,20 +29,20 @@ int		get_y(int coord)
 void	starving_n_death(t_game *game)
 {
 	t_list		*tmp;
-	t_client	*tmp_client;
+	t_player	*tmp_player;
 
-	tmp = game->clients;
+	tmp = game->players;
 	while (tmp) {
-		tmp_client = (t_client *)game->clients->content;
-		tmp_client->hp--;
-		if (!tmp_client->hp) {
-			t_list *tmp_list = ft_listpop(game->clients, tmp);
-			tmp_client = (t_client *)tmp_list->content;
+		tmp_player = (t_player *)game->players->content;
+		tmp_player->hp--;
+		if (!tmp_player->hp) {
+			t_list *tmp_list = ft_listpop(game->players, tmp);
+			tmp_player = (t_player *)tmp_list->content;
 			for (int i = 1; i < RESOURCES_NUMBER; i++) {
-				tmp_client->curr_cell->inventory[i] += tmp_client->inventory[i];
+				tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 			}
-			free(tmp_client->inventory);
-			free(tmp_client);
+			free(tmp_player->inventory);
+			free(tmp_player);
 			free(tmp_list);
 		}
 		tmp = tmp->next;
@@ -50,13 +51,13 @@ void	starving_n_death(t_game *game)
 
 
 
-void	avanche(t_map *map, t_client *client)
+void	avanche(t_map *map, t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
 
-	get_forward_coords(client, &new_x, &new_y);
-	t_list *temp = ft_listpop(client->curr_cell->visitors, client);
+	get_forward_coords(player, &new_x, &new_y);
+	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
 	map->cells[new_y][new_x]->visitors->next = temp;
 	t_buffer_json_message(config.buf, "OK");
 }
@@ -64,10 +65,10 @@ void	avanche(t_map *map, t_client *client)
 
 //TESTED
 //returns OK
-void	droite(t_client *client, t_aux *aux)
+void	droite(t_player *player, t_aux *aux)
 {
 	
-	client->orient = aux->orientation[(client->orient + 1) % 4];
+	player->orient = aux->orientation[(player->orient + 1) % 4];
 
 	t_buffer_json_message(config.buf, "OK");
 }
@@ -75,9 +76,9 @@ void	droite(t_client *client, t_aux *aux)
 
 //TESTED
 //returns OK
-void	gauche(t_client *client, t_aux *aux)
+void	gauche(t_player *player, t_aux *aux)
 {
-	client->orient = aux->orientation[(client->orient + 4 - 1) % 4];
+	player->orient = aux->orientation[(player->orient + 4 - 1) % 4];
 	t_buffer_json_message(config.buf, "OK");
 }
 
@@ -125,16 +126,16 @@ int		get_h(int coord)
 
 
 //returns cells
-void	voir(t_client *client, t_map *map, t_aux *aux)
+void	voir(t_player *player, t_map *map, t_aux *aux)
 {	
 	int printed[map->h][map->w];
 	memset(printed, 0, sizeof(printed));
-	int x = client->curr_cell->x;
-	int y = client->curr_cell->y;
+	int x = player->curr_cell->x;
+	int y = player->curr_cell->y;
 	
-	int orient = client->orient;
+	int orient = player->orient;
 	if (orient == ORIENT_N || orient == ORIENT_S) {
-		for (int i = 0; i < client->level + 1; i++) {
+		for (int i = 0; i < player->level + 1; i++) {
 			int h = get_h(y + (orient == ORIENT_S ? i : -i));
 			int w = max(x - i, 0);
 			int max_w = min(x + 1 + i, map->w);
@@ -144,7 +145,7 @@ void	voir(t_client *client, t_map *map, t_aux *aux)
 			}
 		}
 	} else if (orient == ORIENT_W || orient == ORIENT_E) {
-		for (int i = 0; i < client->level + 1; i++) {
+		for (int i = 0; i < player->level + 1; i++) {
 			int w = get_w(x + (orient == ORIENT_W ? -i : i));
 			int h = max(y - i, 0);
 			int max_h = min(y + 1 + i, map->h);
@@ -172,30 +173,30 @@ void	voir(t_client *client, t_map *map, t_aux *aux)
 	t_buffer_write(config.buf, "]}");
 }
 
-void	get_forward_coords(t_client *client, int *new_x, int *new_y)
+void	get_forward_coords(t_player *player, int *new_x, int *new_y)
 {
-	int x = client->curr_cell->x;
-	int y = client->curr_cell->y;
+	int x = player->curr_cell->x;
+	int y = player->curr_cell->y;
 
-	if (client->orient == ORIENT_E)
+	if (player->orient == ORIENT_E)
 	{
-		*new_x = get_x(client->curr_cell->x + 1);
+		*new_x = get_x(player->curr_cell->x + 1);
 		*new_y = y;
 	}
-	else if (client->orient == ORIENT_N)
+	else if (player->orient == ORIENT_N)
 	{
 		*new_x = x;
-		*new_y = get_y(client->curr_cell->y + 1);
+		*new_y = get_y(player->curr_cell->y + 1);
 	}
-	else if (client->orient == ORIENT_W)
+	else if (player->orient == ORIENT_W)
 	{
-		*new_x = get_x(client->curr_cell->x - 1);
+		*new_x = get_x(player->curr_cell->x - 1);
 		*new_y = y;
 	}
-	else if (client->orient == ORIENT_S)
+	else if (player->orient == ORIENT_S)
 	{
 		*new_x = x;
-		*new_y = get_y(client->curr_cell->y - 1);
+		*new_y = get_y(player->curr_cell->y - 1);
 	}
 	else {
 		handle_error("expulse error: invalid orient");
@@ -203,21 +204,21 @@ void	get_forward_coords(t_client *client, int *new_x, int *new_y)
 }
 
 //return ok//ko
-void	expulse(t_client *client, t_map *map)
+void	expulse(t_player *player, t_map *map)
 {
 	int	new_x = 0;
 	int new_y = 0;
 	
-	get_forward_coords(client, &new_x, &new_y);
-	t_list *temp = ft_listpop(client->curr_cell->visitors, client);
-	if (client->curr_cell->visitors) {
-		map->cells[new_y][new_x]->visitors->next = client->curr_cell->visitors;
+	get_forward_coords(player, &new_x, &new_y);
+	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
+	if (player->curr_cell->visitors) {
+		map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
 		t_buffer_json_message(config.buf, "OK");
-		t_buffer_json_message_all(client->curr_cell->visitors, config.buf, "deplacement", client);
+		t_buffer_json_message_all(player->curr_cell->visitors, config.buf, "deplacement", player);
 	} else {
 		t_buffer_json_message(config.buf, "KO");
 	}
-	client->curr_cell->visitors = temp;
+	player->curr_cell->visitors = temp;
 }
 
 
@@ -235,17 +236,17 @@ static int	get_resource_id(t_aux *aux, char *resource)
 }
 
 //NOT TESTED
-void	prend(char *resource, t_client *client, t_aux *aux)
+void	prend(char *resource, t_player *player, t_aux *aux)
 {
 	int	resource_id;
 
 	resource_id = get_resource_id(aux, resource);
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		t_buffer_json_message(config.buf, "KO");
-	} else if (client->curr_cell->inventory[resource_id] > 0)
+	} else if (player->curr_cell->inventory[resource_id] > 0)
 	{
-		client->curr_cell->inventory[resource_id]--;
-		client->inventory[resource_id]++;
+		player->curr_cell->inventory[resource_id]--;
+		player->inventory[resource_id]++;
 		t_buffer_json_message(config.buf, "OK");
 	} else {
 		t_buffer_json_message(config.buf, "KO");
@@ -254,16 +255,16 @@ void	prend(char *resource, t_client *client, t_aux *aux)
 
 
 //NOT TESTED
-void	pose(char *resource, t_client *client, t_aux *aux)
+void	pose(char *resource, t_player *player, t_aux *aux)
 {
 	int	resource_id;
 
 	resource_id = get_resource_id(aux, resource);
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		t_buffer_json_message(config.buf, "KO");
-	} else if (client->inventory[resource_id] > 0) {
-		client->inventory[resource_id]--;
-		client->curr_cell->inventory[resource_id]++;
+	} else if (player->inventory[resource_id] > 0) {
+		player->inventory[resource_id]--;
+		player->curr_cell->inventory[resource_id]++;
 		t_buffer_json_message(config.buf, "OK");
 	} else {
 		t_buffer_json_message(config.buf, "KO");
@@ -271,31 +272,31 @@ void	pose(char *resource, t_client *client, t_aux *aux)
 }
 
 /*
-void	broadcast(t_game *game, t_client *client, char *text)
+void	broadcast(t_game *game, t_player *player, char *text)
 {
 	
 }
 */
 
 //NOT TESTED
-void	incantation(t_game *game, t_client *client)
+void	incantation(t_game *game, t_player *player)
 {
-	t_list *temp = client->curr_cell->visitors;
-	int	*incat_consts = game->aux->incantation[client->level - 1];
+	t_list *temp = player->curr_cell->visitors;
+	int	*incat_consts = game->aux->incantation[player->level - 1];
 
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		if (client->inventory[i] < incat_consts[i]) {
+		if (player->inventory[i] < incat_consts[i]) {
 			t_buffer_json_message(config.buf, "KO");
 			return ;	
 		}
 	}
 
 	int	incat_counter = incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1;
-	t_client *participants[incat_counter];
+	t_player *participants[incat_counter];
 	while (temp && incat_counter) {
-		t_client *temp_client = (t_client *)temp->content;
-		if (temp_client != client && temp_client->level == client->level) {
-			participants[--incat_counter] = temp_client;
+		t_player *temp_player = (t_player *)temp->content;
+		if (temp_player != player && temp_player->level == player->level) {
+			participants[--incat_counter] = temp_player;
 		}
 		temp = temp->next;
 	}
@@ -305,13 +306,13 @@ void	incantation(t_game *game, t_client *client)
 	}
 
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		client->inventory[i] -= incat_consts[i];
+		player->inventory[i] -= incat_consts[i];
 	}
 
 	for (int i = 0; i < incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1; i++) {
 		participants[i]->level++;
 	}
-	client->level++;
+	player->level++;
 }
 
 // 8-symbol token, symbols in range [A : Z]
@@ -327,10 +328,10 @@ t_token *create_token(int team_id)
 }
 
 /*
-void	do_fork(t_client *client)
+void	do_fork(t_player *player)
 {
-	add_client(create_client);
-	client->is_egg = 1;
+	add_player(create_player);
+	player->is_egg = 1;
 	//t_buf write OK, write token
 }
 */

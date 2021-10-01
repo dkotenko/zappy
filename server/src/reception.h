@@ -30,9 +30,9 @@ enum e_reception_state {
 };
 
 typedef struct s_reception {
-	int **teams_clients;		/* array with same indices as in g_main_config.teams
+	int **teams_clients;		/* array with same indices as in g_cfg.teams
 										teams_clients[5] - array of clients in 
-										g_main_config.teams[5] */
+										g_cfg.teams[5] */
 	int *client_states;			/* array of e_reception_state */
 } t_reception;
 
