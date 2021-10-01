@@ -25,7 +25,7 @@ static t_reception reception;
 void reception_init(int max_clients)
 {
 	xassert((reception.teams_clients =
-			(int **)calloc(g_main_config.teams_count, sizeof(int *))) != NULL,
+			(int **)calloc(g_cfg.teams_count, sizeof(int *))) != NULL,
 			"calloc");
 	xassert((reception.client_states =
 			 (int *)calloc(max_clients, sizeof(int))) != NULL,
@@ -34,7 +34,7 @@ void reception_init(int max_clients)
 
 void reception_clear(void)
 {
-	for (int i = 0; i < g_main_config.teams_count; ++i) {
+	for (int i = 0; i < g_cfg.teams_count; ++i) {
 		free(reception.teams_clients[i]);
 	}
 	free(reception.teams_clients);
@@ -45,8 +45,8 @@ void reception_clear(void)
 
 void reception_remove_client(int client_nb)
 {
-	for (int i = 0; i < g_main_config.teams_count; ++i) {
-		for (int j = 0; j < g_main_config.max_clients_at_team; ++j) {
+	for (int i = 0; i < g_cfg.teams_count; ++i) {
+		for (int j = 0; j < g_cfg.max_clients_at_team; ++j) {
 			if (reception.teams_clients[i] && reception.teams_clients[i][j] == client_nb)
 				reception.teams_clients[i][j] = 0;
 		}
@@ -56,10 +56,10 @@ void reception_remove_client(int client_nb)
 
 char *reception_find_client_team(int client_nb)
 {
-	for (int i = 0; i < g_main_config.teams_count; ++i) {
-		for (int j = 0; j < g_main_config.max_clients_at_team; ++j) {
+	for (int i = 0; i < g_cfg.teams_count; ++i) {
+		for (int j = 0; j < g_cfg.max_clients_at_team; ++j) {
 			if (reception.teams_clients[i] && reception.teams_clients[i][j] == client_nb)
-				return g_main_config.teams[i];
+				return g_cfg.teams[i];
 		}
 	}
 	return NULL;
@@ -71,11 +71,11 @@ static void add_client_to_team(int team_index, int client_nb)
 	
 	if (!reception.teams_clients[team_index])
 		xassert((reception.teams_clients[team_index] =
-				 (int *)calloc(g_main_config.max_clients_at_team + 1,
+				 (int *)calloc(g_cfg.max_clients_at_team + 1,
 							   sizeof(int))) != NULL, "calloc");
 	while (reception.teams_clients[team_index][i])
 		++i;
-	if (i < g_main_config.max_clients_at_team)
+	if (i < g_cfg.max_clients_at_team)
 		reception.teams_clients[team_index][i] = client_nb;
 	else
 		log_error("can't add client to team");
@@ -84,7 +84,7 @@ static void add_client_to_team(int team_index, int client_nb)
 static int count_clients_in_team(int team_index)
 {
 	int count = 0;
-	for (int i = 0; i < g_main_config.max_clients_at_team; ++i) {
+	for (int i = 0; i < g_cfg.max_clients_at_team; ++i) {
 		if (reception.teams_clients[team_index]
 			&& reception.teams_clients[team_index][i])
 			++count;
@@ -94,10 +94,10 @@ static int count_clients_in_team(int team_index)
 
 static int get_team_index(const char *team)
 {
-	for (int i = 0; i < g_main_config.teams_count; ++i) {
-		if (!g_main_config.teams[i])
+	for (int i = 0; i < g_cfg.teams_count; ++i) {
+		if (!g_cfg.teams[i])
 			return 0;
-		if (strcmp(g_main_config.teams[i], team) == 0)
+		if (strcmp(g_cfg.teams[i], team) == 0)
 			return i;
 	}
 	return -1;
@@ -109,7 +109,7 @@ int reception_slots_in_team(char *team)
 	if (team_index == -1)
 		return -1;
 	int clients_in_team = count_clients_in_team(team_index);
-	return g_main_config.max_clients_at_team - clients_in_team;
+	return g_cfg.max_clients_at_team - clients_in_team;
 }
 
 int reception_chat(int client_nb, char *message)
@@ -138,16 +138,16 @@ int reception_chat(int client_nb, char *message)
 			return RECEPTION_ROUTE_EXIT;
 		}
 		clients_in_team = count_clients_in_team(team_index);
-		if (clients_in_team >= g_main_config.max_clients_at_team) {
+		if (clients_in_team >= g_cfg.max_clients_at_team) {
 			srv_reply_client(client_nb, "Team is full\n");
 			reception.client_states[client_nb] = 0;
 			return RECEPTION_ROUTE_EXIT;
 		}
 		add_client_to_team(team_index, client_nb);
-		ret_nb_client = g_main_config.max_clients_at_team - clients_in_team - 1;
+		ret_nb_client = g_cfg.max_clients_at_team - clients_in_team - 1;
 		srv_reply_client(client_nb, "%d\n", ret_nb_client);
 		srv_reply_client(client_nb, "%d %d\n",
-						 g_main_config.world_width, g_main_config.world_height);
+						 g_cfg.world_width, g_cfg.world_height);
 		return RECEPTION_ROUTE_CLIENT;
 	}
 	return RECEPTION_ROUTE_NONE;

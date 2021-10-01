@@ -3,6 +3,8 @@
 #include "../server.h"
 #include "../reception.h"
 
+t_game *game;
+
 int is_session_ends()
 {
     return (0);
@@ -10,62 +12,52 @@ int is_session_ends()
 
 
 
-void	add_visitor(t_cell *cell, t_client *client)
+void	add_visitor(t_cell *cell, t_player *player)
 {
-	t_list *new_client;
+	t_list *new_player;
 
-	new_client = ft_lstnew_pointer(client, sizeof(t_client));
-	ft_lstadd(&cell->visitors, new_client);
+	new_player = ft_lstnew_pointer(player, sizeof(t_player));
+	ft_lstadd(&cell->visitors, new_player);
 	
 	
 	
 	cell->visitors_num++;
 }
 
-
 //, int (*functionPtr)(int, int)
 
-
-
-
-
-int print_client(struct s_cell *cell)
+int print_player(struct s_cell *cell)
 {
 	if (cell->visitors_num)
 		return (1);
 	return (0);
 }
 
-t_client	*create_client(t_game *game, t_cell *cell)
+t_team	*create_teams()
 {
-	t_client	*client;
+	t_team	*teams;
 
-	client = (t_client *)ft_memalloc(sizeof(t_client));
-
-	client->curr_cell = cell;
-	client->id = game->clients_num++;
-	
-	client->hp = INIT_HP;
-	client->orient = rand() % 4;
-	client->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
-	client->curr_cell = cell;
-	client->buf = t_buffer_create(0);
-	client->is_egg = 0;
-	return (client);
+	new = (t_team *)ft_memalloc(size(t_team) * g_cfg.teams_count);
+	for (int i = 0; i < g_cfg.teams_count; i++) {
+		new[i].id = i + 1;
+		new.name = g_cfg.teams;
+		new.players = (t_player *)ft_memalloc(size(t_player) * g_cfg.max_clients_at_team);
+	}
+	return teams;
 }
-
-
 
 t_game	*create_game()
 {
 	t_game	*game;
 
 	game = (t_game *)ft_memalloc(sizeof(t_game));
+	game->teams_num = g_cfg.teams_count;
+	game->teams = create_teams();
     game->aux = create_aux();
+	game->map = create_map(game, g_cfg.world_height, g_cfg.world_width);
+	game->buf = t_buffer_create(0);
 	return (game);
 }
-
-
 
 int main_old()
 {
@@ -75,26 +67,24 @@ int main_old()
 	int h = 10;
 	int w = 10;
 	
-	
 	//game is global 
 	game = create_game();
-	game->clients_num = 2;
+	game->players_num = 2;
 	game->teams_num = 2;
 	
-	game->map = create_map(game, w, h);
+	
 	
 	exit(0);
 	//t_cell *temp = get_random_cell(map);
 	t_cell *temp = game->map->cells[1][1];
-	t_client *client = create_client(game, temp); 
+	t_player *player = create_player(game, temp); 
 	
-	add_visitor(temp, client);
-	print_map(game, print_client);
-	printf("%d before\n", client->orient);
-	gauche(client, game->aux);
-	printf("%d after\n", client->orient);
-	print_map(game, print_client);
-	
+	add_visitor(temp, player);
+	print_map(game, print_player);
+	printf("%d before\n", player->orient);
+	gauche(player, game->aux);
+	printf("%d after\n", player->orient);
+	print_map(game, print_player);
 
 	 /*
     The winning team is the one that will have its 6 players reach the maximum level.
@@ -105,39 +95,60 @@ int main_old()
 	return (0);
 }
 
-t_game *game;
+
 
 void lgc_init(void)
 {
 	log_info("logic: Setup world");
 	srand(time(NULL));
 	game = create_game();
-	game->teams_num = g_main_config.teams_count;
-	game->map = create_map(game, g_main_config.world_width, g_main_config.world_height);
+	
 }
 
-
-void lgc_new_player(int client_nb, char *team)
+void	delete_player(t_player *player)
 {
-	t_cell *temp = game->map->cells[1][1];
-	t_client *client = create_client(game, temp); 
 	
-	add_visitor(temp, client);
-	// add client to game
+}
 
-	log_info("logic: Add player #%d (team '%s')", client_nb, team);
+t_player	*create_player(player_id)
+{
+	t_player	*player;
+
+	player = (t_player *)ft_memalloc(sizeof(t_player));
+	player->id = game->players_num++;
+	player->hp = INIT_HP;
+	player->orient = rand() % 4;
+	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
+	player->is_egg = 0;
+	return (player);
+}
+
+void	player_set_cell(t_player *player, t_cell *cell)
+{
+
+}
+
+void lgc_new_player(int player_nb, char *team)
+{
+	t_cell *cell = get_random_cell(game->map);
+	t_player *player = create_player(game, temp); 
+	add_visitor(cell, player);
+	add_player(player);
+	// add player to game
+
+	log_info("logic: Add player #%d (team '%s')", player_nb, team);
 	int x = 0;
 	int y = 0;
 	int o = 2;
 	int l = 1;
-	srv_event("pnw %d %d %d %d %d %s\n", client_nb, x, y, o, l, team);
+	srv_event("pnw %d %d %d %d %d %s\n", player_nb, x, y, o, l, team);
 }
 
-void lgc_player_gone(int client_nb)
+void lgc_player_gone(int player_nb)
 {
 	// delete player from game
-	log_info("logic: Remove client #%d", client_nb);
-	srv_event("pdi %d\n", client_nb);
+	log_info("logic: Remove player #%d", player_nb);
+	srv_event("pdi %d\n", player_nb);
 }
 
 void lgc_update(void)
@@ -177,15 +188,15 @@ int lgc_get_command_duration(char *cmd)
 	return -1;
 }
 
-void lgc_execute_command(int client_nb, char *cmd)
+void lgc_execute_command(int player_nb, char *cmd)
 {
 	if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
-		srv_reply_client(client_nb, "%d\n",
-						 reception_slots_in_team(reception_find_client_team(client_nb)));
+		srv_reply_player(player_nb, "%d\n",
+						 reception_slots_in_team(reception_find_player_team(player_nb)));
 	} else {
-		log_info("logic: Execute command '%s' from #%d", cmd, client_nb);
-		srv_reply_client(client_nb, "%s - ok\n", cmd);
+		log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
+		srv_reply_player(player_nb, "%s - ok\n", cmd);
 	}
 
 
@@ -201,9 +212,9 @@ int lgc_get_cell_resources(int x, int y, int resources[7])
 	return 1;
 }
 
-int lgc_get_player_position(int client_nb, int *x, int *y, int *o)
+int lgc_get_player_position(int player_nb, int *x, int *y, int *o)
 {
-	if (client_nb < 0)
+	if (player_nb < 0)
 		return -1;
 	*x = 12;
 	*y = 34;
@@ -211,16 +222,16 @@ int lgc_get_player_position(int client_nb, int *x, int *y, int *o)
 	return 0;
 }
 
-int lgc_get_player_level(int client_nb)
+int lgc_get_player_level(int player_nb)
 {
-	if (client_nb < 0)
+	if (player_nb < 0)
 		return -1;
 	return 1;
 }
 
-int lgc_get_player_inventory(int client_nb, int *x, int *y, int resources[7])
+int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
 {
-	if (client_nb < 0)
+	if (player_nb < 0)
 		return -1;
 	*x = 34;
 	*y = 56;

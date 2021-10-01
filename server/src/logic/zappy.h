@@ -54,7 +54,7 @@ typedef struct s_cell {
     int visitors_num;
 }		t_cell;
 
-typedef struct s_client
+typedef struct s_player
 {
     int id;
     int level;
@@ -62,20 +62,14 @@ typedef struct s_client
     int orient;
     int *inventory;
     t_cell *curr_cell;
-    t_buffer *buf;
     int is_egg;
-}	t_client;
-
-typedef struct s_monitor
-{
-	int _;
-}	t_monitor;
+}	t_player;
 
 typedef struct s_team
 {
 	int id;
     char *name;
-    t_client *clients;
+    t_player *players;
 } t_team;
 
 typedef struct s_config {
@@ -87,7 +81,7 @@ typedef struct s_config {
     int moniteur_number; // 1;
     int team_number;
     t_buffer *buf;
-    //t_client *clients;
+    //t_player *players;
 } t_config;
 
 typedef struct s_map
@@ -102,9 +96,10 @@ typedef struct s_game
     t_aux   *aux;
     t_team  *teams;
     int      teams_num;
-	t_list	*clients;
-	int		clients_num;
+	t_list	*players;
+	int		players_num;
 	t_map	*map;
+    t_buffer *buf;
 } t_game;
 
 
@@ -124,8 +119,8 @@ typedef struct s_token
 /*
  * actions
  */
-void	droite(t_client *client, t_aux *aux); //Повернуть направо
-void	gauche(t_client *client, t_aux *aux); //Повернуть налево
+void	droite(t_player *player, t_aux *aux); //Повернуть направо
+void	gauche(t_player *player, t_aux *aux); //Повернуть налево
 void	voir();
 
 
@@ -140,7 +135,7 @@ void print_map(t_game *game, int (*f)(t_cell *));
 void	t_buffer_json_key(t_buffer *buf, char *key);
 void	t_buffer_json_message(t_buffer *buf, char *message);
 void	write_cell_json(t_cell *cell, t_aux *aux);
-void	t_buffer_json_message_all(t_list *clients, t_buffer *buf, char *message, t_client *client);
+void	t_buffer_json_message_all(t_list *players, t_buffer *buf, char *message, t_player *player);
 
 /*
  *	random

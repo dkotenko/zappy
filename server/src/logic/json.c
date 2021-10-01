@@ -38,14 +38,14 @@ void	write_cell_json(t_cell *cell, t_aux *aux)
 	t_buffer_write(config.buf, " }");
 }
 
-void	t_buffer_json_message_all(t_list *clients, t_buffer *buf, char *message, t_client *client)
+void	t_buffer_json_message_all(t_list *players, t_buffer *buf, char *message, t_player *player)
 {
-	t_list		*tmp = clients;
-	t_client	*tmp_client;
+	t_list		*tmp = players;
+	t_player	*tmp_player;
 
 	while (tmp) {
-		tmp_client = (t_client *)tmp->content;
-		if (tmp_client != client) {
+		tmp_player = (t_player *)tmp->content;
+		if (tmp_player != player) {
 			t_buffer_json_message(buf, message);
 		tmp = tmp->next;
 		}

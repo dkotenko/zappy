@@ -332,7 +332,7 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].fct_handle = reception_chat;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_main_config.world_width, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_cfg.world_width, CIRCBUF_ITEM_SIZE);
 
 	env.fds[cs].fct_handle(cs, NULL);
 }
@@ -347,16 +347,16 @@ static void srv_create()
 	xassert((s = socket(PF_INET, SOCK_STREAM, pe->p_proto)) != -1, "socket");
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(g_main_config.port);
+	sin.sin_port = htons(g_cfg.port);
 	xassert(bind(s, (struct sockaddr*)&sin, sizeof(sin)) != -1, "bind");
 	xassert(listen(s, 42) != -1, "listen");
-	log_info("Listen on port %d", g_main_config.port);
+	log_info("Listen on port %d", g_cfg.port);
 	env.fds[s].type = FD_SERV;
 	env.fds[s].fct_read = srv_accept;
 
-	if (srv_update_t(g_main_config.t) == -1)
+	if (srv_update_t(g_cfg.t) == -1)
 		log_fatal("Invalid time unit (%d): "
-				  "must be in range [1, %d]", g_main_config.t, T_MAX);
+				  "must be in range [1, %d]", g_cfg.t, T_MAX);
 }
 
 static void srv_init()

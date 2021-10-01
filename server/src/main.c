@@ -30,7 +30,7 @@ static char *default_teams[] = {"team1", "team2", "team3"};
 	"  -t time unit divider (the greater t is, the faster the game will go), default 1\n" \
 	"  -n team_name_1 team_name_2 ...\n"
 
-t_main_config g_main_config = {
+t_main_config g_cfg = {
 	.port = 9876,
 	.world_width = 20,
 	.world_height = 20,
@@ -51,17 +51,17 @@ static void validate_arg(int cond, const char *message)
 
 static void validate_args(void)
 {
-	validate_arg(g_main_config.port > 0 && g_main_config.port < 65536,
+	validate_arg(g_cfg.port > 0 && g_cfg.port < 65536,
 				 "Port is out of range [1, 65535]");
-	validate_arg(g_main_config.world_width > 0,
+	validate_arg(g_cfg.world_width > 0,
 				 "World width must be positive");
-	validate_arg(g_main_config.world_height > 0,
+	validate_arg(g_cfg.world_height > 0,
 				 "World height must be positive");
-	for (int i = 0; i < g_main_config.teams_count; ++i)
-		validate_arg(g_main_config.teams[i][0] != 0, "Team name must not be empty");
-	validate_arg(g_main_config.max_clients_at_team > 0,
+	for (int i = 0; i < g_cfg.teams_count; ++i)
+		validate_arg(g_cfg.teams[i][0] != 0, "Team name must not be empty");
+	validate_arg(g_cfg.max_clients_at_team > 0,
 				 "Number of clients in team must be positive");
-	/* g_main_config.t will be checked in srv_create() */
+	/* g_cfg.t will be checked in srv_create() */
 }
 
 static void parse_args(int argc, char **argv)
@@ -74,26 +74,26 @@ static void parse_args(int argc, char **argv)
 			printf(USAGE, argv[0]);
 			exit(0);
 		case 'q':
-			g_main_config.quiet = 1;
+			g_cfg.quiet = 1;
 			break ;
 		case 'p':
-			g_main_config.port = atoi(optarg);
+			g_cfg.port = atoi(optarg);
 			break ;
 		case 'x':
-			g_main_config.world_width = atoi(optarg);
+			g_cfg.world_width = atoi(optarg);
 			break ;
 		case 'y':
-			g_main_config.world_height = atoi(optarg);
+			g_cfg.world_height = atoi(optarg);
 			break ;
 		case 'c':
-			g_main_config.max_clients_at_team = atoi(optarg);
+			g_cfg.max_clients_at_team = atoi(optarg);
 			break ;
 		case 't':
-			g_main_config.t = atoi(optarg);
+			g_cfg.t = atoi(optarg);
 			break ;
 		case 'n':
-			g_main_config.teams = argv + optind - 1;
-			g_main_config.teams_count = argc - optind + 1;
+			g_cfg.teams = argv + optind - 1;
+			g_cfg.teams_count = argc - optind + 1;
 			break ;
 		case '?':
 			exit(1);

@@ -5,8 +5,6 @@ void print_map(t_game *game, int (*f)(t_cell *))
 	int  i;
 	int  j;
 
-	
-
      i = 0;
      printf("      ");
      while (++i < game->map->w + 1)
@@ -25,7 +23,7 @@ void print_map(t_game *game, int (*f)(t_cell *))
 			   
                if (f(game->map->cells[i][j]))
                {
-                    printf("%s%c  %s", ANSI_COLOR_RED, game->aux->orient_chars[((t_client *)(game->map->cells[i][j]->visitors->content))->orient], ANSI_COLOR_RESET);
+                    printf("%s%c  %s", ANSI_COLOR_RED, game->aux->orient_chars[((t_player *)(game->map->cells[i][j]->visitors->content))->orient], ANSI_COLOR_RESET);
                }
                else
                {
@@ -63,8 +61,8 @@ t_map	*create_map(t_game *game, int w, int h)
 			map->cells[i][j] = create_cell(j, i);
 		}
      }
-	 game->map = map;
-	 init_map(game);
+     game->map = map;
+     init_map(game);
      return (map);
 }
 
