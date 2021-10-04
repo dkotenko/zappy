@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   logic.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/24 17:34:22 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 19:50:34 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/04 19:45:28 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,9 @@ void lgc_update(void);
 
 /* Calls when command arrives to know when server should call `execute_command' */
 int lgc_get_command_duration(char *cmd);
+
+/* Calls when command arrives to know command id */
+int lgc_get_command_id(char *cmd);
 
 /* Calls when command should be executed */
 void lgc_execute_command(int client_nb, char *cmd);

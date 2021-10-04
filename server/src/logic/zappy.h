@@ -8,6 +8,7 @@
 # include "libft.h"
 # include "color.h"
 # include "const.h"
+# include "../logic.h"
 
 
 

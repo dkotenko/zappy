@@ -2,6 +2,7 @@
 #include "../logger.h"
 #include "../server.h"
 #include "../reception.h"
+#include "../utils.h"
 
 t_game *game;
 
@@ -193,22 +194,81 @@ int lgc_get_command_duration(char *cmd)
 	return -1;
 }
 
-/*
+
 void lgc_execute_command(int player_nb, char *cmd)
 {
+	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
+	t_player *player = get_player_by_id(player_nb);
+
+	if (strcmp(cmd, "avance") == 0) {
+		avanche(player);
+	}
+	if (strcmp(cmd, "droite") == 0) {
+
+	}
+		
+	if (strcmp(cmd, "gauche") == 0)
+		
+	if (strcmp(cmd, "voir") == 0)
+		
+	if (strcmp(cmd, "inventaire") == 0)
+		
+	if (strcmp(cmd, "prend") == 0)
+		
+	if (strcmp(cmd, "pose") == 0)
+		
+	if (strcmp(cmd, "expulse") == 0)
+		
+	if (strcmp(cmd, "broadcast") == 0)
+		
+	if (strcmp(cmd, "incantation") == 0)
+		
+	if (strcmp(cmd, "fork") == 0)
+		
 	if (strcmp(cmd, "connect_nbr") == 0) {
+
+	} else if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
 		srv_reply_player(player_nb, "%d\n",
 						 reception_slots_in_team(reception_find_player_team(player_nb)));
 	} else {
-		log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
-		srv_reply_player(player_nb, "%s - ok\n", cmd);
+		
+		//srv_reply_player(player_nb, "%s - ok\n", cmd);
 	}
 
 
 	// if event happens, call srv_event()
 }
-*/
+
+int lgc_get_command_id(char *cmd)
+{
+	if (strncmp(cmd, "avance", 6) == 0)
+		CMD_AVANCE;
+	if (strncmp(cmd, "droite", 6) == 0)
+		CMD_DROITE;
+	if (strncmp(cmd, "gauche", 6) == 0)
+		CMD_GAUCHE;
+	if (strncmp(cmd, "voir", 4) == 0)
+		CMD_VOIR;
+	if (strncmp(cmd, "inventaire", 10) == 0)
+		CMD_INVENTAIRE;
+	if (strncmp(cmd, "prend", 5) == 0)
+		CMD_PREND;
+	if (strncmp(cmd, "pose", 4) == 0)
+		CMD_POSE;
+	if (strncmp(cmd, "expulse", 7) == 0)
+		CMD_EXPULSE;
+	if (strncmp(cmd, "broadcast", 9) == 0)
+		CMD_BROADCAST;
+	if (strncmp(cmd, "incantation", 9) == 0)
+		CMD_INCANTATION;
+	if (strncmp(cmd, "fork", 4) == 0)
+		CMD_FORK;
+	if (strncmp(cmd, "connect_nbr", 11) == 0)
+		CMD_CONNECT_NBR;
+	return -1;
+}
+
 
 int lgc_get_cell_resources(int x, int y, int resources[7])
 {
