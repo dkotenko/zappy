@@ -35,15 +35,15 @@ int print_player(struct s_cell *cell)
 
 t_team	*create_teams()
 {
-	t_team	*teams;
+	t_team	*new;
 
-	new = (t_team *)ft_memalloc(size(t_team) * g_cfg.teams_count);
+	new = (t_team *)ft_memalloc(sizeof(t_team) * g_cfg.teams_count);
 	for (int i = 0; i < g_cfg.teams_count; i++) {
 		new[i].id = i + 1;
-		new.name = g_cfg.teams;
-		new.players = (t_player *)ft_memalloc(size(t_player) * g_cfg.max_clients_at_team);
+		new->name = g_cfg.teams[i];
+		new->players = (t_player *)ft_memalloc(sizeof(t_player) * g_cfg.max_clients_at_team);
 	}
-	return teams;
+	return new;
 }
 
 t_game	*create_game()
@@ -59,6 +59,7 @@ t_game	*create_game()
 	return (game);
 }
 
+/*
 int main_old()
 {
 	t_game *game;
@@ -77,7 +78,7 @@ int main_old()
 	exit(0);
 	//t_cell *temp = get_random_cell(map);
 	t_cell *temp = game->map->cells[1][1];
-	t_player *player = create_player(game, temp); 
+	t_player *player = create_player(1); 
 	
 	add_visitor(temp, player);
 	print_map(game, print_player);
@@ -86,15 +87,14 @@ int main_old()
 	printf("%d after\n", player->orient);
 	print_map(game, print_player);
 
-	 /*
-    The winning team is the one that will have its 6 players reach the maximum level.
-     */
-
-    
 	exit(0);
 	return (0);
 }
+*/
 
+ /*
+    The winning team is the one that will have its 6 players reach the maximum level.
+     */
 
 
 void lgc_init(void)
@@ -105,17 +105,20 @@ void lgc_init(void)
 	
 }
 
+/*
 void	delete_player(t_player *player)
 {
 	
 }
+*/
 
-t_player	*create_player(player_id)
+t_player	*create_player(int player_id)
 {
 	t_player	*player;
 
 	player = (t_player *)ft_memalloc(sizeof(t_player));
-	player->id = game->players_num++;
+	player->id = player_id;
+	game->players_num++;
 	player->hp = INIT_HP;
 	player->orient = rand() % 4;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
@@ -123,17 +126,19 @@ t_player	*create_player(player_id)
 	return (player);
 }
 
+/*
 void	player_set_cell(t_player *player, t_cell *cell)
 {
 
 }
+*/
 
 void lgc_new_player(int player_nb, char *team)
 {
 	t_cell *cell = get_random_cell(game->map);
-	t_player *player = create_player(game, temp); 
+	t_player *player = create_player(player_nb); 
 	add_visitor(cell, player);
-	add_player(player);
+	//add_player(player);
 	// add player to game
 
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
@@ -188,6 +193,7 @@ int lgc_get_command_duration(char *cmd)
 	return -1;
 }
 
+/*
 void lgc_execute_command(int player_nb, char *cmd)
 {
 	if (strcmp(cmd, "connect_nbr") == 0) {
@@ -202,6 +208,7 @@ void lgc_execute_command(int player_nb, char *cmd)
 
 	// if event happens, call srv_event()
 }
+*/
 
 int lgc_get_cell_resources(int x, int y, int resources[7])
 {
