@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 16:15:20 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/04 20:11:51 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,8 @@ t_main_config g_cfg = {
 	.teams_count = 3,
 	.max_clients_at_team = 5,
 	.t = 1,
-	.quiet = 0
+	.quiet = 0,
+	.cmd = NULL
 };
 
 static void validate_arg(int cond, const char *message)
@@ -102,8 +103,15 @@ static void parse_args(int argc, char **argv)
 
 }
 
+void	init_cmd()
+{
+	g_cfg.cmd.durations = (int *)malloc(sizeof(int) * CMD_NUMBER);
+	
+}
+
 int main(int argc, char **argv)
 {
+	init_cmd(); 
 	parse_args(argc, argv);
 	validate_args();
 	srv_start();

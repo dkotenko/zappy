@@ -1,14 +1,14 @@
-#******************************************************************************#
+# **************************************************************************** #
 #                                                                              #
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+         #
+#    By: clala <clala@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/09/30 19:51:47 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/10/04 18:27:40 by clala            ###   ########.fr        #
 #                                                                              #
-#******************************************************************************#
+# **************************************************************************** #
 
 NAME = server
 
@@ -32,7 +32,7 @@ logic/main.c \
 
 HEADER = $(addprefix $(SRCDIR)/, \
 server.h logger.h utils.h circbuf.h \
-ft_btree.h commands.h logic.h reception.h \
+ft_btree.h commands.h reception.h \
 graphic.h admin.h \
 logic/color.h logic/const.h logic/zappy.h)
 

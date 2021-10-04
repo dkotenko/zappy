@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:52:34 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/04 20:01:32 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,25 +105,31 @@ static struct timeval tu2tv(int tu)
 	return t;
 }
 
-static int client_handle_command(int cs, char *command)
+static int client_handle_command(int client_id, char *command)
 {
-	t_fd *client = &env.fds[cs];
+	t_fd *client = &env.fds[client_id];
 	t_command *cmd;
 
-	log_debug("#%d -> srv: '%s'", cs, command);
+	log_debug("#%d -> srv: '%s'", client_id, command);
 	if (client->pending_commands == MAX_PENDING_COMMANDS) {
 		log_warning("drop command '%s': queue is full", command);
 		return 0;
 	}
 	
-	int dur = lgc_get_command_duration(command);
-	if (dur == -1) {
-		log_warning("unknown command '%s' from #%d", command, cs);
+	int command_id = lgc_get_command_id(command);
+	if (command_id == -1) {
+		log_warning("unknown command '%s' from #%d", command, client_id);
 		return 0;
 	}
+	
+	int dur = g_cfg.cmd[command_id].duraction;
+	//lgc_get_command_duration(command);
+	
+	
+	
 	if (dur == 0) {
-		cmd = command_new(env.t, strdup(command), cs);
-		lgc_execute_command(cs, command);
+		cmd = command_new(env.t, strdup(command), client_id);
+		lgc_execute_command(client_id, command);
 		command_del(cmd);
 		return 0;
 	}
@@ -134,7 +140,7 @@ static int client_handle_command(int cs, char *command)
 	} else {
 		timeradd(&t, &env.t, &t);
 	}
-	cmd = command_new(t, strdup(command), cs);
+	cmd = command_new(t, strdup(command), client_id);
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;

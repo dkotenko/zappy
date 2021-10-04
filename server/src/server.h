@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:04:19 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/04 20:12:54 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,16 +15,38 @@
 
 # define DEBUG
 
-typedef struct s_main_config {
-	int port;
-	int world_width;
-	int world_height;
-	char **teams; // pointer to first team in argv
-	int teams_count; // size of `teams'
-	int max_clients_at_team;
-	int t;
-	int quiet;
+# define CMD_NUMBER 12
+enum e_command
+{
+	CMD_AVANCE,
+	CMD_DROITE,
+	CMD_GAUCHE,
+	CMD_VOIR,
+	CMD_INVENTAIRE,
+	CMD_PREND,
+	CMD_POSE,
+	CMD_EXPULSE,
+	CMD_BROADCAST,
+	CMD_INCANTATION,
+	CMD_FORK,
+	CMD_CONNECT_NBR
+};
 
+typedef struct s_cmd_aux {
+	int		*durations;
+	int		**name;
+} t_;
+
+typedef struct s_main_config {
+	int		port;
+	int		world_width;
+	int		world_height;
+	char	**teams; // pointer to first team in argv
+	int		teams_count; // size of `teams'
+	int		max_clients_at_team;
+	int		t;
+	int		quiet;
+	t_dict	cmd;
 } t_main_config;
 
 extern t_main_config g_cfg;
