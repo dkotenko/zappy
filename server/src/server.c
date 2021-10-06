@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/04 20:01:32 by clala            ###   ########.fr       */
+/*   Updated: 2021/10/06 13:43:00 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,8 @@ static void client_gone(int cs)
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
 	reception_remove_client(cs);
+	/* TODO */
+	/* commands_popnb(cs, MAX_PENDING_COMMANDS); */ 
 	log_info("Client #%d gone away", cs);
 }
 
@@ -188,11 +190,14 @@ static void	client_read(int cs)
 
 static void client_write(int cs)
 {
-	void *data;
+	char *data;
 	
 	while (env.fds[cs].circbuf_write.len) {
-		data = circbuf_pop(&env.fds[cs].circbuf_write);
-		send(cs, data, CIRCBUF_ITEM_SIZE, 0);
+		data = (char *)circbuf_pop(&env.fds[cs].circbuf_write);
+		if (data[CIRCBUF_ITEM_SIZE - 1] != '\0')
+			send(cs, data, CIRCBUF_ITEM_SIZE, 0);
+		else
+			send(cs, data, strlen(data), 0);
 		free(data);
 	}
 }
