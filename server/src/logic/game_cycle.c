@@ -1,6 +1,6 @@
 #include "zappy.h"
-/*
-int is_session_end(t_config *config)
+
+int is_session_end(void)
 {
 	int		i;
 
@@ -15,19 +15,19 @@ int is_session_end(t_config *config)
 	return false;
 }
 
-t_list *get_winners(t_config *config)
+t_list *get_winners(void)
 {
 	int		i;
-	t_list	*list;
+	t_list	*list = NULL;
 
 	i = -1;
 	while (++i < config->team_number)
 	{
 		if (teams[i]->max_level_count >=6)
 		{
-			ft_lstadd(list, teams[i]);
+			ft_lstadd_pointer(list, teams[i]);
 		}
 	}
 	return list;
 }
-*/
+

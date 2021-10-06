@@ -18,7 +18,7 @@ void	t_buffer_json_message(t_buffer *buf, char *message)
 	t_buffer_write(buf, " }");
 }
 
-void	write_cell_json(t_cell *cell, t_aux *aux)
+void	write_cell_json(t_cell *cell)
 {
 	t_buffer_write(config.buf, "{ ");
 
@@ -30,7 +30,7 @@ void	write_cell_json(t_cell *cell, t_aux *aux)
 	t_buffer_write_int(config.buf, cell->y);
 	t_buffer_write(config.buf, ", ");
 
-	inventory(cell->inventory, aux);
+	inventory(cell->inventory);
 	t_buffer_write(config.buf, ", ");
 
 	t_buffer_json_key(config.buf, "players_num");

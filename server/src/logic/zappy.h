@@ -10,8 +10,6 @@
 # include "const.h"
 # include "../logic.h"
 
-
-
 typedef struct s_aux
 {
     int     *orientation;
@@ -57,20 +55,21 @@ typedef struct s_cell {
 
 typedef struct s_player
 {
-    int id;
-    int level;
-    int hp;
-    int orient;
-    int *inventory;
-    t_cell *curr_cell;
-    int is_egg;
+    int     id;
+    int     level;
+    int     hp;
+    int     orient;
+    int     *inventory;
+    t_cell  *curr_cell;
+    int     is_egg;
+    int     team_id;
 }	t_player;
 
 typedef struct s_team
 {
 	int id;
     char *name;
-    t_player *players;
+    t_player **players;
 } t_team;
 
 typedef struct s_config {
@@ -117,12 +116,7 @@ typedef struct s_token
     int     team_id;
 } t_token;
 
-/*
- * actions
- */
-void	droite(t_player *player, t_aux *aux); //Повернуть направо
-void	gauche(t_player *player, t_aux *aux); //Повернуть налево
-void	voir();
+
 
 
 t_aux   *create_aux();
@@ -135,7 +129,7 @@ void print_map(t_game *game, int (*f)(t_cell *));
  */
 void	t_buffer_json_key(t_buffer *buf, char *key);
 void	t_buffer_json_message(t_buffer *buf, char *message);
-void	write_cell_json(t_cell *cell, t_aux *aux);
+void	write_cell_json(t_cell *cell);
 void	t_buffer_json_message_all(t_list *players, t_buffer *buf, char *message, t_player *player);
 
 /*
@@ -146,5 +140,5 @@ int		get_random_in_range(int max_number);
 int     get_random_from_to(int min_num, int max_num);
 
 
-void	inventory(int *inv, t_aux *aux);
+void	inventory(int *inv);
 #endif

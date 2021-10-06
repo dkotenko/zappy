@@ -11,7 +11,10 @@ int is_session_ends()
     return (0);
 }
 
-
+void	add_player(int player_id)
+{
+	
+}
 
 void	add_visitor(t_cell *cell, t_player *player)
 {
@@ -19,10 +22,12 @@ void	add_visitor(t_cell *cell, t_player *player)
 
 	new_player = ft_lstnew_pointer(player, sizeof(t_player));
 	ft_lstadd(&cell->visitors, new_player);
-	
-	
-	
 	cell->visitors_num++;
+}
+
+t_player	*get_player_by_id(int player_id)
+{
+	return game->players[player_id];
 }
 
 //, int (*functionPtr)(int, int)
@@ -42,7 +47,7 @@ t_team	*create_teams()
 	for (int i = 0; i < g_cfg.teams_count; i++) {
 		new[i].id = i + 1;
 		new->name = g_cfg.teams[i];
-		new->players = (t_player *)ft_memalloc(sizeof(t_player) * g_cfg.max_clients_at_team);
+		new->players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
 	}
 	return new;
 }
@@ -52,7 +57,6 @@ t_game	*create_game()
 	t_game	*game;
 
 	game = (t_game *)ft_memalloc(sizeof(t_game));
-	game->teams_num = g_cfg.teams_count;
 	game->teams = create_teams();
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.world_height, g_cfg.world_width);
@@ -113,12 +117,13 @@ void	delete_player(t_player *player)
 }
 */
 
-t_player	*create_player(int player_id)
+t_player	*create_player(int player_id, int team_id)
 {
 	t_player	*player;
 
 	player = (t_player *)ft_memalloc(sizeof(t_player));
 	player->id = player_id;
+	player->team_id = team_id;
 	game->players_num++;
 	player->hp = INIT_HP;
 	player->orient = rand() % 4;
@@ -134,19 +139,31 @@ void	player_set_cell(t_player *player, t_cell *cell)
 }
 */
 
+int	get_team_id(char *team_name)
+{
+	for (int i = 0; i < g_cfg.teams_count; i++)
+	{
+		if (!strcmp(team_name, game->teams[i].name))
+			return i;	
+	}
+	return -1;
+}
+
 void lgc_new_player(int player_nb, char *team)
 {
+	int	team_id = get_team_id(team);
+
 	t_cell *cell = get_random_cell(game->map);
-	t_player *player = create_player(player_nb); 
+	t_player *player = create_player(player_nb, team_id);
 	add_visitor(cell, player);
 	//add_player(player);
 	// add player to game
 
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
-	int x = 0;
-	int y = 0;
-	int o = 2;
-	int l = 1;
+	int x = player->curr_cell->x;
+	int y = player->curr_cell->y;
+	int o = player->orient;
+	int l = player->level;
 	srv_event("pnw %d %d %d %d %d %s\n", player_nb, x, y, o, l, team);
 }
 
@@ -159,110 +176,51 @@ void lgc_player_gone(int player_nb)
 
 void lgc_update(void)
 {
-
+	if (is_session_ends()) {
+		get_winners();
+	}
+	starving_n_death();
 	// check all players, decrease hp, check win condition
 
 }
 
-
-int lgc_get_command_duration(char *cmd)
+void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 {
-	if (strcmp(cmd, "avance") == 0)
-		return 7;
-	if (strcmp(cmd, "droite") == 0)
-		return 7;
-	if (strcmp(cmd, "gauche") == 0)
-		return 7;
-	if (strcmp(cmd, "voir") == 0)
-		return 7;
-	if (strcmp(cmd, "inventaire") == 0)
-		return 1;
-	if (strcmp(cmd, "prend") == 0)
-		return 7;
-	if (strcmp(cmd, "pose") == 0)
-		return 7;
-	if (strcmp(cmd, "expulse") == 0)
-		return 7;
-	if (strcmp(cmd, "broadcast") == 0)
-		return 7;
-	if (strcmp(cmd, "incantation") == 0)
-		return 300;
-	if (strcmp(cmd, "fork") == 0)
-		return 42;
-	if (strcmp(cmd, "connect_nbr") == 0)
-		return 0;
-	return -1;
-}
+	t_player *player = get_player_by_id(player_nb);
 
-
-void lgc_execute_command(int player_nb, char *cmd)
-{
 	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
-
-	/* t_player *player = get_player_by_id(player_nb); */
-
-	if (strcmp(cmd, "avance") == 0) {
-		/* avanche(player); */
-	} else if (strcmp(cmd, "droite") == 0) {
-
-	} else if (strcmp(cmd, "gauche") == 0) {
-		
-	} else if (strcmp(cmd, "voir") == 0) {
-		
-	} else if (strcmp(cmd, "inventaire") == 0) {
-		
-	} else if (strcmp(cmd, "prend") == 0) {
-		
-	} else if (strcmp(cmd, "pose") == 0) {
-		
-	} else if (strcmp(cmd, "expulse") == 0) {
-		
-	} else if (strcmp(cmd, "broadcast") == 0) {
-		
-	} else if (strcmp(cmd, "incantation") == 0) {
-		
-	} else if (strcmp(cmd, "fork") == 0) {
-		
-	} else if (strcmp(cmd, "connect_nbr") == 0) {
-
-	} else if (strcmp(cmd, "connect_nbr") == 0) {
-		// TODO get team name from logic, not from reception (search is long)
-		srv_reply_client(player_nb, "%d\n",
-						 reception_slots_in_team(reception_find_client_team(player_nb)));
+	if (g_cfg.cmd.req_arg[cmd_id]) {
+		(g_cfg.cmd.f_arg[cmd_id])(player, cmd);
 	} else {
-		
-		//srv_reply_player(player_nb, "%s - ok\n", cmd);
+		(g_cfg.cmd.f[cmd_id])(player);
 	}
-
-
-	// if event happens, call srv_event()
 }
 
 int lgc_get_command_id(char *cmd)
 {
-	if (strncmp(cmd, "avance", 6) == 0)
+	if (strcmp(cmd, "avance") == 0)
 		return CMD_AVANCE;
-	if (strncmp(cmd, "droite", 6) == 0)
+	if (strcmp(cmd, "droite") == 0)
 		return CMD_DROITE;
-	if (strncmp(cmd, "gauche", 6) == 0)
+	if (strcmp(cmd, "gauche") == 0)
 		return CMD_GAUCHE;
-	if (strncmp(cmd, "voir", 4) == 0)
+	if (strcmp(cmd, "voir") == 0)
 		return CMD_VOIR;
-	if (strncmp(cmd, "inventaire", 10) == 0)
+	if (strcmp(cmd, "inventaire") == 0)
 		return CMD_INVENTAIRE;
-	if (strncmp(cmd, "prend", 5) == 0)
+	if (strncmp(cmd, "prend ", 6) == 0)
 		return CMD_PREND;
-	if (strncmp(cmd, "pose", 4) == 0)
+	if (strncmp(cmd, "pose ", 5) == 0)
 		return CMD_POSE;
-	if (strncmp(cmd, "expulse", 7) == 0)
+	if (strcmp(cmd, "expulse") == 0)
 		return CMD_EXPULSE;
-	if (strncmp(cmd, "broadcast", 9) == 0)
+	if (strncmp(cmd, "broadcast ", 10) == 0)
 		return CMD_BROADCAST;
-	if (strncmp(cmd, "incantation", 9) == 0)
+	if (strcmp(cmd, "incantation") == 0)
 		return CMD_INCANTATION;
-	if (strncmp(cmd, "fork", 4) == 0)
+	if (strcmp(cmd, "fork") == 0)
 		return CMD_FORK;
-	if (strncmp(cmd, "connect_nbr", 11) == 0)
+	if (strcmp(cmd, "connect_nbr") == 0)
 		return CMD_CONNECT_NBR;
 	return -1;
 }
@@ -279,11 +237,13 @@ int lgc_get_cell_resources(int x, int y, int resources[7])
 
 int lgc_get_player_position(int player_nb, int *x, int *y, int *o)
 {
-	if (player_nb < 0)
+	t_player *player = get_player_by_id(player_nb);
+
+	if (!player)
 		return -1;
-	*x = 12;
-	*y = 34;
-	*o = 2;
+	*x = player->curr_cell->x;
+	*y = player->curr_cell->y;
+	*o = player->orient;
 	return 0;
 }
 

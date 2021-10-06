@@ -15,27 +15,7 @@
 
 # define DEBUG
 
-# define CMD_NUMBER 12
-enum e_command
-{
-	CMD_AVANCE,
-	CMD_DROITE,
-	CMD_GAUCHE,
-	CMD_VOIR,
-	CMD_INVENTAIRE,
-	CMD_PREND,
-	CMD_POSE,
-	CMD_EXPULSE,
-	CMD_BROADCAST,
-	CMD_INCANTATION,
-	CMD_FORK,
-	CMD_CONNECT_NBR
-};
-
-typedef struct s_cmd_aux {
-	int		*duration;
-	char	**name;
-} t_dict;
+# include "logic/actions_client.h"
 
 typedef struct s_main_config {
 	int		port;
