@@ -74,6 +74,8 @@ typedef struct s_env {
 
 t_env env;
 
+
+
 static void clean_fd(t_fd *fd)
 {
 	fd->type = FD_FREE;
@@ -122,7 +124,7 @@ static int client_handle_command(int client_id, char *command)
 		return 0;
 	}
 	
-	int dur = g_cfg.cmd[command_id].duraction;
+	int dur = g_cfg.cmd.duration[command_id];
 	//lgc_get_command_duration(command);
 	
 	
