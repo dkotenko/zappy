@@ -26,7 +26,7 @@ static void error(int client_nb)
 static void msz(int client_nb)
 {
 	srv_reply_client(client_nb, "msz %d %d\n",
-					 g_cfg.world_width, g_cfg.world_height);
+					 g_cfg.width, g_cfg.height);
 }
 
 static void bct(int client_nb)
@@ -59,8 +59,8 @@ static void mct(int client_nb)
 {
 	int resources[7];
 	
-	for (int i = 0; i < g_cfg.world_height; ++i) {
-		for (int j = 0; j < g_cfg.world_width; ++j) {
+	for (int i = 0; i < g_cfg.height; ++i) {
+		for (int j = 0; j < g_cfg.width; ++j) {
 			if (lgc_get_cell_resources(i, j, resources) == 1)
 				srv_reply_client(client_nb, "bct %d %d %d %d %d %d %d %d %d\n",
 								 i, j, resources[0], resources[1], resources[2],

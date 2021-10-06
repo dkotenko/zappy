@@ -12,22 +12,22 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y);
 int		get_x(int coord)
 {
 	if (coord < 1)
-		coord += config.w;
-	else if (coord > config.w)
-		coord -= config.w;
+		coord += g_cfg.width;
+	else if (coord > g_cfg.width)
+		coord -= g_cfg.width;
 	return coord;
 }
 
 int		get_y(int coord)
 {
 	if (coord < 1)
-		coord += config.h;
-	else if (coord > config.h)
-		coord -= config.h;
+		coord += g_cfg.height;
+	else if (coord > g_cfg.height)
+		coord -= g_cfg.height;
 	return coord;
 }
 
-
+/*
 void	mort(t_player *player)
 {
 	t_list *tmp_list = ft_listpop(game->players, tmp);
@@ -57,7 +57,7 @@ void	starving_n_death(t_game *game)
 	}
 }
 
-
+*/
 
 void	avanche(t_player *player)
 {
@@ -67,7 +67,7 @@ void	avanche(t_player *player)
 	get_forward_coords(player, &new_x, &new_y);
 	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
 	game->map->cells[new_y][new_x]->visitors->next = temp;
-	t_buffer_json_message(config.buf, "OK");
+	t_buffer_json_message(game->buf, "OK");
 }
 
 
@@ -78,7 +78,7 @@ void	droite(t_player *player)
 	
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
 
-	t_buffer_json_message(config.buf, "OK");
+	t_buffer_json_message(game->buf, "OK");
 }
 
 
@@ -87,24 +87,24 @@ void	droite(t_player *player)
 void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
-	t_buffer_json_message(config.buf, "OK");
+	t_buffer_json_message(game->buf, "OK");
 }
 
 
 //returns items
 void	inventory(int *inv)
 {
-	t_buffer_write(config.buf, "{ ");
-	t_buffer_json_key(config.buf, "inventory");
-	t_buffer_write(config.buf, "{ ");
+	t_buffer_write(game->buf, "{ ");
+	t_buffer_json_key(game->buf, "inventory");
+	t_buffer_write(game->buf, "{ ");
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
-		t_buffer_json_key(config.buf, game->aux->resources[i]);
-		t_buffer_write_int(config.buf, inv[i]);
+		t_buffer_json_key(game->buf, game->aux->resources[i]);
+		t_buffer_write_int(game->buf, inv[i]);
 		if (i != RESOURCES_NUMBER - 1) {
-			t_buffer_write(config.buf, ", ");
+			t_buffer_write(game->buf, ", ");
 		}
 	}
-	t_buffer_write(config.buf, " }}");
+	t_buffer_write(game->buf, " }}");
 }
 
 
@@ -113,18 +113,18 @@ void	inventory(int *inv)
 int		get_w(int coord)
 {
 	if (coord < 0)
-		coord += config.w;
-	else if (coord >= config.w)
-		coord -= config.w;
+		coord += g_cfg.width;
+	else if (coord >= g_cfg.width)
+		coord -= g_cfg.width;
 	return coord;
 }
 
 int		get_h(int coord)
 {
 	if (coord < 0)
-		coord += config.h;
-	else if (coord >= config.h)
-		coord -= config.h;
+		coord += g_cfg.height;
+	else if (coord >= g_cfg.height)
+		coord -= g_cfg.height;
 	return coord;
 }
 
@@ -170,9 +170,9 @@ void	voir(t_player *player)
 	}
 	
 	
-	t_buffer_write(config.buf, "{ ");
-	t_buffer_json_key(config.buf, "cells");
-	t_buffer_add_char(config.buf, '[');
+	t_buffer_write(game->buf, "{ ");
+	t_buffer_json_key(game->buf, "cells");
+	t_buffer_add_char(game->buf, '[');
 	for (int i = 0; i < map->h; i++) {
 		for (int j = 0; j < map->w; j++) {
 			if (printed[i][j]) {
@@ -180,7 +180,7 @@ void	voir(t_player *player)
 			}
 		}
 	}
-	t_buffer_write(config.buf, "]}");
+	t_buffer_write(game->buf, "]}");
 }
 
 void	get_forward_coords(t_player *player, int *new_x, int *new_y)
@@ -223,10 +223,10 @@ void	expulse(t_player *player)
 	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
 	if (player->curr_cell->visitors) {
 		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
-		t_buffer_json_message(config.buf, "OK");
-		t_buffer_json_message_all(player->curr_cell->visitors, config.buf, "deplacement", player);
+		t_buffer_json_message(game->buf, "OK");
+		t_buffer_json_message_all(player->curr_cell->visitors, game->buf, "deplacement", player);
 	} else {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 	}
 	player->curr_cell->visitors = temp;
 }
@@ -252,14 +252,14 @@ void	prend(t_player *player, char *data)
 	int	resource_id = atoi(resource);
 	
 	if (!resource_id && resource[0] != '0' || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 	} else if (player->curr_cell->inventory[resource_id] > 0)
 	{
 		player->curr_cell->inventory[resource_id]--;
 		player->inventory[resource_id]++;
-		t_buffer_json_message(config.buf, "OK");
+		t_buffer_json_message(game->buf, "OK");
 	} else {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 	}
 }
 
@@ -276,13 +276,13 @@ void	pose(t_player *player, char *data)
 	int	resource_id = atoi(resource);
 
 	if (!resource_id && resource[0] != '0' || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 	} else if (player->inventory[resource_id] > 0) {
 		player->inventory[resource_id]--;
 		player->curr_cell->inventory[resource_id]++;
-		t_buffer_json_message(config.buf, "OK");
+		t_buffer_json_message(game->buf, "OK");
 	} else {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 	}
 }
 
@@ -301,7 +301,7 @@ void	incantation(t_game *game, t_player *player)
 
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		if (player->inventory[i] < incat_consts[i]) {
-			t_buffer_json_message(config.buf, "KO");
+			t_buffer_json_message(game->buf, "KO");
 			return ;	
 		}
 	}
@@ -316,7 +316,7 @@ void	incantation(t_game *game, t_player *player)
 		temp = temp->next;
 	}
 	if (incat_counter) {
-		t_buffer_json_message(config.buf, "KO");
+		t_buffer_json_message(game->buf, "KO");
 		return ;
 	}
 

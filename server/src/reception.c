@@ -147,7 +147,7 @@ int reception_chat(int client_nb, char *message)
 		ret_nb_client = g_cfg.max_clients_at_team - clients_in_team - 1;
 		srv_reply_client(client_nb, "%d\n", ret_nb_client);
 		srv_reply_client(client_nb, "%d %d\n",
-						 g_cfg.world_width, g_cfg.world_height);
+						 g_cfg.width, g_cfg.height);
 		return RECEPTION_ROUTE_CLIENT;
 	}
 	return RECEPTION_ROUTE_NONE;

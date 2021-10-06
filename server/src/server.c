@@ -129,7 +129,7 @@ static int client_handle_command(int client_id, char *command)
 	int dur = g_cfg.cmd.duration[command_id];
 	if (dur == 0) {
 		cmd = command_new(env.t, g_cfg.cmd.name[command_id], client_id);
-		lgc_execute_command(client_id, command);
+		lgc_execute_command(client_id, command, command_id);
 		command_del(cmd);
 		return 0;
 	}
@@ -280,7 +280,7 @@ static void do_select()
 		commands_push(command);
 		to = env.tu;
 	} else {
-		if (timercmp(&command->t, &tc, &to)) {
+		if (timercmp(&command->t, &tc, >)) {
 			timersub(&command->t, &tc, &to);
 		} else {
 			memset(&to, 0, sizeof(to));
@@ -298,7 +298,7 @@ static void do_select()
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
 		} else {
-			lgc_execute_command(command->client_nb, command->data);
+			lgc_execute_command(command->client_nb, command->data, -1);
 			--env.fds[command->client_nb].pending_commands;
 		}
 		commands_pop(command);
@@ -341,7 +341,7 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].fct_handle = reception_chat;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_cfg.world_width, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_cfg.width, CIRCBUF_ITEM_SIZE);
 
 	env.fds[cs].fct_handle(cs, NULL);
 }
