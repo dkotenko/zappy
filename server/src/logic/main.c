@@ -203,37 +203,34 @@ void lgc_execute_command(int player_nb, char *cmd)
 
 	if (strcmp(cmd, "avance") == 0) {
 		/* avanche(player); */
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "droite") == 0) {
-
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "gauche") == 0) {
-		
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "voir") == 0) {
-		
+		srv_reply_client(player_nb, "{,,,}\n");
 	} else if (strcmp(cmd, "inventaire") == 0) {
-		
+		srv_reply_client(player_nb, "{}\n");
 	} else if (strcmp(cmd, "prend") == 0) {
-		
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "pose") == 0) {
-		
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "expulse") == 0) {
-		
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "broadcast") == 0) {
-		
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "incantation") == 0) {
-		
+		srv_reply_client(player_nb, "elevation en cours\n");
 	} else if (strcmp(cmd, "fork") == 0) {
-		
-	} else if (strcmp(cmd, "connect_nbr") == 0) {
-
+		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
 		srv_reply_client(player_nb, "%d\n",
 						 reception_slots_in_team(reception_find_client_team(player_nb)));
 	} else {
-		
-		//srv_reply_player(player_nb, "%s - ok\n", cmd);
+		log_warning("Unknown command from player #%d: %s", player_nb, cmd);
 	}
-
 
 	// if event happens, call srv_event()
 }
