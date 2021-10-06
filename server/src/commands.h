@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:29:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 09:52:23 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/06 13:06:26 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ void command_del(t_command *cmd);
 void commands_push(t_command *cmd);
 t_command *commands_min(void);
 void commands_pop(t_command *cmd);
+void commands_popnb(int client_nb, int max_pop);
 int commands_is_empty(void);
 void commands_destroy(void);
 

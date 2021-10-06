@@ -13,7 +13,7 @@ int is_session_ends()
 
 void	add_player(int player_id)
 {
-	
+
 }
 
 void	add_visitor(t_cell *cell, t_player *player)
@@ -189,11 +189,50 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	t_player *player = get_player_by_id(player_nb);
 
 	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
+
 	if (g_cfg.cmd.req_arg[cmd_id]) {
 		(g_cfg.cmd.f_arg[cmd_id])(player, cmd);
 	} else {
 		(g_cfg.cmd.f[cmd_id])(player);
 	}
+	/*
+
+
+	
+
+	if (strcmp(cmd, "avance") == 0) {
+		avanche(player);
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "droite") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "gauche") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "voir") == 0) {
+		srv_reply_client(player_nb, "{,,,}\n");
+	} else if (strcmp(cmd, "inventaire") == 0) {
+		srv_reply_client(player_nb, "{}\n");
+	} else if (strcmp(cmd, "prend") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "pose") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "expulse") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "broadcast") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "incantation") == 0) {
+		srv_reply_client(player_nb, "elevation en cours\n");
+	} else if (strcmp(cmd, "fork") == 0) {
+		srv_reply_client(player_nb, "ok\n");
+	} else if (strcmp(cmd, "connect_nbr") == 0) {
+		// TODO get team name from logic, not from reception (search is long)
+		srv_reply_client(player_nb, "%d\n",
+						 reception_slots_in_team(reception_find_client_team(player_nb)));
+	} else {
+		log_warning("Unknown command from player #%d: %s", player_nb, cmd);
+	}
+
+	// if event happens, call srv_event()
+	*/
 }
 
 int lgc_get_command_id(char *cmd)
