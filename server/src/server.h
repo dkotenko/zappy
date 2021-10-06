@@ -19,8 +19,8 @@
 
 typedef struct s_main_config {
 	int		port;
-	int		world_width;
-	int		world_height;
+	int		width;
+	int		height;
 	char	**teams; // pointer to first team in argv
 	int		teams_count; // size of `teams'
 	int		max_clients_at_team;

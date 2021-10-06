@@ -1,11 +1,14 @@
 #include "zappy.h"
+#include "../server.h"
 
+//extern t_main_config *g_cfg;
+/*
 int is_session_end(void)
 {
 	int		i;
 
 	i = -1;
-	while (++i < config->team_number)
+	while (++i < g_cfg.teams_count)
 	{
 		if (teams[i]->max_level_count >=6)
 		{
@@ -21,7 +24,7 @@ t_list *get_winners(void)
 	t_list	*list = NULL;
 
 	i = -1;
-	while (++i < config->team_number)
+	while (++i < g_cfg.teams_count)
 	{
 		if (teams[i]->max_level_count >=6)
 		{
@@ -31,3 +34,4 @@ t_list *get_winners(void)
 	return list;
 }
 
+*/

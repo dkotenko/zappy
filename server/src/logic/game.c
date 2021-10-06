@@ -27,7 +27,8 @@ void	add_visitor(t_cell *cell, t_player *player)
 
 t_player	*get_player_by_id(int player_id)
 {
-	return game->players[player_id];
+	return NULL;
+	//return game->players[player_id];
 }
 
 //, int (*functionPtr)(int, int)
@@ -59,7 +60,7 @@ t_game	*create_game()
 	game = (t_game *)ft_memalloc(sizeof(t_game));
 	game->teams = create_teams();
     game->aux = create_aux();
-	game->map = create_map(game, g_cfg.world_height, g_cfg.world_width);
+	game->map = create_map(game, g_cfg.height, g_cfg.width);
 	game->buf = t_buffer_create(0);
 	return (game);
 }
@@ -187,7 +188,9 @@ void lgc_update(void)
 void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 {
 	t_player *player = get_player_by_id(player_nb);
-
+	if (cmd_id == -1) {
+		cmd_id = lgc_get_command_id(cmd);
+	}
 	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
 
 	if (g_cfg.cmd.req_arg[cmd_id]) {

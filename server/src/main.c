@@ -34,14 +34,14 @@ static char *default_teams[] = {"team1", "team2", "team3"};
 
 t_main_config g_cfg = {
 	.port = 9876,
-	.world_width = 20,
-	.world_height = 20,
+	.width = 20,
+	.height = 20,
 	.teams = default_teams,
 	.teams_count = 3,
 	.max_clients_at_team = 5,
 	.t = 1,
 	.quiet = 0,
-	.cmd = {NULL, NULL, NULL}
+	.cmd = {NULL, NULL, NULL, NULL}
 };
 
 static void validate_arg(int cond, const char *message)
@@ -56,9 +56,9 @@ static void validate_args(void)
 {
 	validate_arg(g_cfg.port > 0 && g_cfg.port < 65536,
 				 "Port is out of range [1, 65535]");
-	validate_arg(g_cfg.world_width > 0,
+	validate_arg(g_cfg.width > 0,
 				 "World width must be positive");
-	validate_arg(g_cfg.world_height > 0,
+	validate_arg(g_cfg.height > 0,
 				 "World height must be positive");
 	for (int i = 0; i < g_cfg.teams_count; ++i)
 		validate_arg(g_cfg.teams[i][0] != 0, "Team name must not be empty");
@@ -83,10 +83,10 @@ static void parse_args(int argc, char **argv)
 			g_cfg.port = atoi(optarg);
 			break ;
 		case 'x':
-			g_cfg.world_width = atoi(optarg);
+			g_cfg.width = atoi(optarg);
 			break ;
 		case 'y':
-			g_cfg.world_height = atoi(optarg);
+			g_cfg.height = atoi(optarg);
 			break ;
 		case 'c':
 			g_cfg.max_clients_at_team = atoi(optarg);
