@@ -33,9 +33,9 @@ enum e_command
 };
 
 typedef struct s_cmd_aux {
-	int		*durations;
-	int		**name;
-} t_;
+	int		*duration;
+	char	**name;
+} t_dict;
 
 typedef struct s_main_config {
 	int		port;
