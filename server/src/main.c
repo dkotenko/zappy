@@ -41,7 +41,7 @@ t_main_config g_cfg = {
 	.max_clients_at_team = 5,
 	.t = 1,
 	.quiet = 0,
-	.cmd = {NULL, NULL}
+	.cmd = {NULL, NULL, NULL}
 };
 
 static void validate_arg(int cond, const char *message)
@@ -105,39 +105,7 @@ static void parse_args(int argc, char **argv)
 
 }
 
-static void	init_cmd()
-{
-	g_cfg.cmd.duration = (int *)malloc(sizeof(int) * CMD_NUMBER);
-	xassert(g_cfg.cmd.duration != NULL, "malloc");
-	g_cfg.cmd.name = (char **)malloc(sizeof(char *) * CMD_NUMBER);
-	xassert(g_cfg.cmd.name != NULL, "malloc");
 
-	g_cfg.cmd.duration[CMD_AVANCE] = 7;
-	g_cfg.cmd.duration[CMD_DROITE] = 7;
-	g_cfg.cmd.duration[CMD_GAUCHE] = 7;
-	g_cfg.cmd.duration[CMD_VOIR] = 7;
-	g_cfg.cmd.duration[CMD_INVENTAIRE] = 1;
-	g_cfg.cmd.duration[CMD_PREND] = 7;
-	g_cfg.cmd.duration[CMD_POSE] = 7;
-	g_cfg.cmd.duration[CMD_EXPULSE] = 7;
-	g_cfg.cmd.duration[CMD_BROADCAST] = 7;
-	g_cfg.cmd.duration[CMD_INCANTATION] = 300;
-	g_cfg.cmd.duration[CMD_FORK] = 42;
-	g_cfg.cmd.duration[CMD_CONNECT_NBR] = 0;
-
-	g_cfg.cmd.name[CMD_AVANCE] = strdup("avance");
-	g_cfg.cmd.name[CMD_DROITE] = strdup("droite");
-	g_cfg.cmd.name[CMD_GAUCHE] = strdup("gauche");
-	g_cfg.cmd.name[CMD_VOIR] = strdup("voir");
-	g_cfg.cmd.name[CMD_INVENTAIRE] = strdup("inventaire");
-	g_cfg.cmd.name[CMD_PREND] = strdup("prend");
-	g_cfg.cmd.name[CMD_POSE] = strdup("pose");
-	g_cfg.cmd.name[CMD_EXPULSE] = strdup("expulse");
-	g_cfg.cmd.name[CMD_BROADCAST] = strdup("broadcast");
-	g_cfg.cmd.name[CMD_INCANTATION] = strdup("incantation");
-	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
-	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
-}
 
 int main(int argc, char **argv)
 {

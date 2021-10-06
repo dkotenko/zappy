@@ -20,23 +20,42 @@ LIBFT = $(LIBFT_DIR)/libft.a
 MAKE_LIB = make -C $(LIBFT_DIR)
 
 SRCDIR = src
-SRC = $(addprefix $(SRCDIR)/, \
-main.c \
-server.c logger.c utils.c circbuf.c \
-ft_btree.c commands.c logic.c reception.c \
-graphic.c admin.c \
-logic/actions_client.c logic/game_cycle.c \
-logic/json.c logic/map.c logic/random.c logic/t_aux.c \
-logic/main.c \
-)
+SRC_NAMES = main.c \
+			server.c \
+			logger.c \
+			utils.c \
+			circbuf.c \
+			ft_btree.c \
+			commands.c \
+			logic.c \
+			reception.c \
+			graphic.c \
+			admin.c \
+			logic/actions_client.c \
+			logic/game_cycle.c \
+			logic/json.c \
+			logic/map.c \
+			logic/random.c \
+			logic/t_aux.c \
+			logic/game.c
 
-HEADER = $(addprefix $(SRCDIR)/, \
-server.h logger.h utils.h circbuf.h \
-ft_btree.h commands.h reception.h \
-graphic.h admin.h \
-logic/color.h logic/const.h logic/zappy.h)
+HEADER_NAMES = server.h \
+			logger.h \
+			utils.h \
+			circbuf.h \
+			ft_btree.h \
+			commands.h \
+			reception.h \
+			graphic.h \
+			admin.h \
+			logic/color.h \
+			logic/const.h \
+			logic/zappy.h \
+			logic/actions_client.c
 
 
+HEADER = $(addprefix $(SRCDIR)/, $(HEADER_NAMES))
+SRC = $(addprefix $(SRCDIR)/, $(SRC_NAMES))
 OBJ = $(SRC:.c=.o)
 
 all: $(NAME)

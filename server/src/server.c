@@ -125,12 +125,8 @@ static int client_handle_command(int client_id, char *command)
 	}
 	
 	int dur = g_cfg.cmd.duration[command_id];
-	//lgc_get_command_duration(command);
-	
-	
-	
 	if (dur == 0) {
-		cmd = command_new(env.t, strdup(command), client_id);
+		cmd = command_new(env.t, g_cfg.cmd.name[command_id], client_id);
 		lgc_execute_command(client_id, command);
 		command_del(cmd);
 		return 0;
@@ -142,7 +138,7 @@ static int client_handle_command(int client_id, char *command)
 	} else {
 		timeradd(&t, &env.t, &t);
 	}
-	cmd = command_new(t, strdup(command), client_id);
+	cmd = command_new(t, g_cfg.cmd.name[command_id], client_id);
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
@@ -279,7 +275,7 @@ static void do_select()
 		commands_push(command);
 		to = env.tu;
 	} else {
-		if (timercmp(&command->t, &tc, >)) {
+		if (timercmp(&command->t, &tc, &to)) {
 			timersub(&command->t, &tc, &to);
 		} else {
 			memset(&to, 0, sizeof(to));

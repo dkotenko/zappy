@@ -27,14 +27,11 @@ void lgc_player_gone(int client_nb);
 /* Calls when one time unit elapsed (1/t) */
 void lgc_update(void);
 
-/* Calls when command arrives to know when server should call `execute_command' */
-int lgc_get_command_duration(char *cmd);
-
 /* Calls when command arrives to know command id */
 int lgc_get_command_id(char *cmd);
 
 /* Calls when command should be executed */
-void lgc_execute_command(int client_nb, char *cmd);
+void lgc_execute_command(int player_nb, char *cmd, int cmd_id);
 
 /* store resources of cell (x,y) to provided array 
 0 - nourriture, 1 - linemate, 2 - deraumere, 3 - sibur, 
