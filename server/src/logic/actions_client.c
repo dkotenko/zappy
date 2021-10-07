@@ -167,7 +167,7 @@ void	voir(t_player *player)
 		}
 	}
 	else {
-		handle_error("INVALID ORIENTATION\n");
+		log_warning("Invalid orientation");
 	}
 	
 	
@@ -210,7 +210,7 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y)
 		*new_y = get_y(player->curr_cell->y - 1);
 	}
 	else {
-		handle_error("expulse error: invalid orient");
+		log_warning("expulse error: invalid orient");
 	}
 }
 
