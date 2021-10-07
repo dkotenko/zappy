@@ -59,13 +59,14 @@ void	starving_n_death(t_game *game)
 
 */
 
+// TODO rename it to 'avance'
 void	avanche(t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
 
 	get_forward_coords(player, &new_x, &new_y);
-	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
+	t_list *temp = ft_lstpop(player->curr_cell->visitors, player);
 	game->map->cells[new_y][new_x]->visitors->next = temp;
 	t_buffer_json_message(game->buf, "OK");
 }
@@ -220,7 +221,7 @@ void	expulse(t_player *player)
 	int new_y = 0;
 	
 	get_forward_coords(player, &new_x, &new_y);
-	t_list *temp = ft_listpop(player->curr_cell->visitors, player);
+	t_list *temp = ft_lstpop(player->curr_cell->visitors, player);
 	if (player->curr_cell->visitors) {
 		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
 		t_buffer_json_message(game->buf, "OK");
@@ -367,7 +368,7 @@ void	init_cmd()
 	xassert(g_cfg.cmd.name != NULL, "malloc");
 
 	g_cfg.cmd.f_arg = (action_arg *)malloc(sizeof(action_arg *) * CMD_NUMBER);
-	xassert(g_cfg.cmd.f != NULL, "malloc");
+	xassert(g_cfg.cmd.f_arg != NULL, "malloc");
 
 	g_cfg.cmd.f = (action *)malloc(sizeof(action *) * CMD_NUMBER);
 	xassert(g_cfg.cmd.f != NULL, "malloc");

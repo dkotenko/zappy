@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/06 09:00:14 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/07 12:05:57 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ t_main_config g_cfg = {
 	.max_clients_at_team = 5,
 	.t = 1,
 	.quiet = 0,
-	.cmd = {NULL, NULL, NULL, NULL}
+	.cmd = {NULL, NULL, NULL, NULL, NULL}
 };
 
 static void validate_arg(int cond, const char *message)
