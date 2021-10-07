@@ -6,7 +6,7 @@
 #    By: clala <clala@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/10/04 18:27:40 by clala            ###   ########.fr        #
+#    Updated: 2021/10/07 12:59:27 by gmelisan         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -61,7 +61,7 @@ OBJ = $(SRC:.c=.o)
 all: $(NAME)
 
 $(NAME): $(LIBFT) $(OBJ)
-	$(CC) $(CFLAGS) -L$(LIBFT_DIR) -lft -o $(NAME) $^
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) -L$(LIBFT_DIR) -lft
 
 $(OBJ): $(HEADER)
 

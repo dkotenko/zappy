@@ -178,9 +178,9 @@ void lgc_player_gone(int player_nb)
 void lgc_update(void)
 {
 	if (is_session_ends()) {
-		get_winners();
+		//get_winners();
 	}
-	starving_n_death();
+	//starving_n_death();
 	// check all players, decrease hp, check win condition
 
 }

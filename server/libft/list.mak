@@ -30,7 +30,6 @@ ctype/ft_isinteger.c \
 error/handle_error.c \
 files/get_next_line.c \
 list/ft_lstadd.c \
-list/ft_lstadd.o \
 list/ft_lstdel.c \
 list/ft_lstdelone.c \
 list/ft_lstiter.c \

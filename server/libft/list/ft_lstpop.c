@@ -6,13 +6,13 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/14 13:55:46 by clala             #+#    #+#             */
-/*   Updated: 2020/02/15 21:53:21 by clala            ###   ########.fr       */
+/*   Updated: 2021/10/07 13:07:44 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-t_list	*ft_listpop(t_list *list, void *value)
+t_list	*ft_lstpop(t_list *list, void *value)
 {
 	t_list	*temp;
 	t_list	*prev;
