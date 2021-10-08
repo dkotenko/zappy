@@ -17,18 +17,18 @@ class State(Enum):
 
 class Server:
 
-    def connect(host, port):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((host, port))
+    def connect(self, host, port):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.connect((host, port))
         client_nb = -1
         state = State(0)
         while True:
-            r = select.select([s], [], [])
-            msg = sock_readline(s)
+            r = select.select([self.s], [], [])
+            msg = self.read()
             if msg == '':
                 break
             if state == State.BIENVENUE and msg == 'BIENVENUE':
-                sock_send(s, sys.argv[2])
+                self.send(sys.argv[2])
                 state = State.CLIENT_NB
             elif state == State.CLIENT_NB:
                 client_nb = int(msg);
@@ -39,7 +39,6 @@ class Server:
                 print('world_size' + str(world_size))
                 state = State.PLAYER_IDLE
                 break
-        self.s = s
         return world_size
 
     def read(self):
@@ -56,14 +55,32 @@ class Server:
         self.s.send(bytes(msg + '\n', 'ascii'))
 
 
-
+class PlayerInfo:
+    lvl = 1
+    li = 0
+    de = 0
+    si = 0
+    me = 0
+    ph = 0
+    th = 0
     
 class Activity:
 
     server = Server()
+    players = {}
 
-    def def __init__(self, server):
+    def __init__(self, server):
         self.server = server
+
+    def check_message(self, msg):
+        splited = msg.split()
+        if splited[0] == 'mort':
+            print("(x_x)")
+            print("   \___I'm dead")
+            exit(0)
+        if splited[0] == 'message' and splited[3] == 'hi':
+            players[splited[2]](PlayerInfo())
+        
 
 
     def perform(self, msg=''):
@@ -77,12 +94,12 @@ class Activity:
 class ActivityAcquaintance(Activity):
 
     def __init__(self, s):
-        super(s)
+        super().__init__(s)
 
     def perform(self, msg=''):
 
         if msg == '':
-            sock_send(self.s, 'broadcast ' + str(os.getpid()))
+            self.server.send('broadcast ' + str(os.getpid()) + ' hi')
             return None
         if msg == 'ok':
             return ActivityMoving(self.server)
@@ -90,15 +107,16 @@ class ActivityAcquaintance(Activity):
 class ActivityMoving(Activity):
 
     def __init__(self, s):
-        super(s)
+        super().__init__(s)
 
-    def perform(self.msg=''):
+    def perform(self, msg=''):
+        print("moving")
         return None
 
 class ActivityMeeting(Activity):
 
     def __init__(self, s):
-        super(s)
+        super().__init__(s)
 
     def perform(self, msg=''):
         return None
@@ -106,7 +124,7 @@ class ActivityMeeting(Activity):
 class ActivityInvokation(Activity):
 
     def __init__(self, s):
-        super(s)
+        super().__init__(s)
 
     def perform(self, msg=''):
         return None
@@ -115,13 +133,10 @@ class ActivityInvokation(Activity):
 
 class Player:
 
+    activity = Activity(None)
+
     def __init__(self, server):
-        self.name = str(os.getpid())
         self.activity = ActivityAcquaintance(server)
-
-    def change_acitivty(self):
-        pass
-
     
 
 def parse_args():
@@ -184,24 +199,27 @@ def prod_mode(server, world_size):
     player = Player(server)
     player.activity.perform()
     while True:
-        select.select([s], [], [])
+        select.select([server.s], [], [])
         msg = server.read()
         activity = player.activity.perform(msg)
         if activity != None:
             player.activity = activity
+            player.activity.perform()
 
 def main(options):
     server = Server()
     world_size = server.connect(options.hostname, options.port)
     if options.dev:
-        dev_mode(s)
+        dev_mode(server)
     else:
-        prod_mode(s, world_size)
+        prod_mode(server, world_size)
             
     s.close()
 
 if __name__ == '__main__':
-    try:
-        main(parse_args())
-    except Exception as e:
-        print(e)
+    # try:
+    #     main(parse_args())
+    # except Exception as e:
+    #     print(e)
+
+    main(parse_args())
