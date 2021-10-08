@@ -142,10 +142,19 @@ void	player_set_cell(t_player *player, t_cell *cell)
 
 int	get_team_id(char *team_name)
 {
+	/*
 	for (int i = 0; i < g_cfg.teams_count; i++)
 	{
 		if (!strcmp(team_name, game->teams[i].name))
 			return i;	
+	}
+	return -1;
+	*/
+
+	for (int i = 0; i < g_cfg.teams_count; ++i)
+	{
+		if (strcmp(team_name, g_cfg.teams[i]) == 0)
+			return i;
 	}
 	return -1;
 }
@@ -161,11 +170,13 @@ void lgc_new_player(int player_nb, char *team)
 	// add player to game
 
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
+	/*
 	int x = player->curr_cell->x;
 	int y = player->curr_cell->y;
 	int o = player->orient;
 	int l = player->level;
 	srv_event("pnw %d %d %d %d %d %s\n", player_nb, x, y, o, l, team);
+	*/
 }
 
 void lgc_player_gone(int player_nb)
@@ -187,6 +198,7 @@ void lgc_update(void)
 
 void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 {
+/*	
 	t_player *player = get_player_by_id(player_nb);
 	if (cmd_id == -1) {
 		cmd_id = lgc_get_command_id(cmd);
@@ -198,13 +210,13 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	} else {
 		(g_cfg.cmd.f[cmd_id])(player);
 	}
-	/*
+*/
 
 
 	
 
 	if (strcmp(cmd, "avance") == 0) {
-		avanche(player);
+		//avanche(player);
 		srv_reply_client(player_nb, "ok\n");
 	} else if (strcmp(cmd, "droite") == 0) {
 		srv_reply_client(player_nb, "ok\n");
@@ -235,7 +247,6 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	}
 
 	// if event happens, call srv_event()
-	*/
 }
 
 int lgc_get_command_id(char *cmd)
