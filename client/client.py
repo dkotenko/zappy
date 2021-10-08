@@ -102,14 +102,15 @@ def main(options):
             elif c == 'f':
                 sock_send(s, 'fork')
             elif c == 'c':
-                sock_send(c, 'connect_nbr')
+                sock_send(s, 'connect_nbr')
             else:
                 continue 
             r = sock_readline(s)
             last_cmd = c
-            
-    if sys.stdin in r:
+    else:
         pass
+            
+    
 
     s.close()
 
