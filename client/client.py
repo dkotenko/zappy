@@ -3,6 +3,7 @@
 import sys
 import socket
 import select
+import os
 from enum import Enum
 from optparse import OptionParser
 
@@ -10,45 +11,118 @@ class State(Enum):
     BIENVENUE = 0
     CLIENT_NB = 1
     WORLD_SIZE = 2
-    GAME = 3
-
-def sock_readline(s):
-    msg = ''
-    while True:
-        c = s.recv(1).decode('ascii')
-        if c == '\n':
-            break
-        msg += c
-    return msg
+    PLAYER_IDLE = 3
+    PLAYER_BUSY = 4
 
 
-def sock_send(s, msg):
-    s.send(bytes(msg + '\n', 'ascii'))
+class Server:
+
+    def connect(host, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((host, port))
+        client_nb = -1
+        state = State(0)
+        while True:
+            r = select.select([s], [], [])
+            msg = sock_readline(s)
+            if msg == '':
+                break
+            if state == State.BIENVENUE and msg == 'BIENVENUE':
+                sock_send(s, sys.argv[2])
+                state = State.CLIENT_NB
+            elif state == State.CLIENT_NB:
+                client_nb = int(msg);
+                print('client_nb: ' + str(client_nb))
+                state = State.WORLD_SIZE
+            elif state == State.WORLD_SIZE:
+                world_size = msg.split(' ')
+                print('world_size' + str(world_size))
+                state = State.PLAYER_IDLE
+                break
+        self.s = s
+        return world_size
+
+    def read(self):
+        msg = ''
+        while True:
+            c = self.s.recv(1).decode('ascii')
+            if c == '\n':
+                break
+            msg += c
+        return msg
 
 
-def connect(host, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-    client_nb = -1
-    state = State(0)
-    while True:
-        r = select.select([s], [], [])
-        msg = sock_readline(s)
+    def send(self, msg):
+        self.s.send(bytes(msg + '\n', 'ascii'))
+
+
+
+    
+class Activity:
+
+    server = Server()
+
+    def def __init__(self, server):
+        self.server = server
+
+
+    def perform(self, msg=''):
+        """
+        Returns None if activity in progress, otherwise next Activity object
+        cmd - server's message. Empty on first call.
+        """
+        pass
+
+
+class ActivityAcquaintance(Activity):
+
+    def __init__(self, s):
+        super(s)
+
+    def perform(self, msg=''):
+
         if msg == '':
-            break
-        if state == State.BIENVENUE and msg == 'BIENVENUE':
-            sock_send(s, sys.argv[2])
-            state = State.CLIENT_NB
-        elif state == State.CLIENT_NB:
-            client_nb = int(msg);
-            print('client_nb: ' + str(client_nb))
-            state = State.WORLD_SIZE
-        elif state == State.WORLD_SIZE:
-            world_size = msg.split(' ')
-            print('world_size' + str(world_size))
-            break 
-    return s, world_size
+            sock_send(self.s, 'broadcast ' + str(os.getpid()))
+            return None
+        if msg == 'ok':
+            return ActivityMoving(self.server)
 
+class ActivityMoving(Activity):
+
+    def __init__(self, s):
+        super(s)
+
+    def perform(self.msg=''):
+        return None
+
+class ActivityMeeting(Activity):
+
+    def __init__(self, s):
+        super(s)
+
+    def perform(self, msg=''):
+        return None
+
+class ActivityInvokation(Activity):
+
+    def __init__(self, s):
+        super(s)
+
+    def perform(self, msg=''):
+        return None
+
+    
+
+class Player:
+
+    def __init__(self, server):
+        self.name = str(os.getpid())
+        self.activity = ActivityAcquaintance(server)
+
+    def change_acitivty(self):
+        pass
+
+    
 
 def parse_args():
     usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
@@ -62,56 +136,68 @@ def parse_args():
         parser.print_usage()
         exit(1)
     return options
-    
 
-def main(options):
-    s, world_size = connect(options.hostname, options.port)
+def dev_mode(server):
     r = ''
     last_cmd = ''
-    if options.dev:
-        while True:
-            print('\033c')
-            print('last command: {} -> {}'.format(last_cmd, r))
-            print('-------------------------------------------------------------')
-            # print voir
-            print('f - forward (avance), l - left (droite), r - right (gauche),')
-            print('s - see (voir), i - inventory (inventaire), t - take <obj> (prend),')
-            print('d - drop <obj> (pose), k - kick (expulse), b - broadcast <text>,')
-            print('x - incantation, f - fork, c - connect_nbr')
-            c = input('-> ')
-            if c == 'f':
-                sock_send(s, 'avance')
-            elif c == 'l':
-                sock_send(s, 'droite')
-            elif c == 'r':
-                sock_send(s, 'gauche')
-            elif c == 's':
-                sock_send(s, 'voir')
-            elif c == 'i':
-                sock_send(s, 'inventaire')
-            elif c == 't':
-                sock_send(s, 'prend')
-            elif c == 'd':
-                sock_send(s, 'pose')
-            elif c == 'k':
-                sock_send(s, 'expulse')
-            elif c == 'b':
-                sock_send(s, 'broadcast')
-            elif c == 'x':
-                sock_send(s, 'incantation')
-            elif c == 'f':
-                sock_send(s, 'fork')
-            elif c == 'c':
-                sock_send(s, 'connect_nbr')
-            else:
-                continue 
-            r = sock_readline(s)
-            last_cmd = c
-    else:
-        pass
-            
     
+    while True:
+        print('\033c')
+        print('last command: {} -> {}'.format(last_cmd, r))
+        print('-------------------------------------------------------------')
+        # print voir
+        print('f - forward (avance), l - left (droite), r - right (gauche),')
+        print('s - see (voir), i - inventory (inventaire), t - take <obj> (prend),')
+        print('d - drop <obj> (pose), k - kick (expulse), b - broadcast <text>,')
+        print('x - incantation, f - fork, c - connect_nbr')
+        c = input('-> ')
+        if c == 'f':
+            server.send('avance')
+        elif c == 'l':
+            server.send('droite')
+        elif c == 'r':
+            server.send('gauche')
+        elif c == 's':
+            server.send('voir')
+        elif c == 'i':
+            server.send('inventaire')
+        elif c == 't':
+            server.send('prend')
+        elif c == 'd':
+            server.send('pose')
+        elif c == 'k':
+            server.send('expulse')
+        elif c == 'b':
+            server.send('broadcast')
+        elif c == 'x':
+            server.send('incantation')
+        elif c == 'f':
+            server.send('fork')
+        elif c == 'c':
+            server.send('connect_nbr')
+        else:
+            continue 
+        r = server.read()
+        last_cmd = c
 
+def prod_mode(server, world_size):
+    player = Player(server)
+    player.activity.perform()
+    while True:
+        select.select([s], [], [])
+        msg = server.read()
+        activity = player.activity.perform(msg)
+        if activity != None:
+            player.activity = activity
+
+def main(options):
+    server = Server()
+    world_size = server.connect(options.hostname, options.port)
+    if options.dev:
+        dev_mode(s)
+    else:
+        prod_mode(s, world_size)
+            
     s.close()
 
 if __name__ == '__main__':
