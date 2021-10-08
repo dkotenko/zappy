@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/07 12:06:48 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/08 14:04:42 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,7 +141,7 @@ static int client_handle_command(int client_id, char *command)
 	} else {
 		timeradd(&t, &env.t, &t);
 	}
-	cmd = command_new(t, g_cfg.cmd.name[command_id], client_id);
+	cmd = command_new(t, strdup(g_cfg.cmd.name[command_id]), client_id);
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
@@ -416,6 +416,7 @@ void srv_stop()
 	circbuf_clear(&env.circbuf_events);
 	free(env.fds);
 	free(env.deadbodies);
+	clear_cmd();
 	log_info("Exit");
 	exit(0);
 }
@@ -473,6 +474,17 @@ int srv_update_t(int t)
 		return -1;
 	env.tu = tmp;
 	return t;
+}
+
+void srv_push_command(char *cmd, int after_t)
+{
+	struct timeval tc;
+	struct timeval t;
+
+	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
+	t = tu2tv(after_t);
+	timeradd(&t, &tc, &t);
+	commands_push(command_new(t, cmd, 0));
 }
 
 #undef CIRCBUF_SIZE

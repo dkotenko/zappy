@@ -32,6 +32,7 @@ typedef struct s_cmd_aux {
 } t_dict;
 
 void	init_cmd();
+void	clear_cmd();
 
 /*
  * actions
