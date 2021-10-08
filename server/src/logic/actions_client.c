@@ -430,4 +430,23 @@ void	init_cmd()
 	g_cfg.cmd.req_arg[CMD_CONNECT_NBR] = 0;
 }
 
-
+void clear_cmd()
+{
+	free(g_cfg.cmd.name[CMD_AVANCE]);
+	free(g_cfg.cmd.name[CMD_DROITE]);
+	free(g_cfg.cmd.name[CMD_GAUCHE]);
+	free(g_cfg.cmd.name[CMD_VOIR]);
+	free(g_cfg.cmd.name[CMD_INVENTAIRE]);
+	free(g_cfg.cmd.name[CMD_PREND]);
+	free(g_cfg.cmd.name[CMD_POSE]);
+	free(g_cfg.cmd.name[CMD_EXPULSE]);
+	free(g_cfg.cmd.name[CMD_BROADCAST]);
+	free(g_cfg.cmd.name[CMD_INCANTATION]);
+	free(g_cfg.cmd.name[CMD_FORK]);
+	free(g_cfg.cmd.name[CMD_CONNECT_NBR]);
+	free(g_cfg.cmd.duration);
+	free(g_cfg.cmd.name);
+	free(g_cfg.cmd.f_arg);
+	free(g_cfg.cmd.f);
+	free(g_cfg.cmd.req_arg);
+}
