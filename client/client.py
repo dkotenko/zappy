@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import sys
 import socket
 import select
 from enum import Enum
+from optparse import OptionParser
 
 class State(Enum):
     BIENVENUE = 0
@@ -45,13 +48,27 @@ def connect(host, port):
             print('world_size' + str(world_size))
             break 
     return s, world_size
+
+
+def parse_args():
+    usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
+    parser = OptionParser(add_help_option=False, usage=usage)
+    parser.add_option('-n', dest='team', type='str')
+    parser.add_option('-p', dest='port', type='int')
+    parser.add_option('-h', dest='hostname', type='str', default='127.0.0.1')
+    parser.add_option('-d', dest='dev', action='store_true', default=False, help='Enable development mode')
+    (options, args) = parser.parse_args()
+    if options.team == None or options.port == None:
+        parser.print_usage()
+        exit(1)
+    return options
     
 
-def main(dev=False):
-    s, world_size = connect('127.0.0.1', int(sys.argv[1]))
+def main(options):
+    s, world_size = connect(options.hostname, options.port)
     r = ''
     last_cmd = ''
-    if dev:
+    if options.dev:
         while True:
             print('\033c')
             print('last command: {} -> {}'.format(last_cmd, r))
@@ -97,12 +114,7 @@ def main(dev=False):
     s.close()
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print('Usage: python3 {} <port> <team_name> [dev]'.format(sys.argv[0]))
-        exit(1)
-    if len(sys.argv) >= 4 and sys.argv[3] == 'dev':
-        main(dev=True)
-    # try:
-    #     main()
-    # except Exception as e:
-    #     print(e)
+    try:
+        main(parse_args())
+    except Exception as e:
+        print(e)
