@@ -48,8 +48,12 @@ void	connect_nbr();
 void	do_fork(t_player *player);
 void	pose(t_player *player, char *data);
 void	prend(t_player *player, char *data);
-void	broadcast();
 
+
+void	broadcast(t_player *player, char *data);
+int		normalize_side(int orient, int side);
+int		get_broadcast_side(t_player *emitter, t_player *receiver);
+int		get_quarter(int xr, int xe, int yr, int ye);
 /*
 ** game actions
 */

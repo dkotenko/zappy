@@ -11,9 +11,10 @@ int is_session_ends()
     return (0);
 }
 
+
 void	add_player(int player_id)
 {
-
+	(void *)player_id;
 }
 
 void	add_visitor(t_cell *cell, t_player *player)
@@ -65,38 +66,7 @@ t_game	*create_game()
 	return (game);
 }
 
-/*
-int main_old()
-{
-	t_game *game;
-	
-	srand(time(NULL));
-	int h = 10;
-	int w = 10;
-	
-	//game is global 
-	game = create_game();
-	game->players_num = 2;
-	game->teams_num = 2;
-	
-	
-	
-	exit(0);
-	//t_cell *temp = get_random_cell(map);
-	t_cell *temp = game->map->cells[1][1];
-	t_player *player = create_player(1); 
-	
-	add_visitor(temp, player);
-	print_map(game, print_player);
-	printf("%d before\n", player->orient);
-	gauche(player, game->aux);
-	printf("%d after\n", player->orient);
-	print_map(game, print_player);
 
-	exit(0);
-	return (0);
-}
-*/
 
  /*
     The winning team is the one that will have its 6 players reach the maximum level.
@@ -198,7 +168,7 @@ void lgc_update(void)
 
 void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 {
-/*	
+	
 	t_player *player = get_player_by_id(player_nb);
 	if (cmd_id == -1) {
 		cmd_id = lgc_get_command_id(cmd);
@@ -210,42 +180,13 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	} else {
 		(g_cfg.cmd.f[cmd_id])(player);
 	}
-*/
-
 
 	
-
-	if (strcmp(cmd, "avance") == 0) {
-		//avanche(player);
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "droite") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "gauche") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "voir") == 0) {
-		srv_reply_client(player_nb, "{,,,}\n");
-	} else if (strcmp(cmd, "inventaire") == 0) {
-		srv_reply_client(player_nb, "{}\n");
-	} else if (strcmp(cmd, "prend") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "pose") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "expulse") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "broadcast") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "incantation") == 0) {
-		srv_reply_client(player_nb, "elevation en cours\n");
-	} else if (strcmp(cmd, "fork") == 0) {
-		srv_reply_client(player_nb, "ok\n");
-	} else if (strcmp(cmd, "connect_nbr") == 0) {
+	if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
 		srv_reply_client(player_nb, "%d\n",
 						 reception_slots_in_team(reception_find_client_team(player_nb)));
-	} else {
-		log_warning("Unknown command from player #%d: %s", player_nb, cmd);
 	}
-
 	// if event happens, call srv_event()
 }
 

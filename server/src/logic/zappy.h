@@ -95,8 +95,8 @@ typedef struct s_game
 {
     t_aux   *aux;
     t_team  *teams;
+	t_player	**players;
     int      teams_num;
-	t_list	*players;
 	int		players_num;
 	t_map	*map;
     t_buffer *buf;
@@ -117,12 +117,15 @@ typedef struct s_token
 } t_token;
 
 
-
+/*
+ * game
+ */
 
 t_aux   *create_aux();
 void	init_map(t_game *game);
 t_map	*create_map(t_game *game, int w, int h);
 void print_map(t_game *game, int (*f)(t_cell *));
+t_player	*create_player(int player_id, int team_id);
 
 /*
  * json
@@ -138,6 +141,8 @@ void	t_buffer_json_message_all(t_list *players, t_buffer *buf, char *message, t_
 t_cell	*get_random_cell(t_map *map);
 int		get_random_in_range(int max_number);
 int     get_random_from_to(int min_num, int max_num);
+
+
 
 
 void	inventory(int *inv);
