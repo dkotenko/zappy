@@ -1,39 +1,6 @@
 #include "zappy.h"
 
-void print_map(t_game *game, int (*f)(t_cell *))
-{
-	int  i;
-	int  j;
 
-     i = 0;
-     printf("      ");
-     while (++i < game->map->w + 1)
-     {
-          printf("%d  ", i);
-          
-     }
-     printf("\n\n");
-     i = 0;
-     while (++i < game->map->h + 1)
-     {
-          j = 0;
-          printf("%3d   ", i);
-          while (++j < game->map->w + 1)
-          {
-			   
-               if (f(game->map->cells[i][j]))
-               {
-                    printf("%s%c  %s", ANSI_COLOR_RED, game->aux->orient_chars[((t_player *)(game->map->cells[i][j]->visitors->content))->orient], ANSI_COLOR_RESET);
-               }
-               else
-               {
-                    printf("%d  ", game->map->cells[i][j]->visitors_num);
-               }
-          }
-          printf("\n");
-     }
-     printf("\n");
-}
 
 t_cell    *create_cell(int x, int y)
 {

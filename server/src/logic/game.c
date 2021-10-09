@@ -96,7 +96,6 @@ t_player	*create_player(int player_id, int team_id)
 	player->id = player_id;
 	player->team_id = team_id;
 	game->players_num++;
-	player->hp = INIT_HP;
 	player->orient = rand() % 4;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	player->is_egg = 0;

@@ -20,13 +20,6 @@ typedef struct s_aux
 	int		*incantation_sum;
 }   t_aux;
 
-typedef struct s_action {
-    void *f;
-    char *name;
-    double delai;
-    char *response;
-} t_action;
-
 typedef struct s_inventory {
     int nourriture;
     int linemate;
@@ -36,11 +29,6 @@ typedef struct s_inventory {
     int phiras;
     int thystame;
 } t_inventory;
-
-typedef struct s_resource {
-    int num;
-    char *name;
-} t_resource;
 
 /*
  * клетка карты
@@ -57,7 +45,6 @@ typedef struct s_player
 {
     int     id;
     int     level;
-    int     hp;
     int     orient;
     int     *inventory;
     t_cell  *curr_cell;
@@ -143,7 +130,9 @@ int		get_random_in_range(int max_number);
 int     get_random_from_to(int min_num, int max_num);
 
 
+/*
+** print
+*/
 
 
-void	inventory(int *inv);
 #endif
