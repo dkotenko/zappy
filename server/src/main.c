@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:35:26 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/07 12:05:57 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/09 12:41:48 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,7 @@ static void parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	init_cmd(); 
+	init_cmd();
 	parse_args(argc, argv);
 	validate_args();
 	srv_start();

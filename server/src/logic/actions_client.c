@@ -276,7 +276,8 @@ void	pose(t_player *player, char *data)
 	char	*resource = data + strlen("pose ");
 	int	resource_id = atoi(resource);
 
-	if (!resource_id && resource[0] != '0' || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	if ((!resource_id && resource[0] != '0') \
+	|| resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		t_buffer_json_message(game->buf, "KO");
 	} else if (player->inventory[resource_id] > 0) {
 		player->inventory[resource_id]--;
@@ -287,10 +288,140 @@ void	pose(t_player *player, char *data)
 	}
 }
 
+enum e_sides {
+	SIDE_INNER,
+	SIDE_UP,
+	SIDE_UPLEFT,
+	SIDE_LEFT,
+	SIDE_DOWNLEFT,
+	SIDE_DOWN,
+	SIDE_DOWNRIGHT,
+	SIDE_RIGHT,
+	SIDE_UPRIGHT
+};
+
+	/*
+	** quarters for receiver
+	**	1_|_4
+	** 	2 |	3
+	*/
+int get_quarter(int xr, int xe, int yr, int ye) {
+	int quarter = 0;
+	
+	if (xr > xe) {
+		if (yr > ye) {
+			quarter = 2;
+		} else {
+			quarter = 1;
+		}
+	} else {
+		if (yr > ye) {
+			quarter = 3;
+		} else {
+			quarter = 4;
+		}
+	}
+	return (quarter);
+}
+
+int		get_broadcast_side(t_player *emitter, t_player *receiver)
+{
+	int	xe = emitter->curr_cell->x;
+	int ye = emitter->curr_cell->y;
+	int xr = receiver->curr_cell->x;
+	int yr = receiver->curr_cell->y;
+
+	if (xe == ye && xr == yr)
+		return (SIDE_INNER);
+
+	int	x_min = min(xe, xr);
+	int	y_min = min(ye, yr);
+	int	y_max = max(xe, xr);
+	int	x_max = max(ye, yr);
+
+	if (abs(xe - xr) > x_min + g_cfg.width - x_max) {
+		if (xe == x_min) {
+			xe += g_cfg.width;
+		} else {
+			xr += g_cfg.width;
+		}
+	}
+	if (abs(ye - yr) > y_min + g_cfg.height - y_max) {
+		if (ye == y_min) {
+			ye += g_cfg.height;
+		} else {
+			yr += g_cfg.height;
+		}
+	}
+	
+	// is parallel
+	if (xe == xr || ye == yr) {
+		if (xe == xr) {
+			if (ye > yr) {
+				return SIDE_UP;
+			} else {
+				return SIDE_DOWN;
+			}
+		} else {
+			if (xe > xr) {
+				return SIDE_RIGHT;
+			} else {
+				return SIDE_LEFT;
+			}
+		}
+	}
+
+	int quarter = get_quarter(xr, xe, yr, ye);
+	int abs_x = abs(xe - xr);
+	int abs_y = abs(ye - yr);
+	//is diagonal
+	if (abs_x == abs_y) {
+		return quarter * 2;
+	}
+
+	if (abs_x > abs_y) {
+		if (quarter == 1 || quarter == 2) {
+			return SIDE_LEFT;
+		} else {
+			return SIDE_RIGHT;
+		}
+	} else {
+		if (quarter == 1 || quarter == 4) {
+			return SIDE_UP;
+		} else {
+			return SIDE_DOWN;
+		}
+	}
+}
+
+int		normalize_side(int orient, int side)
+{
+	if (orient == ORIENT_E) {
+		side += 6;
+	} else if (orient == ORIENT_S) {
+		side += 4;
+	} else if (orient == ORIENT_W) {
+		side += 2;
+	}
+	if (side > 8) {
+		side -= 8;
+	}
+	return side;
+}
 
 void	broadcast(t_player *player, char *data)
 {
 	char	*text = data + strlen("broadcast ");
+	t_player	*receiver;
+
+	for (int i = 0; i < game->players_num; i++) {
+		if (!game->players[i] || game->players[i] == player) {
+			continue ;
+		}
+		int side = get_broadcast_side(player, receiver);
+		int side_normalized = normalize_side(game->players[i]->orient, side);
+		//send_to_emitter(size_normalized, level);
+	}
 }
 
 
