@@ -89,9 +89,7 @@ void	avanche(t_player *player)
 //TURN RIGHT
 void	droite(t_player *player)
 {
-	
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
-
 	t_buffer_json_message(game->buf, "OK");
 }
 
@@ -142,11 +140,6 @@ int		get_h(int coord)
 		coord -= g_cfg.height;
 	return coord;
 }
-
-
-
-
-
 
 //returns cells
 void	voir(t_player *player)

@@ -6,6 +6,12 @@
 
 t_game *game;
 
+void	reply_and_clean_buff(int player_id)
+{
+	srv_reply_client(player_id, game->buf->s);
+	t_buffer_clean(game->buf);
+}
+
 int is_session_ends()
 {
     return (0);
@@ -127,16 +133,14 @@ void lgc_new_player(int player_nb, char *team)
 {
 	int team_id = get_team_id(team);
 	add_player(player_nb, team_id);
-	// add player to game
-
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
-	/*
+
+	//SEND TO MONITEUR
 	int x = player->curr_cell->x;
 	int y = player->curr_cell->y;
 	int o = player->orient;
 	int l = player->level;
 	srv_event("pnw %d %d %d %d %d %s\n", player_nb, x, y, o, l, team);
-	*/
 }
 
 void lgc_player_gone(int player_nb)
@@ -170,14 +174,15 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	} else {
 		(g_cfg.cmd.f[cmd_id])(player);
 	}
-
-	
+	reply_and_clean_buff(player_nb);
+	/*
 	if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
 		srv_reply_client(player_nb, "%d\n",
 						 reception_slots_in_team(reception_find_client_team(player_nb)));
 	}
 	// if event happens, call srv_event()
+	*/
 }
 
 int lgc_get_command_id(char *cmd)

@@ -113,6 +113,7 @@ void	init_map(t_game *game);
 t_map	*create_map(t_game *game, int w, int h);
 
 t_player	*create_player(int player_id, int team_id);
+void	reply_and_clean_buff(int player_id);
 
 /*
  * json
@@ -141,4 +142,5 @@ void	print_cell(t_cell *cell);
 void	print_visitors(t_list *visitors);
 void	print_inverntory(int *inv);
 void 	print_map(t_game *game, int (*f)(t_cell *));
+
 #endif
