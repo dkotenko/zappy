@@ -87,6 +87,7 @@ typedef struct s_game
 	int		players_num;
 	t_map	*map;
     t_buffer *buf;
+	int		is_test;
 } t_game;
 
 
@@ -114,6 +115,7 @@ t_map	*create_map(t_game *game, int w, int h);
 
 t_player	*create_player(int player_id, int team_id);
 void	reply_and_clean_buff(int player_id);
+void	mock_srv_reply(int client_nb, char *msg);
 
 /*
  * json

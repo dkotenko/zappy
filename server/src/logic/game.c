@@ -6,10 +6,21 @@
 
 t_game *game;
 
+void	mock_srv_reply(int client_nb, char *msg)
+{
+	printf("\n%sClient %d received message: %s%s\n\n",
+		ANSI_COLOR_YELLOW, msg, ANSI_COLOR_RESET);
+}
+
 void	reply_and_clean_buff(int player_id)
 {
-	srv_reply_client(player_id, game->buf->s);
+	if (game->is_test == 0) {
+		srv_reply_client(player_id, game->buf->s);
+	} else {
+		mock_srv_reply(player_id, game->buf->s);
+	}
 	t_buffer_clean(game->buf);
+	
 }
 
 int is_session_ends()
@@ -45,6 +56,8 @@ t_game	*create_game()
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.height, g_cfg.width);
 	game->buf = t_buffer_create(0);
+	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * \
+		g_cfg.max_clients_at_team * g_cfg.teams_count);
 	return (game);
 }
 
@@ -87,6 +100,7 @@ t_player	*add_player(int player_id, int team_id)
 
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
+	game->players[player_id] = player;
 	add_visitor(cell, player);
 	return player;
 }
@@ -132,7 +146,7 @@ int	get_team_id(char *team_name)
 void lgc_new_player(int player_nb, char *team)
 {
 	int team_id = get_team_id(team);
-	add_player(player_nb, team_id);
+	t_player *player =  add_player(player_nb, team_id);
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
 
 	//SEND TO MONITEUR
