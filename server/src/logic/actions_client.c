@@ -72,7 +72,7 @@ void	set_player_cell(t_player *player, t_cell *cell)
 
 
 //TESTED
-void	avanche(t_player *player)
+void	avance(t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
@@ -541,7 +541,7 @@ void	init_cmd()
 	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
 	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
 
-	g_cfg.cmd.f[CMD_AVANCE] = avanche;
+	g_cfg.cmd.f[CMD_AVANCE] = avance;
 	g_cfg.cmd.f[CMD_DROITE] = droite;
 	g_cfg.cmd.f[CMD_GAUCHE] = gauche;
 	g_cfg.cmd.f[CMD_VOIR] = voir;

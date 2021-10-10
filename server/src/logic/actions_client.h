@@ -37,7 +37,7 @@ void	clear_cmd();
 /*
  * actions
  */
-void	avanche(t_player *player);
+void	avance(t_player *player);
 void	droite(t_player *player); //Повернуть направо
 void	gauche(t_player *player); //Повернуть налево
 void	inventory(int *inv);

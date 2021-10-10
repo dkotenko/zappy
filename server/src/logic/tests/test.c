@@ -20,6 +20,8 @@ t_main_config g_cfg = {
 
 extern t_game	*game;
 
+
+
 void	test_broadcast() {
 	t_player	*emitter = create_player(0,0);
 	t_player	*receiver1 = create_player(1,0);
@@ -30,24 +32,33 @@ void	test_broadcast() {
 
 }
 
-void	test_avanche()
+void	test_avance()
 {
-	t_player *player = add_player(3, 5);
+	int player_id = 3;
+	char *cmd = "avance";
+
+	t_player *player = add_player(player_id, 5);
 	print_player(player);
 	set_player_cell(player, game->map->cells[0][0]);
 	player->orient = ORIENT_N;
 	print_player(player);
 	
 	// must be x=0 y=9
-	avanche(player);
-	xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "AVANCHE ORIENT N FAILED");
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_avance");
+	}
+	printf("%d\n", cmd_id);
+	lgc_execute_command(player_id, cmd, cmd_id);
+	
+	xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT N FAILED");
 	print_player(player);
-
+	exit(0);
 	// must be 9 9
 	gauche(player);
 	xassert(player->orient == ORIENT_W, "gauche FAILED");
-	avanche(player);
-	xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "AVANCHE ORIENT W FAILED");
+	avance(player);
+	xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
 	print_player(player);
 
 	//must be x=9 y=0
@@ -56,14 +67,14 @@ void	test_avanche()
 	droite(player);
 	xassert(player->orient == ORIENT_S, "triple droite FAILED");
 	
-	avanche(player);
-	xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "AVANCHE ORIENT S FAILED");
+	avance(player);
+	xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
 	print_player(player);
 
 	//must be x=0 y=0
 	gauche(player);
-	avanche(player);
-	xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "AVANCHE ORIENT E FAILED");
+	avance(player);
+	xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "avance ORIENT E FAILED");
 	print_player(player);
 }
 
@@ -83,7 +94,8 @@ int main() {
 	
 		
 	lgc_init();
-	//test_avanche();
+	game->is_test = 1;
+	test_avance();
 
 	
 	printf("%sTESTS PASSED SUCCESSFULLY IF NO ERRORS OCCURED%s\n",
