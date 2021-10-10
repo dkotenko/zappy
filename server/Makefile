@@ -6,7 +6,7 @@
 #    By: clala <clala@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/10/07 12:59:27 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/10/10 13:22:56 by clala            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,6 @@ SRC_NAMES = main.c \
 			circbuf.c \
 			ft_btree.c \
 			commands.c \
-			logic.c \
 			reception.c \
 			graphic.c \
 			admin.c \

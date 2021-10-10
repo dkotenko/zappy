@@ -62,4 +62,7 @@ int		is_session_end(void);
 t_list *get_winners(void);
 
 
+void	set_player_cell(t_player *player, t_cell *cell);
+
+
 #endif

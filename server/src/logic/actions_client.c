@@ -11,18 +11,18 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y);
 
 int		get_x(int coord)
 {
-	if (coord < 1)
+	if (coord < 0)
 		coord += g_cfg.width;
-	else if (coord > g_cfg.width)
+	else if (coord >= g_cfg.width)
 		coord -= g_cfg.width;
 	return coord;
 }
 
 int		get_y(int coord)
 {
-	if (coord < 1)
+	if (coord < 0)
 		coord += g_cfg.height;
-	else if (coord > g_cfg.height)
+	else if (coord >= g_cfg.height)
 		coord -= g_cfg.height;
 	return coord;
 }
@@ -60,20 +60,33 @@ void	starving_n_death(t_game *game)
 */
 
 // TODO rename it to 'avance'
+
+void	set_player_cell(t_player *player, t_cell *cell)
+{
+	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
+	player->curr_cell->visitors_num--;
+	ft_lstadd(&cell->visitors, temp);
+	cell->visitors_num++;
+	player->curr_cell = cell;
+}
+
+
+//TESTED
 void	avanche(t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
 
 	get_forward_coords(player, &new_x, &new_y);
-	t_list *temp = ft_lstpop(player->curr_cell->visitors, player);
-	game->map->cells[new_y][new_x]->visitors->next = temp;
+	t_cell *cell = game->map->cells[new_y][new_x];
+	set_player_cell(player, cell);
 	t_buffer_json_message(game->buf, "OK");
 }
 
 
 //TESTED
 //returns OK
+//TURN RIGHT
 void	droite(t_player *player)
 {
 	
@@ -85,6 +98,7 @@ void	droite(t_player *player)
 
 //TESTED
 //returns OK
+//TURN LEFT
 void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
@@ -197,7 +211,7 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y)
 	else if (player->orient == ORIENT_N)
 	{
 		*new_x = x;
-		*new_y = get_y(player->curr_cell->y + 1);
+		*new_y = get_y(player->curr_cell->y - 1);
 	}
 	else if (player->orient == ORIENT_W)
 	{
@@ -207,7 +221,7 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y)
 	else if (player->orient == ORIENT_S)
 	{
 		*new_x = x;
-		*new_y = get_y(player->curr_cell->y - 1);
+		*new_y = get_y(player->curr_cell->y + 1);
 	}
 	else {
 		log_warning("expulse error: invalid orient");
@@ -222,6 +236,7 @@ void	expulse(t_player *player)
 	
 	get_forward_coords(player, &new_x, &new_y);
 	t_list *temp = ft_lstpop(player->curr_cell->visitors, player);
+	
 	if (player->curr_cell->visitors) {
 		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
 		t_buffer_json_message(game->buf, "OK");

@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/09/14 13:22:49 by clala             #+#    #+#             */
-/*   Updated: 2021/10/07 12:31:42 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/10 16:10:29 by clala            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ void					ft_lstdelone(t_list **alst,
 void					ft_lstiter(t_list *lst, void (*f)(t_list *elem));
 t_list					*ft_lstmap(t_list *lst, t_list *(*f)(t_list *elem));
 t_list					*ft_lstnew(void const *content, size_t content_size);
-t_list					*ft_lstpop(t_list *list, void *value);
+t_list					*ft_lstpop(t_list **list, void *value);
 t_list					*ft_lstnew_pointer(void const *content, size_t content_size);
 
 /*
