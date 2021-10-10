@@ -12,33 +12,9 @@ int is_session_ends()
 }
 
 
-void	add_player(int player_id)
-{
-	(void *)player_id;
-}
-
-void	add_visitor(t_cell *cell, t_player *player)
-{
-	t_list *new_player;
-
-	new_player = ft_lstnew_pointer(player, sizeof(t_player));
-	ft_lstadd(&cell->visitors, new_player);
-	cell->visitors_num++;
-}
-
 t_player	*get_player_by_id(int player_id)
 {
-	return NULL;
-	//return game->players[player_id];
-}
-
-//, int (*functionPtr)(int, int)
-
-int print_player(struct s_cell *cell)
-{
-	if (cell->visitors_num)
-		return (1);
-	return (0);
+	return game->players[player_id];
 }
 
 t_team	*create_teams()
@@ -48,8 +24,8 @@ t_team	*create_teams()
 	new = (t_team *)ft_memalloc(sizeof(t_team) * g_cfg.teams_count);
 	for (int i = 0; i < g_cfg.teams_count; i++) {
 		new[i].id = i + 1;
-		new->name = g_cfg.teams[i];
-		new->players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
+		new[i].name = g_cfg.teams[i];
+		new[i].players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
 	}
 	return new;
 }
@@ -73,20 +49,14 @@ t_game	*create_game()
      */
 
 
-void lgc_init(void)
-{
-	log_info("logic: Setup world");
-	srand(time(NULL));
-	game = create_game();
-	
-}
 
-/*
+
+
 void	delete_player(t_player *player)
 {
 	
 }
-*/
+
 
 t_player	*create_player(int player_id, int team_id)
 {
@@ -98,28 +68,53 @@ t_player	*create_player(int player_id, int team_id)
 	game->players_num++;
 	player->orient = rand() % 4;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
+	player->inventory[0] += 10;
 	player->is_egg = 0;
 	return (player);
 }
 
-/*
-void	player_set_cell(t_player *player, t_cell *cell)
-{
 
+
+t_player	*add_player(int player_id, int team_id)
+{
+	//int	team_id = get_team_id(team);
+
+	t_cell *cell = get_random_cell(game->map);
+	t_player *player = create_player(player_id, team_id);
+	add_visitor(cell, player);
+	return player;
 }
-*/
+
+void	add_visitor(t_cell *cell, t_player *player)
+{
+	t_list *new_player;
+
+	new_player = ft_lstnew_pointer(player, sizeof(t_player));
+	ft_lstadd(&cell->visitors, new_player);
+	cell->visitors_num++;
+	player->curr_cell = cell;
+}
+
+
+
+// TODO
+// lgc_get_all_players(...)
+
+// Нужно передать о всех клиентах следующую инфу: координаты, ориентация, уровень, название команды
+// например в виде массива структур
+// нужно в визуализаторе при его подключении
+
+
+void lgc_init(void)
+{
+	log_info("logic: Setup world");
+	srand(time(NULL));
+	game = create_game();
+	
+}
 
 int	get_team_id(char *team_name)
 {
-	/*
-	for (int i = 0; i < g_cfg.teams_count; i++)
-	{
-		if (!strcmp(team_name, game->teams[i].name))
-			return i;	
-	}
-	return -1;
-	*/
-
 	for (int i = 0; i < g_cfg.teams_count; ++i)
 	{
 		if (strcmp(team_name, g_cfg.teams[i]) == 0)
@@ -130,12 +125,8 @@ int	get_team_id(char *team_name)
 
 void lgc_new_player(int player_nb, char *team)
 {
-	int	team_id = get_team_id(team);
-
-	t_cell *cell = get_random_cell(game->map);
-	t_player *player = create_player(player_nb, team_id);
-	add_visitor(cell, player);
-	//add_player(player);
+	int team_id = get_team_id(team);
+	add_player(player_nb, team_id);
 	// add player to game
 
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
@@ -224,7 +215,7 @@ int lgc_get_cell_resources(int x, int y, int resources[7])
 	if (x < 0 || y < 0)
 		return -1;
 	for (int i = 0; i < 7; ++i)
-		resources[i] = i;
+		resources[i] = game->map->cells[y][x]->inventory[i];
 	return 1;
 }
 
@@ -242,9 +233,11 @@ int lgc_get_player_position(int player_nb, int *x, int *y, int *o)
 
 int lgc_get_player_level(int player_nb)
 {
-	if (player_nb < 0)
+	t_player *player = get_player_by_id(player_nb);
+
+	if (!player)
 		return -1;
-	return 1;
+	return player->level;
 }
 
 int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
@@ -259,10 +252,3 @@ int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
 	return 0;
 }
 
-
-// TODO
-// lgc_get_all_players(...)
-
-// Нужно передать о всех клиентах следующую инфу: координаты, ориентация, уровень, название команды
-// например в виде массива структур
-// нужно в визуализаторе при его подключении

@@ -1,6 +1,9 @@
 
 #include "../zappy.h"
 #include "../../server.h"
+#include "../../logic.h"
+#include "../../utils.h"
+#include "../color.h"
 
 static char *default_teams[] = {"team1", "team2", "team3"};
 t_main_config g_cfg = {
@@ -22,12 +25,70 @@ void	test_broadcast() {
 	t_player	*receiver1 = create_player(1,0);
 	t_player	*receiver2 = create_player(2,0);
 
+	
 	char *msg = strdup("test");
+
 }
 
-int main() {
-	lgc_init();
+void	test_avanche()
+{
+	t_player *player = add_player(3, 5);
+	print_player(player);
+	set_player_cell(player, game->map->cells[0][0]);
+	player->orient = ORIENT_N;
+	print_player(player);
 	
+	// must be x=0 y=9
+	avanche(player);
+	xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "AVANCHE ORIENT N FAILED");
+	print_player(player);
+
+	// must be 9 9
+	gauche(player);
+	xassert(player->orient == ORIENT_W, "gauche FAILED");
+	avanche(player);
+	xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "AVANCHE ORIENT W FAILED");
+	print_player(player);
+
+	//must be x=9 y=0
+	droite(player);
+	droite(player);
+	droite(player);
+	xassert(player->orient == ORIENT_S, "triple droite FAILED");
+	
+	avanche(player);
+	xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "AVANCHE ORIENT S FAILED");
+	print_player(player);
+
+	//must be x=0 y=0
+	gauche(player);
+	avanche(player);
+	xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "AVANCHE ORIENT E FAILED");
+	print_player(player);
+}
+
+void	test_prend()
+{
+	t_player *player = add_player(3, 5);
+	print_player(player);
+	set_player_cell(player, game->map->cells[0][0]);
+	player->orient = ORIENT_N;
+	print_player(player);
+
+	
+}
+
+
+int main() {
+	
+		
+	lgc_init();
+	//test_avanche();
+
+	
+	printf("%sTESTS PASSED SUCCESSFULLY IF NO ERRORS OCCURED%s\n",
+		ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+	exit(0);
 	/*
 	int h = 10;
 	int w = 10;

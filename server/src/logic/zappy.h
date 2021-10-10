@@ -46,10 +46,10 @@ typedef struct s_player
     int     id;
     int     level;
     int     orient;
+	int     is_egg;
+    int     team_id;
     int     *inventory;
     t_cell  *curr_cell;
-    int     is_egg;
-    int     team_id;
 }	t_player;
 
 typedef struct s_team
@@ -111,7 +111,7 @@ typedef struct s_token
 t_aux   *create_aux();
 void	init_map(t_game *game);
 t_map	*create_map(t_game *game, int w, int h);
-void print_map(t_game *game, int (*f)(t_cell *));
+
 t_player	*create_player(int player_id, int team_id);
 
 /*
@@ -129,10 +129,16 @@ t_cell	*get_random_cell(t_map *map);
 int		get_random_in_range(int max_number);
 int     get_random_from_to(int min_num, int max_num);
 
+void	add_visitor(t_cell *cell, t_player *player);
+t_player	*add_player(int player_id, int team_id);
+void	move_player_to_cell(t_player *player, t_cell *cell);
 
 /*
 ** print
 */
-
-
+void	print_player(t_player *player);
+void	print_cell(t_cell *cell);
+void	print_visitors(t_list *visitors);
+void	print_inverntory(int *inv);
+void 	print_map(t_game *game, int (*f)(t_cell *));
 #endif
