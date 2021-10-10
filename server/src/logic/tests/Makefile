@@ -6,7 +6,7 @@
 #    By: clala <clala@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/09/16 16:31:55 by gmelisan          #+#    #+#              #
-#    Updated: 2021/10/10 16:33:38 by clala            ###   ########.fr        #
+#    Updated: 2021/10/10 17:56:56 by clala            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,7 +44,7 @@ SRC_NAMES = $(BASE_PATH)/server.c \
 			$(LOGIC_PATH)/game.c \
 			$(LOGIC_PATH)/print.c \
 			\
-			$(TESTS_PATH)/main.c
+			$(TESTS_PATH)/test.c
 
 HEADER_NAMES = $(BASE_PATH)/server.h \
 			$(BASE_PATH)/logger.h \
