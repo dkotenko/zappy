@@ -40,6 +40,7 @@ void	test_avance()
 	t_player *player = add_player(player_id, 5);
 	print_player(player);
 	set_player_cell(player, game->map->cells[0][0]);
+	
 	player->orient = ORIENT_N;
 	print_player(player);
 	
@@ -92,8 +93,9 @@ void	test_prend()
 
 int main() {
 	
-		
+	init_cmd();	
 	lgc_init();
+	
 	game->is_test = 1;
 	test_avance();
 
