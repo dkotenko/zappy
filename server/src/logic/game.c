@@ -9,7 +9,7 @@ t_game *game;
 void	mock_srv_reply(int client_nb, char *msg)
 {
 	printf("\n%sClient %d received message: %s%s\n\n",
-		ANSI_COLOR_YELLOW, msg, ANSI_COLOR_RESET);
+		ANSI_COLOR_YELLOW, client_nb, msg, ANSI_COLOR_RESET);
 }
 
 void	reply_and_clean_buff(int player_id)
