@@ -6,6 +6,8 @@ import select
 import os
 from enum import Enum
 from optparse import OptionParser
+from player import Player
+
 
 class State(Enum):
     BIENVENUE = 0
@@ -23,7 +25,7 @@ class Server:
         client_nb = -1
         state = State(0)
         while True:
-            r = select.select([self.s], [], [])
+            select.select([self.s], [], [])
             msg = self.read()
             if msg == '':
                 break
@@ -31,7 +33,7 @@ class Server:
                 self.send(sys.argv[2])
                 state = State.CLIENT_NB
             elif state == State.CLIENT_NB:
-                client_nb = int(msg);
+                client_nb = int(msg)
                 print('client_nb: ' + str(client_nb))
                 state = State.WORLD_SIZE
             elif state == State.WORLD_SIZE:
@@ -50,94 +52,94 @@ class Server:
             msg += c
         return msg
 
-
     def send(self, msg):
         self.s.send(bytes(msg + '\n', 'ascii'))
 
 
-class PlayerInfo:
-    lvl = 1
-    li = 0
-    de = 0
-    si = 0
-    me = 0
-    ph = 0
-    th = 0
-    
-class Activity:
-
-    server = Server()
-    players = {}
-
-    def __init__(self, server):
-        self.server = server
-
-    def check_message(self, msg):
-        splited = msg.split()
-        if splited[0] == 'mort':
-            print("(x_x)")
-            print("   \___I'm dead")
-            exit(0)
-        if splited[0] == 'message' and splited[3] == 'hi':
-            players[splited[2]](PlayerInfo())
-        
+# class PlayerInfo:
+#     lvl = 1
+#     li = 0
+#     de = 0
+#     si = 0
+#     me = 0
+#     ph = 0
+#     th = 0
 
 
-    def perform(self, msg=''):
-        """
-        Returns None if activity in progress, otherwise next Activity object
-        cmd - server's message. Empty on first call.
-        """
-        pass
+# class Activity:
+
+#     server = Server()
+#     players = {}
+
+#     def __init__(self, server):
+#         self.server = server
+
+#     def check_message(self, msg):
+#         splited = msg.split()
+#         if splited[0] == 'mort':
+#             print("(x_x)")
+#             print("   \\___I'm dead")
+#             exit(0)
+#         if splited[0] == 'message' and splited[3] == 'hi':
+#             self.players[splited[2]](PlayerInfo())
+
+#     def perform(self, msg=''):
+#         """
+#         Returns None if activity in progress, otherwise next Activity object
+#         msg - server's message. Empty on first call.
+#         """
+#         pass
 
 
-class ActivityAcquaintance(Activity):
+# class ActivityAcquaintance(Activity):
 
-    def __init__(self, s):
-        super().__init__(s)
+#     def __init__(self, s):
+#         super().__init__(s)
 
-    def perform(self, msg=''):
+#     def perform(self, msg=''):
 
-        if msg == '':
-            self.server.send('broadcast ' + str(os.getpid()) + ' hi')
-            return None
-        if msg == 'ok':
-            return ActivityMoving(self.server)
+#         if msg == '':
+#             self.server.send('broadcast ' + str(os.getpid()) + ' hi')
+#             return None
+#         if msg == 'ok':
+#             return ActivityMoving(self.server)
 
-class ActivityMoving(Activity):
 
-    def __init__(self, s):
-        super().__init__(s)
+# class ActivityMoving(Activity):
 
-    def perform(self, msg=''):
-        print("moving")
-        return None
+#     def __init__(self, s):
+#         super().__init__(s)
 
-class ActivityMeeting(Activity):
+#     def perform(self, msg=''):
+#         print("moving")
+#         return None
 
-    def __init__(self, s):
-        super().__init__(s)
 
-    def perform(self, msg=''):
-        return None
+# class ActivityMeeting(Activity):
 
-class ActivityInvokation(Activity):
+#     def __init__(self, s):
+#         super().__init__(s)
 
-    def __init__(self, s):
-        super().__init__(s)
+#     def perform(self, msg=''):
+#         return None
 
-    def perform(self, msg=''):
-        return None
 
-    
+# class ActivityInvokation(Activity):
 
-class Player:
+#     def __init__(self, s):
+#         super().__init__(s)
 
-    activity = Activity(None)
+#     def perform(self, msg=''):
+#         return None
 
-    def __init__(self, server):
-        self.activity = ActivityAcquaintance(server)
-    
+
+# class Player:
+
+#     activity = Activity(None)
+
+#     def __init__(self, server):
+#         self.activity = ActivityAcquaintance(server)
+
 
 def parse_args():
     usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
@@ -145,17 +147,19 @@ def parse_args():
     parser.add_option('-n', dest='team', type='str')
     parser.add_option('-p', dest='port', type='int')
     parser.add_option('-h', dest='hostname', type='str', default='127.0.0.1')
-    parser.add_option('-d', dest='dev', action='store_true', default=False, help='Enable development mode')
+    parser.add_option('-d', dest='dev', action='store_true',
+                      default=False, help='Enable development mode')
     (options, args) = parser.parse_args()
-    if options.team == None or options.port == None:
+    if options.team is None or options.port is None:
         parser.print_usage()
         exit(1)
     return options
 
+
 def dev_mode(server):
     r = ''
     last_cmd = ''
-    
+
     while True:
         print('\033c')
         print('last command: {} -> {}'.format(last_cmd, r))
@@ -191,20 +195,23 @@ def dev_mode(server):
         elif c == 'c':
             server.send('connect_nbr')
         else:
-            continue 
+            continue
         r = server.read()
         last_cmd = c
 
+
 def prod_mode(server, world_size):
     player = Player(server)
-    player.activity.perform()
+    msg = ''
+    player.play(msg)
     while True:
         select.select([server.s], [], [])
         msg = server.read()
         activity = player.activity.perform(msg)
-        if activity != None:
+        if activity is not None:
             player.activity = activity
             player.activity.perform()
+
 
 def main(options):
     server = Server()
@@ -213,8 +220,7 @@ def main(options):
         dev_mode(server)
     else:
         prod_mode(server, world_size)
-            
-    s.close()
+
 
 if __name__ == '__main__':
     # try:
