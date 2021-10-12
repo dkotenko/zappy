@@ -68,13 +68,13 @@ t_aux     *create_aux()
 	new = (t_aux *)ft_memalloc(sizeof(t_aux));
 
 	new->resources = (char **)ft_memalloc(sizeof(char *) * RESOURCES_NUMBER);
-	new->resources[0] = strdup("NOURRITURE");
-	new->resources[1] = strdup("LINEMATE");
-	new->resources[2] = strdup("DERAUMERE");
-	new->resources[3] = strdup("SIBUR");
-	new->resources[4] = strdup("MENDIANE");
-	new->resources[5] = strdup("PHIRAS");
-	new->resources[6] = strdup("THYSTAME");
+	new->resources[0] = strdup("nourriture");
+	new->resources[1] = strdup("linemate");
+	new->resources[2] = strdup("deraumere");
+	new->resources[3] = strdup("sibur");
+	new->resources[4] = strdup("mendiane");
+	new->resources[5] = strdup("phiras");
+	new->resources[6] = strdup("thystame");
 
 	new->len_resources = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {

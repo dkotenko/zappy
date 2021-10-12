@@ -6,8 +6,7 @@ void	t_buffer_json_key(t_buffer *buf, char *key)
 {
 	t_buffer_add_char(buf, '\"');
 	t_buffer_write(buf, key);
-	t_buffer_write(buf, "\" : \"");
-	t_buffer_add_char(buf, '\"');
+	t_buffer_write(buf, "\" : ");
 }
 
 void	t_buffer_json_message(t_buffer *buf, char *message)

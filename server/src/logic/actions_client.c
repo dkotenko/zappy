@@ -80,7 +80,8 @@ void	avance(t_player *player)
 	get_forward_coords(player, &new_x, &new_y);
 	t_cell *cell = game->map->cells[new_y][new_x];
 	set_player_cell(player, cell);
-	t_buffer_json_message(game->buf, "OK");
+	t_buffer_write(game->buf, "ok");
+	//t_buffer_json_message(game->buf, "OK");
 }
 
 
@@ -90,7 +91,8 @@ void	avance(t_player *player)
 void	droite(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
-	t_buffer_json_message(game->buf, "OK");
+	t_buffer_write(game->buf, "ok");
+	//t_buffer_json_message(game->buf, "OK");
 }
 
 
@@ -100,12 +102,11 @@ void	droite(t_player *player)
 void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
-	t_buffer_json_message(game->buf, "OK");
+	t_buffer_write(game->buf, "ok");
+	//t_buffer_json_message(game->buf, "OK");
 }
 
-
-//returns items
-void	inventory(int *inv)
+void	inventory_json(int *inv)
 {
 	t_buffer_write(game->buf, "{ ");
 	t_buffer_json_key(game->buf, "inventory");
@@ -118,6 +119,20 @@ void	inventory(int *inv)
 		}
 	}
 	t_buffer_write(game->buf, " }}");
+}
+//returns items
+void	inventory(int *inv)
+{
+	t_buffer_write(game->buf, "{");
+	for (int i = 0; i < RESOURCES_NUMBER; i++) {
+		t_buffer_write(game->buf, game->aux->resources[i]);
+		t_buffer_add_char(game->buf, ' ');
+		t_buffer_write_int(game->buf, inv[i]);
+		if (i != RESOURCES_NUMBER - 1) {
+			t_buffer_write(game->buf, ", ");
+		}
+	}
+	t_buffer_write(game->buf, "}");
 }
 
 
@@ -141,54 +156,106 @@ int		get_h(int coord)
 	return coord;
 }
 
-//returns cells
-void	voir(t_player *player)
-{	
+static void	print_voir_json()
+{
 	t_map *map = game->map;
-
-	int printed[map->h][map->w];
-	memset(printed, 0, sizeof(printed));
-	int x = player->curr_cell->x;
-	int y = player->curr_cell->y;
-	
-	int orient = player->orient;
-	if (orient == ORIENT_N || orient == ORIENT_S) {
-		for (int i = 0; i < player->level + 1; i++) {
-			int h = get_h(y + (orient == ORIENT_S ? i : -i));
-			int w = max(x - i, 0);
-			int max_w = min(x + 1 + i, map->w);
-			while (w < max_w) {
-				printed[h][get_w(w)] = 1;
-				w++;
-			}
-		}
-	} else if (orient == ORIENT_W || orient == ORIENT_E) {
-		for (int i = 0; i < player->level + 1; i++) {
-			int w = get_w(x + (orient == ORIENT_W ? -i : i));
-			int h = max(y - i, 0);
-			int max_h = min(y + 1 + i, map->h);
-			while (h < max_h) {
-				printed[get_h(h)][w] = 1;
-				h++;
-			}
-		}
-	}
-	else {
-		log_warning("Invalid orientation");
-	}
-	
-	
 	t_buffer_write(game->buf, "{ ");
 	t_buffer_json_key(game->buf, "cells");
 	t_buffer_add_char(game->buf, '[');
 	for (int i = 0; i < map->h; i++) {
 		for (int j = 0; j < map->w; j++) {
+			/*
 			if (printed[i][j]) {
 				write_cell_json(map->cells[i][j]);
 			}
+			*/
 		}
 	}
 	t_buffer_write(game->buf, "]}");
+}
+
+static void	print_voir_cell(t_player *player, t_cell * cell)
+{
+	int	printed = 0;
+	t_list *temp = cell->visitors;
+
+	for (int i = 0; i < RESOURCES_NUMBER; i++) {
+		for (int j =0; j < cell->inventory[i]; j++) {
+			printed = 1;
+			t_buffer_write(game->buf, game->aux->resources[i]);
+			t_buffer_add_char(game->buf, ' ');
+		}
+	}
+	
+	while (temp) {
+		if ((t_player *)temp->content != player) {
+			int	printed = 1;
+			t_buffer_write(game->buf, "player");
+			t_buffer_add_char(game->buf, ' ');
+		}
+		temp = temp->next;
+	}
+	//if (printed) {
+	//	game->buf->i--;
+	//}
+}
+
+//returns cells
+void	voir(t_player *player)
+{	
+	t_map *map = game->map;
+
+	//int printed[map->h][map->w];
+	//memset(printed, 0, sizeof(printed));
+	int x = player->curr_cell->x;
+	int y = player->curr_cell->y;
+	int orient = player->orient;
+	int cells_counter = 0;
+
+	t_buffer_write(game->buf, "{");
+	if (orient == ORIENT_N || orient == ORIENT_S) {
+		for (int i = 0; i < player->level + 1; i++) {
+
+			int h = get_h(y + (orient == ORIENT_S ? i : -i));
+			int w = max(x - i, 0);
+			int max_w = min(x + 1 + i, map->w);
+			
+			while (w < max_w) {
+				t_buffer_write_int(game->buf, cells_counter);
+				if (cells_counter) {
+					t_buffer_write(game->buf, ", ");
+				}
+				print_voir_cell(player, game->map->cells[h][get_w(w)]);
+				//printed[h][get_w(w)] = 1;
+				w++;
+				cells_counter++;
+			}
+			
+		}
+	} else if (orient == ORIENT_W || orient == ORIENT_E) {
+		for (int i = 0; i < player->level + 1; i++) {
+
+			int w = get_w(x + (orient == ORIENT_W ? -i : i));
+			int h = max(y - i, 0);
+			int max_h = min(y + 1 + i, map->h);
+			
+			while (h < max_h) {
+				t_buffer_write_int(game->buf, cells_counter);
+				if (cells_counter) {
+					t_buffer_write(game->buf, ", ");
+				}
+				//printed[get_h(h)][w] = 1;
+				print_voir_cell(player, game->map->cells[get_h(h)][w]);
+				h++;
+				cells_counter++;
+			}
+			
+		}
+	}
+	else {
+		log_warning("Invalid orientation");
+	}
+	t_buffer_write(game->buf, "}");
 }
 
 void	get_forward_coords(t_player *player, int *new_x, int *new_y)
