@@ -50,6 +50,8 @@ void	test_avance()
 		handle_error("invalid command in test_avance");
 	}
 	printf("%d\n", cmd_id);
+	lgc_execute_command(player_id, "voir", lgc_get_command_id("voir"));
+	exit(0);
 	lgc_execute_command(player_id, cmd, cmd_id);
 	
 	xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT N FAILED");
