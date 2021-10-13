@@ -19,6 +19,7 @@ t_main_config g_cfg = {
 };	
 
 extern t_game	*game;
+int	g_tests_result;
 
 
 /*
@@ -37,9 +38,9 @@ void	test_avance()
 {
 	int player_id = 3;
 	char *cmd = "avance";
+	int local_test_result = 0;
 
 	t_player *player = add_player(player_id, 5);
-	print_player(player);
 	set_player_cell(player, game->map->cells[0][0]);
 	
 	player->orient = ORIENT_N;
@@ -50,36 +51,30 @@ void	test_avance()
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_avance");
 	}
-	printf("%d\n", cmd_id);
-	lgc_execute_command(player_id, "voir", lgc_get_command_id("voir"));
-	exit(0);
-	lgc_execute_command(player_id, cmd, cmd_id);
 	
-	xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT N FAILED");
-	print_player(player);
-	exit(0);
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	
+	local_test_result += xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT N FAILED");
+	
 	// must be 9 9
 	gauche(player);
-	xassert(player->orient == ORIENT_W, "gauche FAILED");
+	local_test_result += xassert(player->orient == ORIENT_W, "gauche FAILED");
 	avance(player);
-	xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
-	print_player(player);
-
+	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
+	
 	//must be x=9 y=0
 	droite(player);
 	droite(player);
 	droite(player);
-	xassert(player->orient == ORIENT_S, "triple droite FAILED");
+	local_test_result += xassert(player->orient == ORIENT_S, "triple droite FAILED");
 	
 	avance(player);
-	xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
-	print_player(player);
+	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
 
 	//must be x=0 y=0
 	gauche(player);
 	avance(player);
-	xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "avance ORIENT E FAILED");
-	print_player(player);
+	local_test_result += xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "avance ORIENT E FAILED");
 }
 
 void	test_prend()
@@ -95,16 +90,21 @@ void	test_prend()
 
 
 int main() {
-	
+	g_tests_result = 0;
 	init_cmd();	
 	lgc_init();
 	
 	game->is_test = 1;
 	test_avance();
 
-	
-	printf("%sTESTS PASSED SUCCESSFULLY IF NO ERRORS OCCURED%s\n",
+	if (g_tests_result == 0) {
+		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
 		ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
+	} else {
+		printf("%sTESTS FAILED%s\n",
+		ANSI_COLOR_RED, ANSI_COLOR_RESET);
+	}
+	
 	exit(0);
 	/*
 	int h = 10;
