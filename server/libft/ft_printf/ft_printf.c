@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+t_buf					*g_buf;
+t_var					g_v;
+
 int	ft_printf(const char *format, ...)
 {
 	va_list	ap;

@@ -12,6 +12,9 @@
 
 #include "libft.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 void	t_buf_add_size(t_buf *buf)
 {
 	char	*new;

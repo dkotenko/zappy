@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static void	hex_bin_prefix_printer(char *s)
 {
 	if (g_v.sharp_sign && ft_strchr("bxX", g_v.type_spec)

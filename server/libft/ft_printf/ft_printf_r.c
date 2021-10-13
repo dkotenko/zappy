@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static void	print_twenty_to_thirty_n_last(char c)
 {
 	if (c == 21)

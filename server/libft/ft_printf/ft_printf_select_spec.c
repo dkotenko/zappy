@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static void	set_size_spec(const char *format, int j)
 {
 	if (format[j] == 'l')

@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static int	get_base(void)
 {
 	if (g_v.type_spec == 'o')
