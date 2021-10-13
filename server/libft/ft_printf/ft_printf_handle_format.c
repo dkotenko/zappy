@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static int	select_width(const char *format, va_list *ap, int *i)
 {
 	int		len_width;

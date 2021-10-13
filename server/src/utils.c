@@ -17,12 +17,14 @@
 #include "logger.h"
 #include "server.h"
 
-void xassert(int value, const char *str)
+int xassert(int value, const char *str)
 {
 	if (!value) {
 		log_fatal("%s: %s", str, strerror(errno));
 	}
+	return value ? 1 : 0;
 }
+
 
 void timerprint(void (*f)(const char *format, ...), struct timeval *t, char *name)
 {

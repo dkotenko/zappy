@@ -98,9 +98,6 @@ typedef union u_data
 	intmax_t			intmax_;
 }						t_data;
 
-t_buf					*g_buf;
-t_var					g_v;
-
 int						ft_printf(const char *format, ...);
 int						ft_dprintf(int fd, const char *format, ...);
 int						ft_vdprintf(int fd, const char *format, va_list *ap);

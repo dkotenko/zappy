@@ -21,7 +21,7 @@ t_main_config g_cfg = {
 extern t_game	*game;
 
 
-
+/*
 void	test_broadcast() {
 	t_player	*emitter = create_player(0,0);
 	t_player	*receiver1 = create_player(1,0);
@@ -31,6 +31,7 @@ void	test_broadcast() {
 	char *msg = strdup("test");
 
 }
+*/
 
 void	test_avance()
 {

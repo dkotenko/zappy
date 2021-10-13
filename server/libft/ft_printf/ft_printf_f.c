@@ -12,6 +12,9 @@
 
 #include "../includes/ft_printf.h"
 
+extern t_buf	*g_buf;
+extern t_var	g_v;
+
 static	int	is_spec_val(char *s, int flag)
 {
 	if (!*s)

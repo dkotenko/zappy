@@ -73,7 +73,7 @@ t_game	*create_game()
 
 void	delete_player(t_player *player)
 {
-	
+	player = NULL;	
 }
 
 
