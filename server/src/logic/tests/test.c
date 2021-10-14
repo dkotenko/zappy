@@ -75,27 +75,49 @@ void	test_avance()
 	gauche(player);
 	avance(player);
 	local_test_result += xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "avance ORIENT E FAILED");
+	g_tests_result += local_test_result;
 }
 
 void	test_prend()
 {
 	t_player *player = add_player(3, 5);
-	print_player(player);
-	set_player_cell(player, game->map->cells[0][0]);
-	player->orient = ORIENT_N;
+	int player_id = 3;
+	char *cmd = "avance";
+	int local_test_result = 0;
+
+	
 	print_player(player);
 
 	
 }
 
+void	test_inventoire()
+{
+	t_player *player = add_player(3, 5);
+	int player_id = 3;
+	char *cmd = "inventaire";
+	int local_test_result = 0;
+
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_inventoire");
+	}
+	
+	print_player(player);
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	
+}
 
 int main() {
-	g_tests_result = 0;
-	init_cmd();	
-	lgc_init();
 	
+	g_tests_result = 0;
+	init_cmd();
+	
+	lgc_init();
 	game->is_test = 1;
-	test_avance();
+	
+	//test_avance();
+	test_inventoire();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
@@ -106,31 +128,6 @@ int main() {
 	}
 	
 	exit(0);
-	/*
-	int h = 10;
-	int w = 10;
-	
-	//game is global 
-	game = create_game();
-	game->players_num = 2;
-	game->teams_num = 2;
-	
-	
-	
-	exit(0);
-	//t_cell *temp = get_random_cell(map);
-	t_cell *temp = game->map->cells[1][1];
-	t_player *player = create_player(1); 
-	
-	add_visitor(temp, player);
-	print_map(game, print_player);
-	printf("%d before\n", player->orient);
-	gauche(player, game->aux);
-	printf("%d after\n", player->orient);
-	print_map(game, print_player);
-
-	test_broadcast();
-	*/
 	return (0);
 }
 
