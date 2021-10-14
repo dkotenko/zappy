@@ -29,11 +29,10 @@ t_map	*create_map(t_game *game, int w, int h)
 		}
      }
      game->map = map;
-     init_map(game);
      return (map);
 }
 
-void	init_map(t_game *game)
+void	init_random_map(t_game *game)
 {
 	//init food 
 	int food_amount = game->aux->incantation_sum[RESOURCES_NUMBER_OF_PLAYERS] * \
@@ -49,4 +48,26 @@ void	init_map(t_game *game)
 			get_random_cell(game->map)->inventory[i]++;
 		}
 	}
+}
+
+void	init_logic_map(t_game *game)
+{
+	game = NULL;
+}
+
+void	mock_init_map(t_game *game)
+{
+	game = NULL;
+}
+
+void	clear_resources_map(t_game *game)
+{
+	t_map *map = game->map;
+	
+	for (int i = 0; i < map->h; i++)
+     {
+		for (int j = 0; j < map->w; j++) {
+			ft_memset(map->cells[i][j]->inventory, 0, sizeof(int));
+		}
+     }
 }

@@ -47,7 +47,9 @@ t_team	*create_teams()
 	return new;
 }
 
-t_game	*create_game()
+
+
+t_game	*create_game(map_initiator init_map)
 {
 	t_game	*game;
 
@@ -55,6 +57,7 @@ t_game	*create_game()
 	game->teams = create_teams();
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.height, g_cfg.width);
+	(*init_map)(game);
 	game->buf = t_buffer_create(0);
 	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * \
 		g_cfg.max_clients_at_team * g_cfg.teams_count);
@@ -126,12 +129,11 @@ void	add_visitor(t_cell *cell, t_player *player)
 // нужно в визуализаторе при его подключении
 
 
-void lgc_init(void)
+void lgc_init()
 {
 	log_info("logic: Setup world");
 	srand(time(NULL));
-	game = create_game();
-	
+	game = create_game(init_random_map);
 }
 
 int	get_team_id(char *team_name)
