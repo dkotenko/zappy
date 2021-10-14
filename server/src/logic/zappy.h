@@ -104,7 +104,11 @@ typedef struct s_token
     int     team_id;
 } t_token;
 
-
+typedef void (*map_initiator)(t_game *);
+void	init_random_map(t_game *game);
+void	init_logic_map(t_game *game);
+void	mock_init_map(t_game *game);
+void	clear_resources_map(t_game *game);
 /*
  * game
  */

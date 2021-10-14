@@ -40,9 +40,9 @@ void	clear_cmd();
 void	avance(t_player *player);
 void	droite(t_player *player); //Повернуть направо
 void	gauche(t_player *player); //Повернуть налево
-void	inventory(int *inv);
+void	inventory(t_player *player);
 void	voir(t_player *player);
-void	incantation(t_game *game, t_player *player);
+void	incantation(t_player *player);
 void	expulse(t_player *player);
 void	connect_nbr();
 void	do_fork(t_player *player);

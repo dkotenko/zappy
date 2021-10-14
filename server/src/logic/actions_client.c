@@ -121,13 +121,14 @@ void	inventory_json(int *inv)
 	t_buffer_write(game->buf, " }}");
 }
 //returns items
-void	inventory(int *inv)
+void	inventory(t_player *player)
 {
+	
 	t_buffer_write(game->buf, "{");
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
 		t_buffer_write(game->buf, game->aux->resources[i]);
 		t_buffer_add_char(game->buf, ' ');
-		t_buffer_write_int(game->buf, inv[i]);
+		t_buffer_write_int(game->buf, player->inventory[i]);
 		if (i != RESOURCES_NUMBER - 1) {
 			t_buffer_write(game->buf, ", ");
 		}
@@ -501,7 +502,7 @@ void	broadcast(t_player *player, char *data)
 
 
 //NOT TESTED
-void	incantation(t_game *game, t_player *player)
+void	incantation(t_player *player)
 {
 	t_list *temp = player->curr_cell->visitors;
 	int	*incat_consts = game->aux->incantation[player->level - 1];
