@@ -175,30 +175,31 @@ static void	print_voir_json()
 	t_buffer_write(game->buf, "]}");
 }
 
-static void	print_voir_cell(t_player *player, t_cell * cell)
+static void	print_voir_cell(t_player *player, t_cell *cell)
 {
 	int	printed = 0;
 	t_list *temp = cell->visitors;
 
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
 		for (int j =0; j < cell->inventory[i]; j++) {
+			if (printed) {
+				t_buffer_add_char(game->buf, ' ');
+			}
 			printed = 1;
 			t_buffer_write(game->buf, game->aux->resources[i]);
-			t_buffer_add_char(game->buf, ' ');
 		}
 	}
 	
 	while (temp) {
 		if ((t_player *)temp->content != player) {
-			int	printed = 1;
+			if (printed) {
+				t_buffer_add_char(game->buf, ' ');
+			}
+			printed = 1;
 			t_buffer_write(game->buf, "player");
-			t_buffer_add_char(game->buf, ' ');
 		}
 		temp = temp->next;
 	}
-	//if (printed) {
-	//	game->buf->i--;
-	//}
 }
 
 //returns cells
@@ -222,7 +223,6 @@ void	voir(t_player *player)
 			int max_w = min(x + 1 + i, map->w);
 			
 			while (w < max_w) {
-				t_buffer_write_int(game->buf, cells_counter);
 				if (cells_counter) {
 					t_buffer_write(game->buf, ", ");
 				}
@@ -241,7 +241,6 @@ void	voir(t_player *player)
 			int max_h = min(y + 1 + i, map->h);
 			
 			while (h < max_h) {
-				t_buffer_write_int(game->buf, cells_counter);
 				if (cells_counter) {
 					t_buffer_write(game->buf, ", ");
 				}
