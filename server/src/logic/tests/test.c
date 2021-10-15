@@ -80,9 +80,12 @@ void	test_avance()
 
 void	test_prend()
 {
-	t_player *player = add_player(3, 5);
+	t_player *player;
+
+	if (game->players_num == 0)
+		player = add_player(3, 5);
 	int player_id = 3;
-	char *cmd = "avance";
+	char *cmd = "prend";
 	int local_test_result = 0;
 
 	
@@ -108,6 +111,28 @@ void	test_inventoire()
 	
 }
 
+void	test_voir()
+{
+	int player_id = 3;
+	t_player *player = add_player(player_id, 5);
+	player->orient = ORIENT_E;
+	t_player *player2 = add_player(0, 5);
+	t_player *player3 = add_player(1, 5);
+	set_player_cell(player2, game->map->cells[0][1]);
+	set_player_cell(player3, game->map->cells[0][1]);
+	print_cell(game->map->cells[0][1]);
+	char *cmd = "voir";
+	int local_test_result = 0;
+
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_inventoire");
+	}
+	
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	
+}
+
 int main() {
 	
 	g_tests_result = 0;
@@ -117,7 +142,7 @@ int main() {
 	game->is_test = 1;
 	
 	//test_avance();
-	test_inventoire();
+	test_voir();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
