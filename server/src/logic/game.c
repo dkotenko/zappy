@@ -96,8 +96,6 @@ t_player	*create_player(int player_id, int team_id)
 	return (player);
 }
 
-
-
 t_player	*add_player(int player_id, int team_id)
 {
 	//int	team_id = get_team_id(team);
@@ -119,15 +117,12 @@ void	add_visitor(t_cell *cell, t_player *player)
 	player->curr_cell = cell;
 }
 
-
-
 // TODO
 // lgc_get_all_players(...)
 
 // Нужно передать о всех клиентах следующую инфу: координаты, ориентация, уровень, название команды
 // например в виде массива структур
 // нужно в визуализаторе при его подключении
-
 
 void lgc_init()
 {
@@ -230,7 +225,6 @@ int lgc_get_command_id(char *cmd)
 		return CMD_CONNECT_NBR;
 	return -1;
 }
-
 
 int lgc_get_cell_resources(int x, int y, int resources[7])
 {

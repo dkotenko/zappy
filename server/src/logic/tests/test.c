@@ -115,14 +115,16 @@ void	test_voir()
 {
 	int player_id = 3;
 	t_player *player = add_player(player_id, 5);
+	set_player_cell(player, game->map->cells[0][0]);
 	player->orient = ORIENT_E;
 	t_player *player2 = add_player(0, 5);
 	t_player *player3 = add_player(1, 5);
 	set_player_cell(player2, game->map->cells[0][1]);
 	set_player_cell(player3, game->map->cells[0][1]);
-	print_cell(game->map->cells[0][1]);
+	//print_cell(game->map->cells[0][1]);
 	char *cmd = "voir";
 	int local_test_result = 0;
+	//"{sibur phiras thystame, sibur sibur player player, linemate deraumere deraumere deraumere deraumere sibur sibur mendiane phiras}";
 
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {

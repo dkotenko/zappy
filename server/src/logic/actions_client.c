@@ -180,6 +180,8 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 	int	printed = 0;
 	t_list *temp = cell->visitors;
 
+	//print_cell(cell);
+
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
 		for (int j =0; j < cell->inventory[i]; j++) {
 			if (printed) {
@@ -245,6 +247,7 @@ void	voir(t_player *player)
 					t_buffer_write(game->buf, ", ");
 				}
 				//printed[get_h(h)][w] = 1;
+				printf("x:%d y:%d\n", w, h);
 				print_voir_cell(player, game->map->cells[get_h(h)][w]);
 				h++;
 				cells_counter++;
