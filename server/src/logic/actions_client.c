@@ -33,6 +33,7 @@ void	mort(t_player *player)
 	t_buffer_write(game->buf, "mort");
 }
 
+/*
 //NOT TESTED
 void	starving_n_death(t_game *game)
 {
@@ -47,7 +48,9 @@ void	starving_n_death(t_game *game)
 		}
 	}
 
-// TODO rename it to 'avance'
+}
+*/
+
 
 void	set_player_cell(t_player *player, t_cell *cell)
 {
