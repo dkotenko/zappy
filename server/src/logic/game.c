@@ -76,7 +76,23 @@ t_game	*create_game(map_initiator init_map)
 
 void	delete_player(t_player *player)
 {
-	player = NULL;	
+	t_list *tmp = player->curr_cell->visitors;
+	while (tmp) {
+		t_player *tmp_player = (t_player *)tmp->content;
+		if (tmp) {
+			break ;
+		}
+		tmp = tmp->next;
+	}
+	xassert(tmp, "delete_player error: no player at cell");
+	ft_listpop(player->curr_cell->visitors, tmp);	
+	for (int i = 1; i < RESOURCES_NUMBER; i++) {
+		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
+	}
+	game->players[player->id] = NULL;
+	free(player->inventory);
+	free(player);
+	free(tmp);
 }
 
 
