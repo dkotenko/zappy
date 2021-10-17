@@ -5,6 +5,8 @@
 #include "../../utils.h"
 #include "../color.h"
 
+void	init_game(void);
+
 static char *default_teams[] = {"team1", "team2", "team3"};
 t_main_config g_cfg = {
 	.port = 9876,
@@ -20,6 +22,7 @@ t_main_config g_cfg = {
 
 extern t_game	*game;
 int	g_tests_result;
+t_list *g_list_game_to_free;
 
 
 /*
@@ -36,6 +39,7 @@ void	test_broadcast() {
 
 void	test_avance()
 {
+	init_game();
 	int player_id = 3;
 	char *cmd = "avance";
 	int local_test_result = 0;
@@ -57,23 +61,23 @@ void	test_avance()
 	local_test_result += xassert(player->curr_cell->x == 0 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT N FAILED");
 	
 	// must be 9 9
-	gauche(player);
+	lgc_execute_command(player_id, "gauche", lgc_get_command_id("gauche"));
 	local_test_result += xassert(player->orient == ORIENT_W, "gauche FAILED");
-	avance(player);
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
 	
 	//must be x=9 y=0
-	droite(player);
-	droite(player);
-	droite(player);
+	lgc_execute_command(player_id, "droite", lgc_get_command_id("droite"));
+	lgc_execute_command(player_id, "droite", lgc_get_command_id("droite"));
+	lgc_execute_command(player_id, "droite", lgc_get_command_id("droite"));
 	local_test_result += xassert(player->orient == ORIENT_S, "triple droite FAILED");
 	
-	avance(player);
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
 
 	//must be x=0 y=0
-	gauche(player);
-	avance(player);
+	lgc_execute_command(player_id, "gauche", lgc_get_command_id("gauche"));
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 	local_test_result += xassert(player->curr_cell->x == 0 && player->curr_cell->y == 0, "avance ORIENT E FAILED");
 	g_tests_result += local_test_result;
 }
@@ -82,21 +86,25 @@ void	test_prend()
 {
 	t_player *player;
 
+	init_game();
+	int player_id = 3;
 	if (game->players_num == 0)
 		player = add_player(3, 5);
-	int player_id = 3;
-	char *cmd = "prend";
+	char *cmd = "prend ";
 	int local_test_result = 0;
-
-	
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_prend");
+	}
 	print_player(player);
-
+	ft_memset(player->curr_cell, 0, sizeof(int * RESOURCES_NUMBER));
 	
 }
 
 void	test_inventoire()
 {
 	t_player *player = add_player(3, 5);
+	set_player_cell(player, game->map->cells[0][0]);
 	int player_id = 3;
 	char *cmd = "inventaire";
 	int local_test_result = 0;
@@ -107,6 +115,7 @@ void	test_inventoire()
 	}
 	
 	print_player(player);
+	
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 	
 }
@@ -135,16 +144,26 @@ void	test_voir()
 	
 }
 
-int main() {
-	
+void	init_game(void)
+{
+	if (game)
+	{
+		ft_lstadd(&g_list_game_to_free, ft_lstnew_pointer(game, sizeof(t_game)));
+	}
 	g_tests_result = 0;
 	init_cmd();
-	
 	lgc_init();
 	game->is_test = 1;
+}
+
+int main() {
+	game = NULL;
+	g_list_game_to_free = (t_list *)ft_memalloc(sizeof(t_list));
 	
-	//test_avance();
+	test_avance();
 	test_voir();
+	test_inventoire();
+	test_prend();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
