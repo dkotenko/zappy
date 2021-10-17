@@ -27,37 +27,25 @@ int		get_y(int coord)
 	return coord;
 }
 
-/*
 void	mort(t_player *player)
 {
-	t_list *tmp_list = ft_listpop(game->players, tmp);
-	tmp_player = (t_player *)tmp_list->content;
-	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
-	}
-	free(tmp_player->inventory);
-	free(tmp_player);
-	free(tmp_list);
+	delete_player(player);
+	t_buffer_write(game->buf, "mort");
 }
 
 //NOT TESTED
 void	starving_n_death(t_game *game)
 {
-	t_list		*tmp;
-	t_player	*tmp_player;
-
-	tmp = game->players;
-	while (tmp) {
-		tmp_player = (t_player *)game->players->content;
-		if (!tmp_player->hp) {
-			mort(tmp_player);
+	for (int i = 0; i < game->players_num; i++) {
+		if (game->players[i]) {
+			if (game->players[i]->inventory[0] == 0) {
+				mort(game->players[i]);
+			}
+			if (game->tick - game->players[i]->last_meal_tick > 1259) {
+				tmp_player->hp--;
+			}
 		}
-		tmp_player->hp--;
-		tmp = tmp->next;
 	}
-}
-
-*/
 
 // TODO rename it to 'avance'
 
@@ -92,7 +80,6 @@ void	droite(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
 	t_buffer_write(game->buf, "ok");
-	//t_buffer_json_message(game->buf, "OK");
 }
 
 
@@ -103,7 +90,6 @@ void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
 	t_buffer_write(game->buf, "ok");
-	//t_buffer_json_message(game->buf, "OK");
 }
 
 void	inventory_json(int *inv)
@@ -135,9 +121,6 @@ void	inventory(t_player *player)
 	}
 	t_buffer_write(game->buf, "}");
 }
-
-
-
 
 int		get_w(int coord)
 {

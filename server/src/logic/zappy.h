@@ -48,6 +48,7 @@ typedef struct s_player
     int     orient;
 	int     is_egg;
     int     team_id;
+    int     last_meal_tick;
     int     *inventory;
     t_cell  *curr_cell;
 }	t_player;
@@ -120,6 +121,7 @@ t_map	*create_map(t_game *game, int w, int h);
 t_player	*create_player(int player_id, int team_id);
 void	reply_and_clean_buff(int player_id);
 void	mock_srv_reply(int client_nb, char *msg);
+void	delete_player(t_player *player);
 
 /*
  * json
