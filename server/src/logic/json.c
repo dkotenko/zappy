@@ -54,3 +54,36 @@ void	t_buffer_json_message_all(t_list *players, t_buffer *buf, char *message, t_
 		}
 	}
 }
+
+void	inventory_json(int *inv)
+{
+	t_buffer_write(game->buf, "{ ");
+	t_buffer_json_key(game->buf, "inventory");
+	t_buffer_write(game->buf, "{ ");
+	for (int i = 0; i < RESOURCES_NUMBER; i++) {
+		t_buffer_json_key(game->buf, game->aux->resources[i]);
+		t_buffer_write_int(game->buf, inv[i]);
+		if (i != RESOURCES_NUMBER - 1) {
+			t_buffer_write(game->buf, ", ");
+		}
+	}
+	t_buffer_write(game->buf, " }}");
+}
+
+void	print_voir_json()
+{
+	t_map *map = game->map;
+	t_buffer_write(game->buf, "{ ");
+	t_buffer_json_key(game->buf, "cells");
+	t_buffer_add_char(game->buf, '[');
+	for (int i = 0; i < map->h; i++) {
+		for (int j = 0; j < map->w; j++) {
+			/*
+			if (printed[i][j]) {
+				write_cell_json(map->cells[i][j]);
+			}
+			*/
+		}
+	}
+	t_buffer_write(game->buf, "]}");
+}
