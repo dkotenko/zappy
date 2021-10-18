@@ -7,139 +7,7 @@ import os
 from enum import Enum
 from optparse import OptionParser
 from player import Player
-
-
-class State(Enum):
-    BIENVENUE = 0
-    CLIENT_NB = 1
-    WORLD_SIZE = 2
-    PLAYER_IDLE = 3
-    PLAYER_BUSY = 4
-
-
-class Server:
-
-    def connect(self, host, port):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect((host, port))
-        client_nb = -1
-        state = State(0)
-        while True:
-            select.select([self.s], [], [])
-            msg = self.read()
-            if msg == '':
-                break
-            if state == State.BIENVENUE and msg == 'BIENVENUE':
-                self.send(sys.argv[2])
-                state = State.CLIENT_NB
-            elif state == State.CLIENT_NB:
-                client_nb = int(msg)
-                print('client_nb: ' + str(client_nb))
-                state = State.WORLD_SIZE
-            elif state == State.WORLD_SIZE:
-                world_size = msg.split(' ')
-                print('world_size' + str(world_size))
-                state = State.PLAYER_IDLE
-                break
-        return world_size
-
-    def read(self):
-        msg = ''
-        while True:
-            c = self.s.recv(1).decode('ascii')
-            if c == '\n':
-                break
-            msg += c
-        return msg
-
-    def send(self, msg):
-        self.s.send(bytes(msg + '\n', 'ascii'))
-
-
-# class PlayerInfo:
-#     lvl = 1
-#     li = 0
-#     de = 0
-#     si = 0
-#     me = 0
-#     ph = 0
-#     th = 0
-
-
-# class Activity:
-
-#     server = Server()
-#     players = {}
-
-#     def __init__(self, server):
-#         self.server = server
-
-#     def check_message(self, msg):
-#         splited = msg.split()
-#         if splited[0] == 'mort':
-#             print("(x_x)")
-#             print("   \\___I'm dead")
-#             exit(0)
-#         if splited[0] == 'message' and splited[3] == 'hi':
-#             self.players[splited[2]](PlayerInfo())
-
-#     def perform(self, msg=''):
-#         """
-#         Returns None if activity in progress, otherwise next Activity object
-#         msg - server's message. Empty on first call.
-#         """
-#         pass
-
-
-# class ActivityAcquaintance(Activity):
-
-#     def __init__(self, s):
-#         super().__init__(s)
-
-#     def perform(self, msg=''):
-
-#         if msg == '':
-#             self.server.send('broadcast ' + str(os.getpid()) + ' hi')
-#             return None
-#         if msg == 'ok':
-#             return ActivityMoving(self.server)
-
-
-# class ActivityMoving(Activity):
-
-#     def __init__(self, s):
-#         super().__init__(s)
-
-#     def perform(self, msg=''):
-#         print("moving")
-#         return None
-
-
-# class ActivityMeeting(Activity):
-
-#     def __init__(self, s):
-#         super().__init__(s)
-
-#     def perform(self, msg=''):
-#         return None
-
-
-# class ActivityInvokation(Activity):
-
-#     def __init__(self, s):
-#         super().__init__(s)
-
-#     def perform(self, msg=''):
-#         return None
-
-
-# class Player:
-
-#     activity = Activity(None)
-
-#     def __init__(self, server):
-#         self.activity = ActivityAcquaintance(server)
-
+from server import Server
 
 def parse_args():
     usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
@@ -207,11 +75,25 @@ def prod_mode(server, world_size):
     while True:
         select.select([server.s], [], [])
         msg = server.read()
-        activity = player.activity.perform(msg)
-        if activity is not None:
-            player.activity = activity
-            player.activity.perform()
+        player.play(msg)
 
+
+    while True:
+        select.select([server.s], [], [])
+        msg = server.read()
+        if player.check_message(msg):  # check mort, put broadcast to queue if need
+            player.play(msg)           # if it's command answer, pass to command handler
+            server.send()              # from queue
+
+
+    server.messages # if command result - message, add to messages
+
+    result = ''
+    while True:
+        cmd = player.play(result) # at first, check server.messages, and change behavior if need
+        result = server.exec_command(cmd)
+        
+    
 
 def main(options):
     server = Server()

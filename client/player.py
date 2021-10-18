@@ -11,7 +11,9 @@ class PlayerInfo:
     ph = 0
     th = 0
 
-    def __init__(self, msg):
+    def __init__(self, msg = ''):
+        if msg == '':
+            return
         splited = msg.split('_')
         self.lvl = splited[0]
         self.li = splited[1]
@@ -40,49 +42,60 @@ class Player:
         INVOKATION = 3
 
     server = None
-    state = State.INTRODUCING
+    state_queue = [State.INTRODUCING, State.MOVING]
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}
-    next_state = State.MOVING
 
     def __init__(self, server):
         self.server = server
 
     def play(self, msg):
-        self.check_message(self, msg)
+        self._check_message(msg)
+        state = self.state_queue[0]
+        r = False
+        if state == self.State.INTRODUCING:
+            r = self._introduce(msg)
+        if state == self.State.MOVING:
+            r = self._move(msg)
+        if state == self.State.MEETING:
+            r = self._meet(msg)
+        if state == self.State.INVOKATION:
+            r = self._invokate(msg)
+        if r == True:
+            state_queue.pop(0)
+            self.play('')
 
-        if self.state == self.State.INTRODUCING:
-            self._introduce(msg)
-        if self.state == self.State.MOVING:
-            self._move(msg)
-        if self.state == self.State.MEETING:
-            self.f_meet(msg)
-        if self.state == self.State.INVOKATION:
-            self._invokate(msg)
-
-    def check_message(self, msg):
+    def _check_message(self, msg):
+        if msg == '':
+            return 
         splited = msg.split()
         if splited[0] == 'mort':
             print("I'm dead")
             exit(0)
         if splited[0] == 'message' and splited[3] == 'hi':
             self.players_info[splited[2]](PlayerInfo(splited[4]))
-            self._introduce('')
-        pass
+            self.state_queue.append(self.State.INTRODUCING)
 
     def _introduce(self, msg):
+        print('introduce')
         if msg == '':
-            self.server.send('broadcast ' + self.name + ' hi ' + self.my_info)
+            self.server.send('broadcast ' + self.name + ' hi ' + str(self.my_info))
         if msg == 'ok':
-            self.state = self.next_state
-            self.next_state = None
+            return True
+        return False
 
     def _move(self, msg):
         print('move')
+        return False
 
     def _meet(self, msg):
-        pass
+        print('meet')
+        return False
 
     def _invokate(self, msg):
-        pass
+        print('invokate')
+        return False
+
+
+    # [MOVING]
