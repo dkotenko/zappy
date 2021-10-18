@@ -12,6 +12,19 @@ void	mock_srv_reply(int client_nb, char *msg)
 		ANSI_COLOR_YELLOW, client_nb, msg, ANSI_COLOR_RESET);
 }
 
+void	reply_except_list(t_list *list, int player_id)
+{
+	while (list)
+	{
+		t_player *player = (t_player *)list->content;
+		if (player->id != player_id) {
+			srv_reply_client(player->id, game->buf->s);	
+		}
+		list = list->next;
+	}
+	t_buffer_clean(game->buf);
+}
+
 void	reply_and_clean_buff(int player_id)
 {
 	if (game->is_test == 0) {
@@ -20,7 +33,6 @@ void	reply_and_clean_buff(int player_id)
 		mock_srv_reply(player_id, game->buf->s);
 	}
 	t_buffer_clean(game->buf);
-	
 }
 
 int is_session_ends()

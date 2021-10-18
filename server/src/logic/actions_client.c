@@ -95,20 +95,7 @@ void	gauche(t_player *player)
 	t_buffer_write(game->buf, "ok");
 }
 
-void	inventory_json(int *inv)
-{
-	t_buffer_write(game->buf, "{ ");
-	t_buffer_json_key(game->buf, "inventory");
-	t_buffer_write(game->buf, "{ ");
-	for (int i = 0; i < RESOURCES_NUMBER; i++) {
-		t_buffer_json_key(game->buf, game->aux->resources[i]);
-		t_buffer_write_int(game->buf, inv[i]);
-		if (i != RESOURCES_NUMBER - 1) {
-			t_buffer_write(game->buf, ", ");
-		}
-	}
-	t_buffer_write(game->buf, " }}");
-}
+
 //returns items
 void	inventory(t_player *player)
 {
@@ -141,24 +128,6 @@ int		get_h(int coord)
 	else if (coord >= g_cfg.height)
 		coord -= g_cfg.height;
 	return coord;
-}
-
-static void	print_voir_json()
-{
-	t_map *map = game->map;
-	t_buffer_write(game->buf, "{ ");
-	t_buffer_json_key(game->buf, "cells");
-	t_buffer_add_char(game->buf, '[');
-	for (int i = 0; i < map->h; i++) {
-		for (int j = 0; j < map->w; j++) {
-			/*
-			if (printed[i][j]) {
-				write_cell_json(map->cells[i][j]);
-			}
-			*/
-		}
-	}
-	t_buffer_write(game->buf, "]}");
 }
 
 static void	print_voir_cell(t_player *player, t_cell *cell)
@@ -282,16 +251,19 @@ void	expulse(t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
+	t_list *temp = NULL;
 	
 	get_forward_coords(player, &new_x, &new_y);
-	t_list *temp = ft_lstpop(player->curr_cell->visitors, player);
-	
-	if (player->curr_cell->visitors) {
+	if (player->curr_cell->visitors > 1) {
+		temp = ft_lstpop(player->curr_cell->visitors, player);
 		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
-		t_buffer_json_message(game->buf, "OK");
-		t_buffer_json_message_all(player->curr_cell->visitors, game->buf, "deplacement", player);
+		t_buffer_write(game->buf, "OK");
+		reply_and_clean_buff(player->id);
+		t_buffer_write(game->buf, "deplacement");
+		reply_except_list(player->curr_cell->visitors, player->id);
 	} else {
-		t_buffer_json_message(game->buf, "KO");
+		t_buffer_write(game->buf, "KO");
+		reply_and_clean_buff(player->id);
 	}
 	player->curr_cell->visitors = temp;
 }
@@ -479,12 +451,16 @@ void	broadcast(t_player *player, char *data)
 	t_player	*receiver;
 
 	for (int i = 0; i < game->players_num; i++) {
-		if (!game->players[i] || game->players[i] == player) {
+		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
 		int side = get_broadcast_side(player, receiver);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
-		//send_to_emitter(size_normalized, level);
+		t_buffer_write("message ");
+		t_buffer_write_int(side_normalized);
+		t_buffer_add_char(',');
+		t_buffer_write(text);
+		reply_and_clean_buff(game->players[i]->id);
 	}
 }
 
