@@ -450,18 +450,20 @@ void	broadcast(t_player *player, char *data)
 	char	*text = data + strlen("broadcast ");
 	t_player	*receiver;
 
+	int	size_pos = 8;
+	t_buffer_write(game->buf, "message 0");
+	t_buffer_add_char(game->buf, ',');
+	t_buffer_write(game->buf, text);
 	for (int i = 0; i < game->players_num; i++) {
 		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
 		int side = get_broadcast_side(player, receiver);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
-		t_buffer_write("message ");
-		t_buffer_write_int(side_normalized);
-		t_buffer_add_char(',');
-		t_buffer_write(text);
-		reply_and_clean_buff(game->players[i]->id);
+		game->buf->s[size_pos] = side_normalized + '0';
+		srv_reply_client(game->players[i]->id, game->buf->s);
 	}
+	t_buffer_clean(game->buf);
 }
 
 
