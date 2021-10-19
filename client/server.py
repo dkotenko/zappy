@@ -1,5 +1,8 @@
+import sys
 from enum import Enum, auto
 from select import select
+from socket import socket
+
 
 def canBeNumber(n):
     try:
@@ -10,28 +13,36 @@ def canBeNumber(n):
 
 
 class Command(Enum):
-    WAIT        = auto()
-    GO_FORWARD  = auto()
-    TURN_LEFT   = auto()
-    TURN_RIGHT  = auto()
-    SEE         = auto()
-    INVENTORY   = auto()
-    TAKE_OBJECT = auto()
-    DROP_OBJECT = auto()
-    KICK        = auto()
-    SAY         = auto()
-    INCANTATE   = auto()
-    FORK        = auto()
-    CONNECT_NBR = auto()
-
-    
-class Message:
 
     class Type(Enum):
-        VOICE        = auto()
-        DEPLACEMENT  = auto()
+        WAIT = auto()
+        GO = auto()
+        TURN_LEFT = auto()
+        TURN_RIGHT = auto()
+        SEE = auto()
+        INVENTORY = auto()
+        TAKE_OBJECT = auto()
+        DROP_OBJECT = auto()
+        KICK = auto()
+        SAY = auto()
+        INCANTATE = auto()
+        FORK = auto()
+        CONNECT_NBR = auto()
+
+    t = Type()
+    arg = ''
+
+    def __init__(self, t, arg=''):
+        self.t = t
+        self.arg = arg
+
+
+class Message:
+    class Type(Enum):
+        VOICE = auto()
+        DEPLACEMENT = auto()
         ACTUAL_LEVEL = auto()
-    
+
     t = None
     source = 0
     data = ''
@@ -44,90 +55,90 @@ class Message:
 
 class Server:
 
-    s = None                    # socket
+    s = None  # socket
     messages = []
 
     class State(Enum):
-        BIENVENUE   = auto()
-        CLIENT_NB   = auto()
-        WORLD_SIZE  = auto()
+        BIENVENUE = auto()
+        CLIENT_NB = auto()
+        WORLD_SIZE = auto()
         PLAYER_IDLE = auto()
         PLAYER_BUSY = auto()
 
     def connect(self, host, port):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s = socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((host, port))
         client_nb = -1
-        state = State(0)
+        state = self.State(0)
         while True:
             select.select([self.s], [], [])
             msg = self.read()
             if msg == '':
                 break
-            if state == State.BIENVENUE and msg == 'BIENVENUE':
+            if state == self.State.BIENVENUE and msg == 'BIENVENUE':
                 self.send(sys.argv[2])
-                state = State.CLIENT_NB
-            elif state == State.CLIENT_NB:
+                state = self.State.CLIENT_NB
+            elif state == self.State.CLIENT_NB:
                 client_nb = int(msg)
                 print('client_nb: ' + str(client_nb))
-                state = State.WORLD_SIZE
-            elif state == State.WORLD_SIZE:
+                state = self.State.WORLD_SIZE
+            elif state == self.State.WORLD_SIZE:
                 world_size = msg.split(' ')
                 print('world_size' + str(world_size))
-                state = State.PLAYER_IDLE
+                state = self.State.PLAYER_IDLE
                 break
         return world_size
 
-    def exec_command(cmd: Command, arg=''):
+    def exec_command(self, cmd: Command):
         """
-        Send command and wait for valid answer. If answer is invalid, return ''
-        All messages are stored at self.messages.
-        If cmd == WAIT, wait for next message from server, return 'ok' on success.
+        Send command and wait for valid answer. If answer is invalid,
+        return 'invalid'. All messages are stored at self.messages. If cmd ==
+        WAIT, wait for next message from server, return 'ok' on
+        success.
         """
         s = ''
-        exepted_reply = ['ok']
-        if cmd == WAIT:
+        expected_reply = ['ok']
+        if cmd == Command.Type.WAIT:
             pass
-        if cmd == GO_FORWARD:
+        if cmd == Command.Type.GO:
             s = 'avance'
-        if cmd == TURN_LEFT:
+        if cmd == Command.Type.TURN_LEFT:
             s = 'droite'
-        if cmd == TURN_RIGHT:
+        if cmd == Command.Type.TURN_RIGHT:
             s = 'gauche'
-        if cmd == SEE:
+        if cmd == Command.Type.SEE:
             s = 'voir'
             expected_reply = ['{}']
-        if cmd == INVENTORY:
+        if cmd == Command.Type.INVENTORY:
             s = 'inventaire'
             expected_reply = ['{}']
-        if cmd == TAKE_OBJECT:
-            s = 'prend ' + arg
+        if cmd == Command.Type.TAKE_OBJECT:
+            s = 'prend ' + cmd.arg
             expected_reply.append('ko')
-        if cmd == DROP_OBJECT:
-            s = 'pose ' + arg
+        if cmd == Command.Type.DROP_OBJECT:
+            s = 'pose ' + cmd.arg
             expected_reply.append('ko')
-        if cmd == KICK:
+        if cmd == Command.Type.KICK:
             s = 'expulse'
             expected_reply.append('ko')
-        if cmd == SAY:
-            s = 'broadcast ' + arg
-        if cmd == INCANTATE:
+        if cmd == Command.Type.SAY:
+            s = 'broadcast ' + cmd.arg
+        if cmd == Command.Type.INCANTATE:
             s = 'incantation'
             expected_reply = ['elevation en cours']
-        if cmd == FORK:
+        if cmd == Command.Type.FORK:
             s = 'fork'
-        if cmd == CONNECT_NBR:
+        if cmd == Command.Type.CONNECT_NBR:
             s = 'connect_nbr'
             expected_reply = ['number']
-        if cmd != WAIT:
+        if cmd != Command.Type.WAIT:
             self._send(s)
-        while True:   
+        while True:
             select([self.s], [], [])
             r = self._read()
             for i in expected_reply:
-                if (r == i) or
-                (i == '{}' and r.startswith('{')) or
-                (i == 'number' and canBeNumber(r)):
+                if ((r == i) or (i == '{}' and r.startswith('{'))
+                        or (i == 'number' and canBeNumber(r))):
                     return r
             if r == 'mort':
                 print("I'm dead")
@@ -139,16 +150,16 @@ class Server:
                                      data=splited[1].strip())
             elif r.startswith('deplacement'):
                 self.messages.append(Message.Type.DEPLACEMENT,
-                                         source=r.split(' ')[1])
+                                     source=r.split(' ')[1])
             elif r.startswith('niveau actuel:'):
                 self.messages.append(Message.Type.ACTUAL_LEVEL,
-                                         data=r.split(':')[1].strip())
+                                     data=r.split(':')[1].strip())
             else:
                 print('unknown message: "' + r + '"')
                 break
-            if cmd == WAIT:
+            if cmd == Command.Type.WAIT:
                 return 'ok'
-        return ''
+        return 'invalid'
 
     def _read(self):
         msg = ''
