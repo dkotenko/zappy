@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+from server import Command
 
 
 class PlayerInfo:
@@ -11,7 +12,7 @@ class PlayerInfo:
     ph = 0
     th = 0
 
-    def __init__(self, msg = ''):
+    def __init__(self, msg=''):
         if msg == '':
             return
         splited = msg.split('_')
@@ -37,12 +38,11 @@ class PlayerInfo:
 class Player:
     class State(Enum):
         INTRODUCING = 0
-        MOVING = 1
+        COLLECTING = 1
         MEETING = 2
         INVOKATION = 3
 
-    server = None
-    state_queue = [State.INTRODUCING, State.MOVING]
+    state = State.INTRODUCING
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}
@@ -50,52 +50,40 @@ class Player:
     def __init__(self, server):
         self.server = server
 
-    def play(self, msg):
-        self._check_message(msg)
-        state = self.state_queue[0]
-        r = False
-        if state == self.State.INTRODUCING:
-            r = self._introduce(msg)
-        if state == self.State.MOVING:
-            r = self._move(msg)
-        if state == self.State.MEETING:
-            r = self._meet(msg)
-        if state == self.State.INVOKATION:
-            r = self._invokate(msg)
-        if r == True:
-            state_queue.pop(0)
-            self.play('')
+    def play(self, result, messages):
+        if self.state == self.State.INTRODUCING:
+            return self._introduce(result, messages)
+        if self.state == self.State.COLLECTING:
+            return self._collect(result, messages)
+        if self.state == self.State.MEETING:
+            return self._meet(result, messages)
+        if self.state == self.State.INVOKATION:
+            return self._invokate(result, messages)
 
-    def _check_message(self, msg):
-        if msg == '':
-            return 
-        splited = msg.split()
-        if splited[0] == 'mort':
-            print("I'm dead")
-            exit(0)
-        if splited[0] == 'message' and splited[3] == 'hi':
-            self.players_info[splited[2]](PlayerInfo(splited[4]))
-            self.state_queue.append(self.State.INTRODUCING)
-
-    def _introduce(self, msg):
+    def _introduce(self, result, messages):
         print('introduce')
-        if msg == '':
-            self.server.send('broadcast ' + self.name + ' hi ' + str(self.my_info))
-        if msg == 'ok':
-            return True
+        if result == '':
+            return Command(Command.Type.SAY,
+                           self.name + ' hi ' + str(self.my_info))
+        return self._collect('', [])
+
+    def _collect(self, result, messages, context={}):
+        print('collect')
+
+        command_list = self._generate_collect_command_list()
+
         return False
 
-    def _move(self, msg):
-        print('move')
-        return False
+    def _generate_collect_command_list(self, radius):
+        cmd_list = []
+                
+        
+        return cmd_list
 
-    def _meet(self, msg):
+    def _meet(self, result, messages):
         print('meet')
         return False
 
-    def _invokate(self, msg):
+    def _invokate(self, result, messages):
         print('invokate')
         return False
-
-
-    # [MOVING]

@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 
-import sys
-import socket
 import select
-import os
-from enum import Enum
+
 from optparse import OptionParser
 from player import Player
 from server import Server
+
 
 def parse_args():
     usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
@@ -15,8 +13,11 @@ def parse_args():
     parser.add_option('-n', dest='team', type='str')
     parser.add_option('-p', dest='port', type='int')
     parser.add_option('-h', dest='hostname', type='str', default='127.0.0.1')
-    parser.add_option('-d', dest='dev', action='store_true',
-                      default=False, help='Enable development mode')
+    parser.add_option('-d',
+                      dest='dev',
+                      action='store_true',
+                      default=False,
+                      help='Enable development mode')
     (options, args) = parser.parse_args()
     if options.team is None or options.port is None:
         parser.print_usage()
@@ -34,8 +35,9 @@ def dev_mode(server):
         print('-------------------------------------------------------------')
         # print voir
         print('f - forward (avance), l - left (droite), r - right (gauche),')
-        print('s - see (voir), i - inventory (inventaire), t - take <obj> (prend),')
-        print('d - drop <obj> (pose), k - kick (expulse), b - broadcast <text>,')
+        print('s - see (voir), i - inventory (inventaire),')
+        print('t - take <obj> (prend), d - drop <obj> (pose),')
+        print('k - kick (expulse), b - broadcast <text>,')
         print('x - incantation, f - fork, c - connect_nbr')
         c = input('-> ')
         if c == 'f':
@@ -69,31 +71,12 @@ def dev_mode(server):
 
 
 def prod_mode(server, world_size):
-    player = Player(server)
-    msg = ''
-    player.play(msg)
-    while True:
-        select.select([server.s], [], [])
-        msg = server.read()
-        player.play(msg)
-
-
-    while True:
-        select.select([server.s], [], [])
-        msg = server.read()
-        if player.check_message(msg):  # check mort, put broadcast to queue if need
-            player.play(msg)           # if it's command answer, pass to command handler
-            server.send()              # from queue
-
-
-    server.messages # if command result - message, add to messages
-
+    player = Player()
     result = ''
     while True:
-        cmd = player.play(result) # at first, check server.messages, and change behavior if need
+        cmd = player.play(result, server.messages)
         result = server.exec_command(cmd)
-        
-    
+
 
 def main(options):
     server = Server()
