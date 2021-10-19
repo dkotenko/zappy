@@ -46,15 +46,15 @@ t_player	*get_player_by_id(int player_id)
 	return game->players[player_id];
 }
 
-t_team	*create_teams()
+t_team	**create_teams()
 {
-	t_team	*new;
+	t_team	**new;
 
-	new = (t_team *)ft_memalloc(sizeof(t_team) * g_cfg.teams_count);
+	new = (t_team **)ft_memalloc(sizeof(t_team *) * g_cfg.teams_count);
 	for (int i = 0; i < g_cfg.teams_count; i++) {
-		new[i].id = i + 1;
-		new[i].name = g_cfg.teams[i];
-		new[i].players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
+		new[i]->id = i + 1;
+		new[i]->name = g_cfg.teams[i];
+		new[i]->players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
 	}
 	return new;
 }
@@ -81,11 +81,6 @@ t_game	*create_game(map_initiator init_map)
  /*
     The winning team is the one that will have its 6 players reach the maximum level.
      */
-
-
-
-
-
 void	delete_player(t_player *player)
 {
 	t_list *tmp = player->curr_cell->visitors;
@@ -97,8 +92,8 @@ void	delete_player(t_player *player)
 		}
 		tmp = tmp->next;
 	}
-	xassert(tmp_player, "delete_player error: no player at cell");
-	ft_lstpop(player->curr_cell->visitors, tmp);	
+	xassert(tmp_player != NULL, "delete_player error: no player at cell");
+	ft_lstpop(&player->curr_cell->visitors, tmp);	
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
@@ -193,12 +188,12 @@ void lgc_player_gone(int player_nb)
 
 void lgc_update(void)
 {
+	game->curr_tick++;
 	if (is_session_ends()) {
-		//get_winners();
+		get_winners();
+	} else {
+		starving_n_death();
 	}
-	//starving_n_death();
-	// check all players, decrease hp, check win condition
-
 }
 
 void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
@@ -280,8 +275,9 @@ int lgc_get_player_level(int player_nb)
 {
 	t_player *player = get_player_by_id(player_nb);
 
-	if (!player)
+	if (!player) {
 		return -1;
+	}
 	return player->level;
 }
 
@@ -289,11 +285,11 @@ int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
 {
 	if (player_nb < 0)
 		return -1;
-	*x = 34;
-	*y = 56;
+	*x = game->players[player_nb]->curr_cell->x;
+	*y = game->players[player_nb]->curr_cell->y;
 
 	for (int i = 0; i < 7; ++i)
-		resources[i] = i + 1;
+		resources[i] = game->players[player_nb]->inventory[i];
 	return 0;
 }
 

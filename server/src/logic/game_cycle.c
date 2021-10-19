@@ -1,37 +1,46 @@
 #include "zappy.h"
 #include "../server.h"
 
-//extern t_main_config *g_cfg;
-/*
+extern t_game *game;
+
 int is_session_end(void)
 {
-	int		i;
-
-	i = -1;
-	while (++i < g_cfg.teams_count)
+	for (int i = 0; i < game->teams_num; i++)
 	{
-		if (teams[i]->max_level_count >=6)
+		if (game->teams[i]->max_level_count > 5)
 		{
-			return true;
+			return 1;
 		}
 	}
-	return false;
+	return 0;
 }
 
 t_list *get_winners(void)
 {
-	int		i;
 	t_list	*list = NULL;
 
-	i = -1;
-	while (++i < g_cfg.teams_count)
+	for (int i = 0; i < game->teams_num; i++)
 	{
-		if (teams[i]->max_level_count >=6)
+		if (game->teams[i]->max_level_count >=6)
 		{
-			ft_lstnew_pointer(list, teams[i]);
+			ft_lstadd(&list, ft_lstnew_pointer(list, game->teams[i]));
 		}
 	}
 	return list;
 }
 
-*/
+void	starving_n_death(void)
+{
+	for (int i = 0; i < game->players_num; i++) {
+		if (!game->players[i]) {
+			continue ;
+		}
+		if (game->curr_tick - game->players[i]->last_meal_tick > 125) {
+			game->players[i]->inventory[NOURRITURE]--;
+			game->players[i]->last_meal_tick = game->curr_tick;
+		}
+		if (game->players[i]->inventory[0] == 0) {
+			mort(game->players[i]);
+		}
+	}
+}

@@ -55,9 +55,10 @@ typedef struct s_player
 
 typedef struct s_team
 {
-	int id;
-    char *name;
-    t_player **players;
+	int         id;
+    char        *name;
+    t_player    **players;
+    int         max_level_count;
 } t_team;
 
 typedef struct s_config {
@@ -81,14 +82,15 @@ typedef struct s_map
 
 typedef struct s_game
 {
-    t_aux   *aux;
-    t_team  *teams;
+    t_aux       *aux;
+    t_team      **teams;
 	t_player	**players;
-    int      teams_num;
-	int		players_num;
-	t_map	*map;
-    t_buffer *buf;
-	int		is_test;
+    int         teams_num;
+	int		    players_num;
+	t_map       *map;
+    t_buffer    *buf;
+	int		    is_test;
+    int         curr_tick;
 } t_game;
 
 
@@ -122,6 +124,7 @@ t_player	*create_player(int player_id, int team_id);
 void	reply_and_clean_buff(int player_id);
 void	mock_srv_reply(int client_nb, char *msg);
 void	delete_player(t_player *player);
+void	starving_n_death(void);
 
 /*
  * json
