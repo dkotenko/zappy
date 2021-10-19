@@ -6,6 +6,7 @@
 # define RESOURCES_NUMBER 7
 # define INCANTATIONS_NUMBER 7
 # define RESOURCES_NUMBER_OF_PLAYERS 0
+# define PLAYER_MAX_LEVEL 8
 
 enum e_richness
 {

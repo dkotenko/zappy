@@ -33,23 +33,6 @@ void	mort(t_player *player)
 	t_buffer_write(game->buf, "mort");
 }
 
-/*
-//NOT TESTED
-void	starving_n_death(t_game *game)
-{
-	for (int i = 0; i < game->players_num; i++) {
-		if (game->players[i]) {
-			if (game->players[i]->inventory[0] == 0) {
-				mort(game->players[i]);
-			}
-			if (game->tick - game->players[i]->last_meal_tick > 1259) {
-				tmp_player->hp--;
-			}
-		}
-	}
-
-}
-*/
 
 
 void	set_player_cell(t_player *player, t_cell *cell)
@@ -62,7 +45,9 @@ void	set_player_cell(t_player *player, t_cell *cell)
 }
 
 
-//TESTED
+/*
+** move forward
+*/
 void	avance(t_player *player)
 {
 	int	new_x = 0;
@@ -72,31 +57,29 @@ void	avance(t_player *player)
 	t_cell *cell = game->map->cells[new_y][new_x];
 	set_player_cell(player, cell);
 	t_buffer_write(game->buf, "ok");
-	//t_buffer_json_message(game->buf, "OK");
 }
 
-
-//TESTED
-//returns OK
-//TURN RIGHT
+/*
+** turn right
+*/
 void	droite(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
 	t_buffer_write(game->buf, "ok");
 }
 
-
-//TESTED
-//returns OK
-//TURN LEFT
+/*
+** turn left
+*/
 void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
 	t_buffer_write(game->buf, "ok");
 }
 
-
-//returns items
+/*
+** returns items
+*/
 void	inventory(t_player *player)
 {
 	
@@ -135,8 +118,6 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 	int	printed = 0;
 	t_list *temp = cell->visitors;
 
-	//print_cell(cell);
-
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
 		for (int j =0; j < cell->inventory[i]; j++) {
 			if (printed) {
@@ -159,7 +140,9 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 	}
 }
 
-//returns cells
+/*
+** returns cells
+*/ 
 void	voir(t_player *player)
 {	
 	t_map *map = game->map;
@@ -202,7 +185,7 @@ void	voir(t_player *player)
 					t_buffer_write(game->buf, ", ");
 				}
 				//printed[get_h(h)][w] = 1;
-				printf("x:%d y:%d\n", w, h);
+				//printf("x:%d y:%d\n", w, h);
 				print_voir_cell(player, game->map->cells[get_h(h)][w]);
 				h++;
 				cells_counter++;
@@ -246,7 +229,9 @@ void	get_forward_coords(t_player *player, int *new_x, int *new_y)
 	}
 }
 
-//return ok//ko
+/*
+** returns ok/ko
+*/
 void	expulse(t_player *player)
 {
 	int	new_x = 0;
@@ -466,8 +451,6 @@ void	broadcast(t_player *player, char *data)
 	t_buffer_clean(game->buf);
 }
 
-
-//NOT TESTED
 void	incantation(t_player *player)
 {
 	t_list *temp = player->curr_cell->visitors;
@@ -500,11 +483,19 @@ void	incantation(t_player *player)
 
 	for (int i = 0; i < incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1; i++) {
 		participants[i]->level++;
+		if (participants[i]->level == PLAYER_MAX_LEVEL) {
+			game->teams[participants[i]->team_id]->max_level_count++;
+		}
 	}
 	player->level++;
+	if (player->level == PLAYER_MAX_LEVEL) {
+		game->teams[player->team_id]->max_level_count++;
+	}
 }
 
-// 8-symbol token, symbols in range [A : Z]
+/*
+** 8-symbol token, symbols in range [A : Z]
+*/
 t_token *create_token(int team_id)
 {
 	t_token	*new = (t_token *)ft_memalloc(sizeof(t_token));
@@ -516,7 +507,6 @@ t_token *create_token(int team_id)
 	return (new);
 }
 
-
 void	do_fork(t_player *player)
 {
 	//add_player(create_player);
@@ -524,13 +514,10 @@ void	do_fork(t_player *player)
 	//t_buf write OK, write token
 }
 
-
 void	connect_nbr(t_player *player)
 {
 	player = NULL;
 }
-
-
 
 void	init_cmd()
 {
