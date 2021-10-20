@@ -509,7 +509,10 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
-	//add_player(create_player);
+	//game->teams[player->team_id]->
+	//
+	
+	add_player(pla);
 	player->is_egg = 1;
 	//t_buf write OK, write token
 }
