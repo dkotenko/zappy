@@ -18,7 +18,7 @@ void	reply_except_list(t_list *list, int player_id)
 	{
 		t_player *player = (t_player *)list->content;
 		if (player->id != player_id) {
-			srv_reply_client(player->id, game->buf->s);	
+			srv_reply_client(player->id, "%s", game->buf->s);	
 		}
 		list = list->next;
 	}
@@ -28,7 +28,7 @@ void	reply_except_list(t_list *list, int player_id)
 void	reply_and_clean_buff(int player_id)
 {
 	if (game->is_test == 0) {
-		srv_reply_client(player_id, game->buf->s);
+		srv_reply_client(player_id, "%s", game->buf->s);
 	} else {
 		mock_srv_reply(player_id, game->buf->s);
 	}
@@ -52,6 +52,7 @@ t_team	**create_teams()
 
 	new = (t_team **)ft_memalloc(sizeof(t_team *) * g_cfg.teams_count);
 	for (int i = 0; i < g_cfg.teams_count; i++) {
+		new[i] = ft_memalloc(sizeof(t_team));
 		new[i]->id = i + 1;
 		new[i]->name = g_cfg.teams[i];
 		new[i]->players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
