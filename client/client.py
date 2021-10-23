@@ -1,53 +1,10 @@
 #!/usr/bin/env python3
 
-import sys
-import socket
 import select
-from enum import Enum
+
 from optparse import OptionParser
-
-class State(Enum):
-    BIENVENUE = 0
-    CLIENT_NB = 1
-    WORLD_SIZE = 2
-    GAME = 3
-
-def sock_readline(s):
-    msg = ''
-    while True:
-        c = s.recv(1).decode('ascii')
-        if c == '\n':
-            break
-        msg += c
-    return msg
-
-
-def sock_send(s, msg):
-    s.send(bytes(msg + '\n', 'ascii'))
-
-
-def connect(host, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
-    client_nb = -1
-    state = State(0)
-    while True:
-        r = select.select([s], [], [])
-        msg = sock_readline(s)
-        if msg == '':
-            break
-        if state == State.BIENVENUE and msg == 'BIENVENUE':
-            sock_send(s, sys.argv[2])
-            state = State.CLIENT_NB
-        elif state == State.CLIENT_NB:
-            client_nb = int(msg);
-            print('client_nb: ' + str(client_nb))
-            state = State.WORLD_SIZE
-        elif state == State.WORLD_SIZE:
-            world_size = msg.split(' ')
-            print('world_size' + str(world_size))
-            break 
-    return s, world_size
+from player import Player
+from server import Server, Command
 
 
 def parse_args():
@@ -56,65 +13,86 @@ def parse_args():
     parser.add_option('-n', dest='team', type='str')
     parser.add_option('-p', dest='port', type='int')
     parser.add_option('-h', dest='hostname', type='str', default='127.0.0.1')
-    parser.add_option('-d', dest='dev', action='store_true', default=False, help='Enable development mode')
+    parser.add_option('-d',
+                      dest='dev',
+                      action='store_true',
+                      default=False,
+                      help='Enable development mode')
     (options, args) = parser.parse_args()
-    if options.team == None or options.port == None:
+    if options.team is None or options.port is None:
         parser.print_usage()
         exit(1)
     return options
-    
 
-def main(options):
-    s, world_size = connect(options.hostname, options.port)
+
+def dev_mode(server):
     r = ''
     last_cmd = ''
-    if options.dev:
-        while True:
-            print('\033c')
-            print('last command: {} -> {}'.format(last_cmd, r))
-            print('-------------------------------------------------------------')
-            # print voir
-            print('f - forward (avance), l - left (droite), r - right (gauche),')
-            print('s - see (voir), i - inventory (inventaire), t - take <obj> (prend),')
-            print('d - drop <obj> (pose), k - kick (expulse), b - broadcast <text>,')
-            print('x - incantation, f - fork, c - connect_nbr')
-            c = input('-> ')
-            if c == 'f':
-                sock_send(s, 'avance')
-            elif c == 'l':
-                sock_send(s, 'droite')
-            elif c == 'r':
-                sock_send(s, 'gauche')
-            elif c == 's':
-                sock_send(s, 'voir')
-            elif c == 'i':
-                sock_send(s, 'inventaire')
-            elif c == 't':
-                sock_send(s, 'prend')
-            elif c == 'd':
-                sock_send(s, 'pose')
-            elif c == 'k':
-                sock_send(s, 'expulse')
-            elif c == 'b':
-                sock_send(s, 'broadcast')
-            elif c == 'x':
-                sock_send(s, 'incantation')
-            elif c == 'f':
-                sock_send(s, 'fork')
-            elif c == 'c':
-                sock_send(c, 'connect_nbr')
-            else:
-                continue 
-            r = sock_readline(s)
-            last_cmd = c
-            
-    if sys.stdin in r:
-        pass
 
-    s.close()
+    while True:
+        print('\033c')
+        print('last command: {} -> {}'.format(last_cmd, r))
+        print('-------------------------------------------------------------')
+        # print voir
+        print('f - forward (avance), l - left (droite), r - right (gauche),')
+        print('s - see (voir), i - inventory (inventaire),')
+        print('t - take <obj> (prend), d - drop <obj> (pose),')
+        print('k - kick (expulse), b - broadcast <text>,')
+        print('x - incantation, f - fork, c - connect_nbr')
+        inp = input('-> ')
+        splited = inp.split(' ')
+        c = splited.pop(0)
+        arg = ' '.join(splited)
+        if c == 'f':
+            r = server.exec_command(Command(Command.Type.GO))
+        elif c == 'l':
+            r = server.exec_command(Command(Command.Type.TURN_LEFT))
+        elif c == 'r':
+            r = server.exec_command(Command(Command.Type.TURN_RIGHT))
+        elif c == 's':
+            r = server.exec_command(Command(Command.Type.SEE))
+        elif c == 'i':
+            r = server.exec_command(Command(Command.Type.INVENTORY))
+        elif c == 't':
+            r = server.exec_command(Command(Command.Type.TAKE_OBJECT, arg))
+        elif c == 'd':
+            r = server.exec_command(Command(Command.Type.DROP_OBJECT, arg))
+        elif c == 'k':
+            r = server.exec_command(Command(Command.Type.KICK))
+        elif c == 'b':
+            r = server.exec_command(Command(Command.Type.SAY, arg))
+        elif c == 'x':
+            r = server.exec_command(Command(Command.Type.INCANTATE))
+        elif c == 'f':
+            r = server.exec_command(Command(Command.Type.FORK))
+        elif c == 'c':
+            r = server.exec_command(Command(Command.Type.CONNECT_NBR))
+        else:
+            continue
+        last_cmd = c
+
+
+def prod_mode(server, world_size):
+    player = Player(world_size)
+    result = ''
+    while True:
+        cmd = player.play(result, server.messages)
+        result = server.exec_command(cmd)
+
+
+def main(options):
+    server = Server()
+    world_size = server.connect(options.hostname, options.port)
+    if options.dev:
+        dev_mode(server)
+    else:
+        prod_mode(server, world_size)
+
 
 if __name__ == '__main__':
-    try:
-        main(parse_args())
-    except Exception as e:
-        print(e)
+    # try:
+    #     main(parse_args())
+    # except Exception as e:
+    #     print(e)
+
+    main(parse_args())
