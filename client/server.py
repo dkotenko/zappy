@@ -169,6 +169,7 @@ class Server:
         msg = ''
         while True:
             c = self.s.recv(1).decode('ascii')
+            print('recv ' + c)
             if c == '\n':
                 break
             msg += c
