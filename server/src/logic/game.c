@@ -18,7 +18,7 @@ void	reply_except_list(t_list *list, int player_id)
 	{
 		t_player *player = (t_player *)list->content;
 		if (player->id != player_id) {
-			srv_reply_client(player->id, "%s", game->buf->s);	
+			srv_reply_client(player->id, "%s\n", game->buf->s);	
 		}
 		list = list->next;
 	}
@@ -28,7 +28,7 @@ void	reply_except_list(t_list *list, int player_id)
 void	reply_and_clean_buff(int player_id)
 {
 	if (game->is_test == 0) {
-		srv_reply_client(player_id, "%s", game->buf->s);
+		srv_reply_client(player_id, "%s\n", game->buf->s);
 	} else {
 		mock_srv_reply(player_id, game->buf->s);
 	}

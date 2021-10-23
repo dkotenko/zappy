@@ -447,7 +447,7 @@ void	broadcast(t_player *player, char *data)
 		int side = get_broadcast_side(player, receiver);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
 		game->buf->s[size_pos] = side_normalized + '0';
-		srv_reply_client(game->players[i]->id, "%s", game->buf->s);
+		srv_reply_client(game->players[i]->id, "%s\n", game->buf->s);
 	}
 	t_buffer_clean(game->buf);
 }
