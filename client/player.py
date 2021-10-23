@@ -46,9 +46,13 @@ class Player:
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}
+    world_x = 0
+    world_y = 0
+    collect_context = {}
 
-    def __init__(self, server):
-        self.server = server
+    def __init__(self, world_size):
+        self.world_x = int(world_size[0])
+        self.world_y = int(world_size[1])
 
     def play(self, result, messages):
         if self.state == self.State.INTRODUCING:
@@ -67,17 +71,62 @@ class Player:
                            self.name + ' hi ' + str(self.my_info))
         return self._collect('', [])
 
-    def _collect(self, result, messages, context={}):
+    def _collect(self, result, messages):
         print('collect')
+        if result == '' or not self.collect_context['command_list']:
+            self.collect_context['command_list'] = self._generate_collect_command_list()
+        if result.startswith('{'):
+            striped = result.strip('{}')
+            splited = striped.split(',')
+            for i in range(0, len(splited)):
+                content = splited[i].strip()
+                content_splited = content.split(' ')
+                for c in content_splited:
+                    if c != 'player':
+                        self._take(i, c)
+                                        
+                    
+            
+        return self.collect_context['command_list'].pop(0)
 
-        command_list = self._generate_collect_command_list()
-
-        return False
-
-    def _generate_collect_command_list(self, radius):
-        cmd_list = []
+    def _take(self, pos, content):
+        borders = [0, 3, 8, 15, 24, 35, 48, 63, 80]
+        i = 0
+        x = 0
+        for i in range(0, len(borders)):
+            if borders[i] >= pos:
                 
+                break
+        y = i
         
+        
+
+
+    def _generate_collect_command_list(self):
+        cmd_list = [
+            Command(Command.Type.SEE),
+            Command(Command.Type.GO),
+            Command(Command.Type.SEE),
+            Command(Command.Type.GO),
+            Command(Command.Type.SEE),
+            Command(Command.Type.TURN_LEFT),
+            Command(Command.Type.SEE)
+        ]
+        radius = 3
+        turned = False
+        while radius < min(self.world_x, self.world_y):
+            for i in range(0, radius):
+                cmd_list.append(Command(Command.Type.GO))
+                cmd_list.append(Command(Command.Type.SEE))
+            cmd_list.append(Command(Command.Type.TURN_LEFT))
+            cmd_list.append(Command(Command.Type.SEE))
+            radius += self.my_info.lvl
+            if turned:
+                radius += 1
+                turned = False
+            else:
+                turned = True
+                
         return cmd_list
 
     def _meet(self, result, messages):
