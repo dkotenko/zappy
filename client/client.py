@@ -71,7 +71,7 @@ def dev_mode(server):
 
 
 def prod_mode(server, world_size):
-    player = Player()
+    player = Player(world_size)
     result = ''
     while True:
         cmd = player.play(result, server.messages)

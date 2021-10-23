@@ -1,7 +1,7 @@
 import sys
 from enum import Enum, auto
-from select import select
-from socket import socket
+import select
+import socket
 
 
 def canBeNumber(n):
@@ -12,7 +12,7 @@ def canBeNumber(n):
         return False
 
 
-class Command(Enum):
+class Command:
 
     class Type(Enum):
         WAIT = auto()
@@ -29,12 +29,16 @@ class Command(Enum):
         FORK = auto()
         CONNECT_NBR = auto()
 
-    t = Type()
+    t = None
     arg = ''
 
     def __init__(self, t, arg=''):
         self.t = t
         self.arg = arg
+
+    def __str__(self):
+        return str('[' + str(self.t) + ' "' + self.arg  + '"]')
+
 
 
 class Message:
@@ -66,17 +70,17 @@ class Server:
         PLAYER_BUSY = auto()
 
     def connect(self, host, port):
-        self.s = socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect((host, port))
         client_nb = -1
-        state = self.State(0)
+        state = self.State.BIENVENUE
         while True:
             select.select([self.s], [], [])
-            msg = self.read()
+            msg = self._read()
             if msg == '':
                 break
             if state == self.State.BIENVENUE and msg == 'BIENVENUE':
-                self.send(sys.argv[2])
+                self._send(sys.argv[2])
                 state = self.State.CLIENT_NB
             elif state == self.State.CLIENT_NB:
                 client_nb = int(msg)
@@ -98,43 +102,43 @@ class Server:
         """
         s = ''
         expected_reply = ['ok']
-        if cmd == Command.Type.WAIT:
+        if cmd.t == Command.Type.WAIT:
             pass
-        if cmd == Command.Type.GO:
+        if cmd.t == Command.Type.GO:
             s = 'avance'
-        if cmd == Command.Type.TURN_LEFT:
+        if cmd.t == Command.Type.TURN_LEFT:
             s = 'droite'
-        if cmd == Command.Type.TURN_RIGHT:
+        if cmd.t == Command.Type.TURN_RIGHT:
             s = 'gauche'
-        if cmd == Command.Type.SEE:
+        if cmd.t == Command.Type.SEE:
             s = 'voir'
             expected_reply = ['{}']
-        if cmd == Command.Type.INVENTORY:
+        if cmd.t == Command.Type.INVENTORY:
             s = 'inventaire'
             expected_reply = ['{}']
-        if cmd == Command.Type.TAKE_OBJECT:
+        if cmd.t == Command.Type.TAKE_OBJECT:
             s = 'prend ' + cmd.arg
             expected_reply.append('ko')
-        if cmd == Command.Type.DROP_OBJECT:
+        if cmd.t == Command.Type.DROP_OBJECT:
             s = 'pose ' + cmd.arg
             expected_reply.append('ko')
-        if cmd == Command.Type.KICK:
+        if cmd.t == Command.Type.KICK:
             s = 'expulse'
             expected_reply.append('ko')
-        if cmd == Command.Type.SAY:
+        if cmd.t == Command.Type.SAY:
             s = 'broadcast ' + cmd.arg
-        if cmd == Command.Type.INCANTATE:
+        if cmd.t == Command.Type.INCANTATE:
             s = 'incantation'
             expected_reply = ['elevation en cours']
-        if cmd == Command.Type.FORK:
+        if cmd.t == Command.Type.FORK:
             s = 'fork'
-        if cmd == Command.Type.CONNECT_NBR:
+        if cmd.t == Command.Type.CONNECT_NBR:
             s = 'connect_nbr'
             expected_reply = ['number']
-        if cmd != Command.Type.WAIT:
+        if cmd.t != Command.Type.WAIT:
             self._send(s)
         while True:
-            select([self.s], [], [])
+            select.select([self.s], [], [])
             r = self._read()
             for i in expected_reply:
                 if ((r == i) or (i == '{}' and r.startswith('{'))
