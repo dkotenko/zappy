@@ -54,13 +54,13 @@ def dev_mode(server):
         elif c == 'i':
             r = server.exec_command(Command(Command.Type.INVENTORY))
         elif c == 't':
-            r = server.exec_command(Command(Command.Type.TAKE_OBJECT), arg)
+            r = server.exec_command(Command(Command.Type.TAKE_OBJECT, arg))
         elif c == 'd':
-            r = server.exec_command(Command(Command.Type.DROP_OBJECT), arg)
+            r = server.exec_command(Command(Command.Type.DROP_OBJECT, arg))
         elif c == 'k':
             r = server.exec_command(Command(Command.Type.KICK))
         elif c == 'b':
-            r = server.exec_command(Command(Command.Type.BROADCAST), arg)
+            r = server.exec_command(Command(Command.Type.SAY, arg))
         elif c == 'x':
             r = server.exec_command(Command(Command.Type.INCANTATE))
         elif c == 'f':
