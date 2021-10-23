@@ -1,5 +1,6 @@
 #include "zappy.h"
 #include "../server.h"
+#include "../logger.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) > (b)) ? (b) : (a))
@@ -239,8 +240,8 @@ void	expulse(t_player *player)
 	t_list *temp = NULL;
 	
 	get_forward_coords(player, &new_x, &new_y);
-	if (player->curr_cell->visitors > 1) {
-		temp = ft_lstpop(player->curr_cell->visitors, player);
+	if (player->curr_cell->visitors_num > 1) { /* TODO check visitors_num is valid */
+		temp = ft_lstpop(&player->curr_cell->visitors, player);
 		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
 		t_buffer_write(game->buf, "OK");
 		reply_and_clean_buff(player->id);
@@ -273,7 +274,7 @@ void	prend(t_player *player, char *data)
 	char	*resource = data + strlen("prend ");
 	int	resource_id = atoi(resource);
 	
-	if (!resource_id && resource[0] != '0' || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	if ((!resource_id && resource[0] != '0') || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		t_buffer_json_message(game->buf, "KO");
 	} else if (player->curr_cell->inventory[resource_id] > 0)
 	{
@@ -433,7 +434,7 @@ int		normalize_side(int orient, int side)
 void	broadcast(t_player *player, char *data)
 {
 	char	*text = data + strlen("broadcast ");
-	t_player	*receiver;
+	t_player	*receiver = NULL;
 
 	int	size_pos = 8;
 	t_buffer_write(game->buf, "message 0");
@@ -446,7 +447,7 @@ void	broadcast(t_player *player, char *data)
 		int side = get_broadcast_side(player, receiver);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
 		game->buf->s[size_pos] = side_normalized + '0';
-		srv_reply_client(game->players[i]->id, game->buf->s);
+		srv_reply_client(game->players[i]->id, "%s", game->buf->s);
 	}
 	t_buffer_clean(game->buf);
 }
@@ -512,8 +513,8 @@ void	do_fork(t_player *player)
 	//game->teams[player->team_id]->
 	//
 	
-	add_player(pla);
-	player->is_egg = 1;
+	//add_player(pla);
+	//player->is_egg = 1;
 	//t_buf write OK, write token
 }
 
