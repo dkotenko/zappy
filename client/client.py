@@ -4,7 +4,7 @@ import select
 
 from optparse import OptionParser
 from player import Player
-from server import Server
+from server import Server, Command
 
 
 def parse_args():
@@ -39,34 +39,36 @@ def dev_mode(server):
         print('t - take <obj> (prend), d - drop <obj> (pose),')
         print('k - kick (expulse), b - broadcast <text>,')
         print('x - incantation, f - fork, c - connect_nbr')
-        c = input('-> ')
+        inp = input('-> ')
+        splited = inp.split(' ')
+        c = splited.pop(0)
+        arg = ' '.join(splited)
         if c == 'f':
-            server.send('avance')
+            r = server.exec_command(Command(Command.Type.GO))
         elif c == 'l':
-            server.send('droite')
+            r = server.exec_command(Command(Command.Type.TURN_LEFT))
         elif c == 'r':
-            server.send('gauche')
+            r = server.exec_command(Command(Command.Type.TURN_RIGHT))
         elif c == 's':
-            server.send('voir')
+            r = server.exec_command(Command(Command.Type.SEE))
         elif c == 'i':
-            server.send('inventaire')
+            r = server.exec_command(Command(Command.Type.INVENTORY))
         elif c == 't':
-            server.send('prend')
+            r = server.exec_command(Command(Command.Type.TAKE_OBJECT), arg)
         elif c == 'd':
-            server.send('pose')
+            r = server.exec_command(Command(Command.Type.DROP_OBJECT), arg)
         elif c == 'k':
-            server.send('expulse')
+            r = server.exec_command(Command(Command.Type.KICK))
         elif c == 'b':
-            server.send('broadcast')
+            r = server.exec_command(Command(Command.Type.BROADCAST), arg)
         elif c == 'x':
-            server.send('incantation')
+            r = server.exec_command(Command(Command.Type.INCANTATE))
         elif c == 'f':
-            server.send('fork')
+            r = server.exec_command(Command(Command.Type.FORK))
         elif c == 'c':
-            server.send('connect_nbr')
+            r = server.exec_command(Command(Command.Type.CONNECT_NBR))
         else:
             continue
-        r = server.read()
         last_cmd = c
 
 
