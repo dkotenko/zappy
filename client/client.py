@@ -28,17 +28,13 @@ def parse_args():
 def dev_mode(server):
     r = ''
     last_cmd = ''
-
+    print('f - forward (avance), l - left (droite), r - right (gauche),')
+    print('s - see (voir), i - inventory (inventaire),')
+    print('t - take <obj> (prend), d - drop <obj> (pose),')
+    print('k - kick (expulse), b - broadcast <text>,')
+    print('x - incantation, f - fork, c - connect_nbr')
+    print('-------------------------------------------------------------')
     while True:
-        print('\033c')
-        print('last command: {} -> {}'.format(last_cmd, r))
-        print('-------------------------------------------------------------')
-        # print voir
-        print('f - forward (avance), l - left (droite), r - right (gauche),')
-        print('s - see (voir), i - inventory (inventaire),')
-        print('t - take <obj> (prend), d - drop <obj> (pose),')
-        print('k - kick (expulse), b - broadcast <text>,')
-        print('x - incantation, f - fork, c - connect_nbr')
         inp = input('-> ')
         splited = inp.split(' ')
         c = splited.pop(0)
@@ -69,7 +65,12 @@ def dev_mode(server):
             r = server.exec_command(Command(Command.Type.CONNECT_NBR))
         else:
             continue
-        last_cmd = c
+        print('response: ' + r)
+        if server.messages:
+            print('messages:')
+            while server.messages:
+                m = server.messages.pop(0)
+                print(m.t, m.data)
 
 
 def prod_mode(server, world_size):
@@ -77,7 +78,9 @@ def prod_mode(server, world_size):
     result = ''
     while True:
         cmd = player.play(result, server.messages)
+        print('exec', cmd.t, cmd.arg)
         result = server.exec_command(cmd)
+        print('result', result)
 
 
 def main(options):
