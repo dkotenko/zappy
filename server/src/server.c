@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/10 14:26:20 by clala            ###   ########.fr       */
+/*   Updated: 2021/10/24 14:52:44 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -141,7 +141,7 @@ static int client_handle_command(int client_id, char *command)
 	} else {
 		timeradd(&t, &env.t, &t);
 	}
-	cmd = command_new(t, strdup(g_cfg.cmd.name[command_id]), client_id);
+	cmd = command_new(t, strdup(command), client_id);
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
