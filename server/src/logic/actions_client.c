@@ -466,7 +466,8 @@ void	incantation(t_player *player)
 
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		if (player->inventory[i] < incat_consts[i]) {
-			t_buffer_json_message(game->buf, "ko");
+			t_buffer_write(game->buf, "ko");
+			//t_buffer_json_message(game->buf, "ko");
 			return ;	
 		}
 	}
@@ -481,7 +482,8 @@ void	incantation(t_player *player)
 		temp = temp->next;
 	}
 	if (incat_counter) {
-		t_buffer_json_message(game->buf, "ko");
+		//t_buffer_json_message(game->buf, "ko");
+		t_buffer_write(game->buf, "ko");
 		return ;
 	}
 
