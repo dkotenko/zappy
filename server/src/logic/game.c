@@ -205,7 +205,6 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 		cmd_id = lgc_get_command_id(cmd);
 	}
 	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
-
 	if (g_cfg.cmd.req_arg[cmd_id]) {
 		(g_cfg.cmd.f_arg[cmd_id])(player, cmd);
 	} else {
@@ -234,13 +233,13 @@ int lgc_get_command_id(char *cmd)
 		return CMD_VOIR;
 	if (strcmp(cmd, "inventaire") == 0)
 		return CMD_INVENTAIRE;
-	if (strncmp(cmd, "prend ", 6) == 0)
+	if (strncmp(cmd, "prend", 5) == 0)
 		return CMD_PREND;
-	if (strncmp(cmd, "pose ", 5) == 0)
+	if (strncmp(cmd, "pose", 4) == 0)
 		return CMD_POSE;
 	if (strcmp(cmd, "expulse") == 0)
 		return CMD_EXPULSE;
-	if (strncmp(cmd, "broadcast ", 10) == 0)
+	if (strncmp(cmd, "broadcast", 9) == 0)
 		return CMD_BROADCAST;
 	if (strcmp(cmd, "incantation") == 0)
 		return CMD_INCANTATION;
