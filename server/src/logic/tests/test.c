@@ -20,9 +20,10 @@ t_main_config g_cfg = {
 	.cmd = {NULL, NULL, NULL, NULL, NULL}
 };	
 
-extern t_game	*game;
-int	g_tests_result;
-t_list *g_list_game_to_free;
+extern	t_game	*game;
+int		g_tests_result;
+t_list	*g_list_game_to_free;
+t_dlist	*g_messages;
 
 
 /*
@@ -90,15 +91,22 @@ void	test_prend()
 	int player_id = 3;
 	if (game->players_num == 0)
 		player = add_player(3, 5);
-	char *cmd = "prend ";
+	char *cmd = "prend nourriture";
 	int local_test_result = 0;
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_prend");
 	}
-	print_player(player);
-	ft_memset(player->curr_cell, 0, sizeof(int * RESOURCES_NUMBER));
 	
+	print_player(player);
+	ft_memset(player->curr_cell->inventory, 0, sizeof(int) * RESOURCES_NUMBER);
+	player->curr_cell->inventory[NOURRITURE] = 1;
+	int player_nourriture = player->inventory[NOURRITURE];
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	local_test_result += xassert(player->inventory[NOURRITURE] == player_nourriture + 1, "no item in player inv after prend");
+	local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == 0, "prend: item remains at cell");
+
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
 
 void	test_inventoire()
@@ -141,7 +149,6 @@ void	test_voir()
 	}
 	
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
-	
 }
 
 void	init_game(void)
@@ -159,10 +166,12 @@ void	init_game(void)
 int main() {
 	game = NULL;
 	g_list_game_to_free = (t_list *)ft_memalloc(sizeof(t_list));
+	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
-	test_avance();
-	test_voir();
-	test_inventoire();
+	
+	//test_avance();
+	//test_voir();
+	//test_inventoire();
 	test_prend();
 
 	if (g_tests_result == 0) {
