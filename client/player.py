@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from server import Command
+from server import Command, Message
 
 
 class PlayerInfo:
@@ -83,12 +83,17 @@ class Player:
     def _handle_messages(self, messages):
         while messages:
             m = messages.pop(0)
+            print("got message: " + str(m.t) + ' ' + m.data)
             if m.t == Message.Type.VOICE:
                 data_splited = m.data.split()
                 if data_splited[1] == 'hi':
-                    players_info[data_splited[0]] = PlayerInfo(data_splited[2])
+                    self.players_info[data_splited[0]] = PlayerInfo(
+                        data_splited[2])
                     self.command_list.insert(
-                        0, Command(Command.Type.SAY, self.name + ' hi ' + str(self.my_info)))
+                        0,
+                        Command(Command.Type.SAY,
+                                self.name + ' hi ' + str(self.my_info)))
+                    print('add info about ' + data_splited[0])
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.my_info.lvl = int(m.data)
                 self.state = self.State.COLLECTING
@@ -101,9 +106,11 @@ class Player:
         return self._collect('', [])
 
     def _collect(self, result, messages):
+        #return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
-        if self.last_cmd and self.last_cmd.t == Command.Type.SEE and result.startswith('{'):
+        if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
+           and result.startswith('{'):
             striped = result.strip('{}')
             splited = striped.split(',')
             for i in range(0, len(splited)):
@@ -117,13 +124,12 @@ class Player:
                     self._take(i, take_list)
                     break
 
-        if self.last_cmd and self.last_cmd.t  == Command.Type.TAKE_OBJECT:
+        if self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT:
             self.my_info.add_stone(self.last_cmd.arg)
             if self._can_incantate():
                 self.state = self.State.INCANTATION
                 return self._incantate('', messages)
-            
-                    
+
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
         return cmd
@@ -191,7 +197,6 @@ class Player:
                 return True
         return False
 
-    
     def _take(self, pos, contents):
         borders = [0, 3, 8, 15, 24, 35, 48, 63, 80]
         centers = [0, 2, 6, 12, 20, 30, 42, 56, 72]
@@ -201,18 +206,22 @@ class Player:
             if borders[i] >= pos:
                 break
         y = i
-        x = centers[i] - pos    # positive = left, negative = right
+        x = centers[i] - pos  # positive = left, negative = right
         commands = []
         for i in range(0, y):
             commands.append(Command(Command.Type.GO))
         if x != 0:
-            commands.append(Command(Command.Type.TURN_LEFT if x > 0 else Command.Type.TURN_RIGHT))
+            commands.append(
+                Command(Command.Type.TURN_LEFT if x > 0 else Command.Type.
+                        TURN_RIGHT))
         for i in range(0, abs(x)):
             commands.append(Command(Command.Type.GO))
         for c in contents:
             commands.append(Command(Command.Type.TAKE_OBJECT, c))
         if x != 0:
-            commands.append(Command(Command.Type.TURN_LEFT if x < 0 else Command.Type.TURN_RIGHT))
+            commands.append(
+                Command(Command.Type.TURN_LEFT if x < 0 else Command.Type.
+                        TURN_RIGHT))
         self.command_list = commands + self.command_list
 
     def _generate_collect_command_list(self):
@@ -239,7 +248,7 @@ class Player:
                 turned = False
             else:
                 turned = True
-                
+
         return cmd_list
 
     def _meet(self, result, messages):
@@ -253,5 +262,5 @@ class Player:
     def _incantate(self, result, messages):
         if result == '':
             return Command(Command.Type.INCANTATE)
-        
-        return Comand(Command.Type.WAIT)
+
+        return Command(Command.Type.WAIT)

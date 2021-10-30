@@ -6,7 +6,7 @@
 #    By: clala <clala@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/12/15 16:58:46 by clala             #+#    #+#              #
-#    Updated: 2021/10/07 13:03:07 by gmelisan         ###   ########.fr        #
+#    Updated: 2021/10/28 13:04:57 by gmelisan         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ include list.mak
 OBJ=$(SRCS:.c=.o)
 INCLUDES=-I./includes
 
-CC=clang -Wall -Wextra -Werror
+CC=clang -Wall -Wextra -Werror -g
 THREADS = 8
 
 

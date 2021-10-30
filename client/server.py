@@ -2,6 +2,9 @@ import sys
 from enum import Enum, auto
 import select
 import socket
+import fcntl
+import termios
+import array
 
 
 def canBeNumber(n):
@@ -37,8 +40,7 @@ class Command:
         self.arg = arg
 
     def __str__(self):
-        return str('[' + str(self.t) + ' "' + self.arg  + '"]')
-
+        return str('[' + str(self.t) + ' "' + self.arg + '"]')
 
 
 class Message:
@@ -139,6 +141,11 @@ class Server:
             self._send(s)
         while True:
             select.select([self.s], [], [])
+            buf = array.array('i', [0])
+            fcntl.ioctl(self.s, termios.FIONREAD, buf, 1)
+            if buf[0] == 0:
+                print('server error')
+                exit(0)
             r = self._read()
             for i in expected_reply:
                 if ((r == i) or (i == '{}' and r.startswith('{'))
@@ -149,15 +156,15 @@ class Server:
                 exit(0)
             elif r.startswith('message'):
                 splited = r.split(',')
-                self.messages.append(Message.Type.VOICE,
-                                     source=splited[0].split(' ')[1],
-                                     data=splited[1].strip())
+                self.messages.append(Message(Message.Type.VOICE,
+                                             source=splited[0].split(' ')[1],
+                                             data=splited[1].strip()))
             elif r.startswith('deplacement'):
-                self.messages.append(Message.Type.DEPLACEMENT,
-                                     source=r.split(' ')[1])
+                self.messages.append(Message(Message.Type.DEPLACEMENT,
+                                             source=r.split(' ')[1]))
             elif r.startswith('niveau actuel:'):
-                self.messages.append(Message.Type.ACTUAL_LEVEL,
-                                     data=r.split(':')[1].strip())
+                self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
+                                             data=r.split(':')[1].strip()))
             else:
                 print('unknown message: "' + r + '"')
                 break

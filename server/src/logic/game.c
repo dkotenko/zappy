@@ -43,7 +43,11 @@ int is_session_ends()
 
 t_player	*get_player_by_id(int player_id)
 {
-	return game->players[player_id];
+	for (int i = 0; i < game->players_num; ++i) {
+		if (game->players[i]->id == player_id)
+			return game->players[i];
+	}
+	return NULL;
 }
 
 t_team	**create_teams()
@@ -98,7 +102,12 @@ void	delete_player(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
-	game->players[player->id] = NULL;
+	int id;
+	for (int i = 0; i < game->players_num; ++i)
+		if (game->players[i] == player) {
+			game->players[i] = NULL;
+		}
+
 	free(player->inventory);
 	free(player);
 	free(tmp);
@@ -112,7 +121,6 @@ t_player	*create_player(int player_id, int team_id)
 	player = (t_player *)ft_memalloc(sizeof(t_player));
 	player->id = player_id;
 	player->team_id = team_id;
-	game->players_num++;
 	player->orient = rand() % 4;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	player->inventory[0] += 10;
@@ -127,7 +135,7 @@ t_player	*add_player(int player_id, int team_id)
 
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
-	game->players[player_id] = player;
+	game->players[game->players_num++] = player;
 	add_visitor(cell, player);
 	return player;
 }
@@ -140,6 +148,7 @@ void	add_visitor(t_cell *cell, t_player *player)
 	ft_lstadd(&cell->visitors, new_player);
 	cell->visitors_num++;
 	player->curr_cell = cell;
+	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
 }
 
 // TODO

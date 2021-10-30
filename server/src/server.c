@@ -157,7 +157,8 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		lgc_player_gone(cs);
+		if (client->type == FD_CLIENT)
+			lgc_player_gone(cs);
 		client_gone(cs);
 		return ;
 	}
@@ -441,6 +442,8 @@ void srv_reply_client(int client_nb, char *msg, ...)
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
 	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+	buf[strlen(buf) - 1] = 0;
+	log_debug("srv -> #%d: '%s'", client_nb, buf);
 	free(buf);
 	va_end(ap);
 }

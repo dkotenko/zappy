@@ -38,11 +38,15 @@ void	mort(t_player *player)
 
 void	set_player_cell(t_player *player, t_cell *cell)
 {
+	log_debug("move visitor from cell(%d %d) to cell(%d %d)", 
+			player->curr_cell->x, player->curr_cell->y,
+			cell->x, cell->y);
 	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
 	player->curr_cell->visitors_num--;
 	ft_lstadd(&cell->visitors, temp);
 	cell->visitors_num++;
 	player->curr_cell = cell;
+	log_debug("value of visitors of cell(%d %d): %p", cell->x, cell->y, player->curr_cell->visitors);
 }
 
 
@@ -451,12 +455,14 @@ void	broadcast(t_player *player, char *data)
 		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
+		receiver = game->players[i];
 		int side = get_broadcast_side(player, receiver);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
 		game->buf->s[size_pos] = side_normalized + '0';
 		srv_reply_client(game->players[i]->id, "%s\n", game->buf->s);
 	}
 	t_buffer_clean(game->buf);
+	t_buffer_write(game->buf, "ok");
 }
 
 void	incantation(t_player *player)
@@ -501,6 +507,8 @@ void	incantation(t_player *player)
 	if (player->level == PLAYER_MAX_LEVEL) {
 		game->teams[player->team_id]->max_level_count++;
 	}
+	t_buffer_write(game->buf, "niveau actuel: K");
+	game->buf->s[15] = player->level + '0';
 }
 
 /*
