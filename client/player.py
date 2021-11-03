@@ -34,6 +34,9 @@ class PlayerInfo:
             str(self.th)
         return r
 
+    def __repr__(self):
+        return self.__str__()
+
     def add_stone(self, name):
         if name == 'linemate':
             self.li += 1
@@ -56,7 +59,7 @@ class Player:
         MEETING = 2
         INCANTATION = 3
 
-    state = State.INTRODUCING
+    state = State.COLLECTING
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}
@@ -86,17 +89,17 @@ class Player:
             print("got message: " + str(m.t) + ' ' + m.data)
             if m.t == Message.Type.VOICE:
                 data_splited = m.data.split()
-                if data_splited[1] == 'hi':
+                if data_splited[1] == 'hi' or data_splited[1] == 'took':
                     self.players_info[data_splited[0]] = PlayerInfo(
                         data_splited[2])
                     self.command_list.insert(
                         0,
                         Command(Command.Type.SAY,
                                 self.name + ' hi ' + str(self.my_info)))
-                    print('add info about ' + data_splited[0])
-            if m.t == Message.Type.ACTUAL_LEVEL:
-                self.my_info.lvl = int(m.data)
-                self.state = self.State.COLLECTING
+            
+            # if m.t == Message.Type.ACTUAL_LEVEL:
+            #     self.my_info.lvl = int(m.data)
+            #     self.state = self.State.COLLECTING
 
     def _introduce(self, result, messages):
         if result == '':
@@ -106,7 +109,7 @@ class Player:
         return self._collect('', [])
 
     def _collect(self, result, messages):
-        #return Command(Command.Type.WAIT)
+        # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
         if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
@@ -126,6 +129,9 @@ class Player:
 
         if self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT:
             self.my_info.add_stone(self.last_cmd.arg)
+            self.command_list.insert(0, Command(Command.Type.SAY,
+                                                self.name + ' took ' +
+                                                str(self.my_info)))
             if self._can_incantate():
                 self.state = self.State.INCANTATION
                 return self._incantate('', messages)
@@ -226,6 +232,7 @@ class Player:
 
     def _generate_collect_command_list(self):
         cmd_list = [
+            Command(Command.Type.SAY, self.name + ' hi ' + str(self.my_info)),
             Command(Command.Type.SEE),
             Command(Command.Type.GO),
             Command(Command.Type.SEE),
@@ -255,12 +262,20 @@ class Player:
         return False
 
     def _can_incantate(self):
+        print('my_info: ' + str(self.my_info) + ', ' +
+              'players: ' + str(self.players_info))
         if self.my_info.lvl == 1 and self.my_info.li >= 1:
+            return True
+        if (self.my_info.lvl == 2 and self.my_info.li >= 1 and
+                self.my_info.de >= 1 and self.my_info.si >= 1):
             return True
         return False
 
     def _incantate(self, result, messages):
         if result == '':
             return Command(Command.Type.INCANTATE)
-
-        return Command(Command.Type.WAIT)
+        if result.startswith('niveau actuel'):
+            splited = result.split(':')
+            self.my_info.lvl = int(splited[1].strip())
+        self.state = self.state.COLLECTING
+        return self._collect('', messages)

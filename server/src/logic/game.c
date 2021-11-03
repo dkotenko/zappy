@@ -44,7 +44,7 @@ int is_session_ends()
 t_player	*get_player_by_id(int player_id)
 {
 	for (int i = 0; i < game->players_num; ++i) {
-		if (game->players[i]->id == player_id)
+		if (game->players[i] && game->players[i]->id == player_id)
 			return game->players[i];
 	}
 	return NULL;
