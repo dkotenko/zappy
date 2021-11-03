@@ -1,5 +1,7 @@
 #include "zappy.h"
 #include "../server.h"
+#include "actions_client.h"
+#include "../logger.h"
 
 extern t_game *game;
 
@@ -39,6 +41,7 @@ void	starving_n_death(void)
 			game->players[i]->inventory[NOURRITURE]--;
 			game->players[i]->last_meal_tick = game->curr_tick;
 		}
+		//log_debug("player[%d].food = %d", i, game->players[i]->inventory[0]);
 		if (game->players[i]->inventory[0] == 0) {
 			mort(game->players[i]);
 		}

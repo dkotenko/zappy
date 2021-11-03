@@ -60,6 +60,7 @@ int		get_quarter(int xr, int xe, int yr, int ye);
 void	starving_n_death(void);
 int		is_session_end(void);
 t_list *get_winners(void);
+void	mort(t_player *player);
 
 
 void	set_player_cell(t_player *player, t_cell *cell);

@@ -47,7 +47,7 @@ class Message:
     class Type(Enum):
         VOICE = auto()
         DEPLACEMENT = auto()
-        ACTUAL_LEVEL = auto()
+        ACTUAL_LEVEL = auto()   # not used
 
     t = None
     source = 0
@@ -131,7 +131,7 @@ class Server:
             s = 'broadcast ' + cmd.arg
         if cmd.t == Command.Type.INCANTATE:
             s = 'incantation'
-            expected_reply = ['elevation en cours']
+            expected_reply = ['niveau actuel']
         if cmd.t == Command.Type.FORK:
             s = 'fork'
         if cmd.t == Command.Type.CONNECT_NBR:
@@ -151,6 +151,9 @@ class Server:
                 if ((r == i) or (i == '{}' and r.startswith('{'))
                         or (i == 'number' and canBeNumber(r))):
                     return r
+            if r.startswith('niveau actuel'):
+                return r
+            print('message: ' + r)
             if r == 'mort':
                 print("I'm dead")
                 exit(0)
@@ -162,7 +165,7 @@ class Server:
             elif r.startswith('deplacement'):
                 self.messages.append(Message(Message.Type.DEPLACEMENT,
                                              source=r.split(' ')[1]))
-            elif r.startswith('niveau actuel:'):
+            elif r.startswith('niveau actuel:'):  # not used
                 self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
                                              data=r.split(':')[1].strip()))
             else:

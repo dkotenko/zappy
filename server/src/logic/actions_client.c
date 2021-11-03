@@ -30,10 +30,10 @@ int		get_y(int coord)
 
 void	mort(t_player *player)
 {
+	srv_reply_client(player->id, "mort\n");
+	srv_client_died(player->id);
 	delete_player(player);
-	t_buffer_write(game->buf, "mort");
 }
-
 
 
 void	set_player_cell(t_player *player, t_cell *cell)
