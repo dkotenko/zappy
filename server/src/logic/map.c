@@ -36,7 +36,7 @@ void	init_random_map(t_game *game)
 {
 	//init food 
 	int food_amount = game->aux->incantation_sum[RESOURCES_NUMBER_OF_PLAYERS] * \
-		game->teams_num * R_RICH * R_LEVEL;
+		game->teams_num * /*R_RICH * */ R_LEVEL;
 	while (food_amount--) {
 		get_random_cell(game->map)->inventory[NOURRITURE]++;
 	}
