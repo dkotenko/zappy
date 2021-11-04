@@ -279,7 +279,10 @@ void	prend(t_player *player, char *data)
 	char	*resource = data + strlen("prend ");
 	int	resource_id = get_resource_id(resource);
 	
-	if ((!resource_id && resource[0] != '0') || resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	// TODO what is "(!resource_id && resource[0] != '0')"  ?
+	// if not nourriture and first symbol is not '0' ? 
+	
+	if (/*(!resource_id && resource[0] != '0') || */resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
 	} else if (player->curr_cell->inventory[resource_id] > 0)

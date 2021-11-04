@@ -71,6 +71,7 @@ t_game	*create_game(map_initiator init_map)
 	t_game	*game;
 
 	game = (t_game *)ft_memalloc(sizeof(t_game));
+	game->teams_num = g_cfg.teams_count;
 	game->teams = create_teams();
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.height, g_cfg.width);
@@ -192,6 +193,11 @@ void lgc_new_player(int player_nb, char *team)
 void lgc_player_gone(int player_nb)
 {
 	// delete player from game
+
+	// TODO double free when player dies after disconnect. Following line should fix but
+	// segfaults happen
+
+	//delete_player(get_player_by_id(player_nb));
 	log_info("logic: Remove player #%d", player_nb);
 	srv_event("pdi %d\n", player_nb);
 }

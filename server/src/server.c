@@ -457,6 +457,7 @@ void srv_flush_client(int client_nb)
 void srv_client_died(int client_nb)
 {
 	int i = 0;
+	log_debug("srv_client_died(%d)", client_nb);
 	
 	while (env.deadbodies[i] != 0 && i <= env.maxfd)
 		++i;

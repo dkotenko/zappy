@@ -59,7 +59,7 @@ class Player:
         MEETING = 2
         INCANTATION = 3
 
-    state = State.COLLECTING
+    state = State.INTRODUCING
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}
@@ -67,6 +67,7 @@ class Player:
     world_y = 0
     command_list = []
     last_cmd = ''
+    meet_target = None
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -92,11 +93,27 @@ class Player:
                 if data_splited[1] == 'hi' or data_splited[1] == 'took':
                     self.players_info[data_splited[0]] = PlayerInfo(
                         data_splited[2])
+                if data_splited[1] == 'hi':
                     self.command_list.insert(
                         0,
                         Command(Command.Type.SAY,
                                 self.name + ' hi ' + str(self.my_info)))
-            
+# -> 1 meet 2, (2 go to 1)
+# -> 2 meet_confirm 1, (1 go to 2)
+                if (data_splited[1] == 'meet' and
+                        data_splited[2] == self.name):
+                    self.state = self.State.MEETING
+                    self.meet_target = data_splited[0]
+                    self.command_list.insert(0,
+                                             Command(Command.Type.SAY,
+                                                     self.name +
+                                                     ' meet_confirm ' +
+                                                     data_splited[0]))
+                if (data_splited[1] == 'meet_confirm' and
+                        data_splited[2] == self.name):
+                    self.state = self.State.MEETING
+                    self.meet_target = data_splited[0]
+
             # if m.t == Message.Type.ACTUAL_LEVEL:
             #     self.my_info.lvl = int(m.data)
             #     self.state = self.State.COLLECTING
@@ -112,6 +129,12 @@ class Player:
         # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
+            # say about lvlup
+            if result == '' and self.my_info.lvl != 1:
+                self.command_list.insert(0, Command(Command.Type.SAY,
+                                                    self.name + ' took ' +
+                                                    str(self.my_info)))
+
         if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
            and result.startswith('{'):
             striped = result.strip('{}')
@@ -127,14 +150,24 @@ class Player:
                     self._take(i, take_list)
                     break
 
-        if self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT:
-            self.my_info.add_stone(self.last_cmd.arg)
-            self.command_list.insert(0, Command(Command.Type.SAY,
-                                                self.name + ' took ' +
-                                                str(self.my_info)))
-            if self._can_incantate():
-                self.state = self.State.INCANTATION
-                return self._incantate('', messages)
+        if (self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT
+                and self.last_cmd.arg != 'nourriture'):
+            if result == 'ok':
+                self.my_info.add_stone(self.last_cmd.arg)
+                self.command_list.insert(0, Command(Command.Type.SAY,
+                                                    self.name + ' took ' +
+                                                    str(self.my_info)))
+            can_incantate = self._can_incantate()
+            if can_incantate:
+                if can_incantate[0] == self.name:
+                    self.state = self.State.INCANTATION
+                    return self._incantate('', messages)
+                self.state = self.State.MEETING
+                self.command_list = []
+                for name in can_incantate:
+                    self.command_list.append(Command(Command.Type.Say,
+                                                     self.name + ' meet ' +
+                                                     name))
 
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
@@ -143,6 +176,9 @@ class Player:
     def _do_i_need_this(self, res):
         if res == 'nourriture':
             return True
+        if self.state == self.State.MEETING:
+            return False
+
         if self.my_info.lvl == 1:
             if res == 'linemate' and self.my_info.li < 1:
                 return True
@@ -232,7 +268,6 @@ class Player:
 
     def _generate_collect_command_list(self):
         cmd_list = [
-            Command(Command.Type.SAY, self.name + ' hi ' + str(self.my_info)),
             Command(Command.Type.SEE),
             Command(Command.Type.GO),
             Command(Command.Type.SEE),
@@ -259,17 +294,34 @@ class Player:
         return cmd_list
 
     def _meet(self, result, messages):
-        return False
+        if self.command_list:
+            return self.command_list.pop(0)
+        if not self.meet_target:
+            return Command(Command.Type.WAIT)
+        print('meet target = ' + self.meet_target)
+        return Command(Command.Type.WAIT)
 
     def _can_incantate(self):
+        '''
+        return list of names to meet with, my name if lvl 1, empty if cannot
+        '''
         print('my_info: ' + str(self.my_info) + ', ' +
               'players: ' + str(self.players_info))
         if self.my_info.lvl == 1 and self.my_info.li >= 1:
-            return True
-        if (self.my_info.lvl == 2 and self.my_info.li >= 1 and
-                self.my_info.de >= 1 and self.my_info.si >= 1):
-            return True
-        return False
+            return [self.name]
+        if self.my_info.lvl == 2:
+            for name in self.players_info.keys():
+                player = self.players_info[name]
+                li = self.my_info.li
+                de = self.my_info.de
+                si = self.my_info.si
+                if player.lvl == 2:
+                    li = li + player.li
+                    de = de + player.de
+                    si = si + player.si
+                    if li >= 1 and de >= 1 and si >= 1:
+                        return [name]
+        return []
 
     def _incantate(self, result, messages):
         if result == '':
