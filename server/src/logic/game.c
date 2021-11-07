@@ -152,13 +152,6 @@ void	add_visitor(t_cell *cell, t_player *player)
 	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
 }
 
-// TODO
-// lgc_get_all_players(...)
-
-// Нужно передать о всех клиентах следующую инфу: координаты, ориентация, уровень, название команды
-// например в виде массива структур
-// нужно в визуализаторе при его подключении
-
 void lgc_init()
 {
 	log_info("logic: Setup world");
