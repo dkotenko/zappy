@@ -1,6 +1,7 @@
 #include "zappy.h"
 #include "../server.h"
 #include "../logger.h"
+#include "../utils.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) > (b)) ? (b) : (a))
@@ -347,12 +348,6 @@ void	prend(t_player *player, char *data)
 	}
 }
 
-static char *get_resource(char *data)
-{
-	
-	return (NULL);
-}
-
 //NOT TESTED
 void	pose(t_player *player, char *data)
 {
@@ -594,6 +589,7 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
+	(void)player;
 	//game->teams[player->team_id]->
 	//
 	

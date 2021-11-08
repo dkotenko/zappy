@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/24 14:52:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/08 11:31:05 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -430,6 +430,8 @@ void srv_event(char *msg, ...)
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
 	circbuf_push_string(&env.circbuf_events, buf);
+	buf[strlen(buf) - 1] = 0;
+	log_debug("srv -> (gfx): '%s'", buf);
 	free(buf);
 	va_end(ap);
 }

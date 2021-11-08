@@ -103,7 +103,6 @@ void	delete_player(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
-	int id;
 	for (int i = 0; i < game->players_num; ++i)
 		if (game->players[i] == player) {
 			game->players[i] = NULL;
