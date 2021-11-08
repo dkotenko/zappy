@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:33:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/24 14:52:44 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -31,16 +32,20 @@
 #include "commands.h"
 #include "logic.h"
 #include "reception.h"
+#include "graphic.h"
+#include "admin.h"
 
+# define T_MAX						1000
 #define MAX_PENDING_COMMANDS		10
 
-#define CIRCBUF_SIZE				16
+#define CIRCBUF_SIZE				64
 #define CIRCBUF_ITEM_SIZE			32
 
 enum e_type {
 	FD_FREE,
 	FD_SERV,
-	FD_CLIENT
+	FD_CLIENT,
+	FD_GFX
 };
 
 typedef struct s_fd {
@@ -65,9 +70,12 @@ typedef struct s_env {
 	struct timeval t;			/* time after select */
 	struct timeval tu;			/* time unit */
 	int *deadbodies;			/* array with same size of fds */
+	t_circbuf circbuf_events;	/* date to be written to gfx clients */
 } t_env;
 
 t_env env;
+
+
 
 static void clean_fd(t_fd *fd)
 {
@@ -86,6 +94,8 @@ static void client_gone(int cs)
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
 	reception_remove_client(cs);
+	/* TODO */
+	/* commands_popnb(cs, MAX_PENDING_COMMANDS); */ 
 	log_info("Client #%d gone away", cs);
 }
 
@@ -100,25 +110,27 @@ static struct timeval tu2tv(int tu)
 	return t;
 }
 
-static int client_handle_command(int cs, char *command)
+static int client_handle_command(int client_id, char *command)
 {
-	t_fd *client = &env.fds[cs];
+	t_fd *client = &env.fds[client_id];
 	t_command *cmd;
-	
+
+	log_debug("#%d -> srv: '%s'", client_id, command);
 	if (client->pending_commands == MAX_PENDING_COMMANDS) {
 		log_warning("drop command '%s': queue is full", command);
 		return 0;
 	}
 	
-	int dur = lgc_get_command_duration(command);
-	if (dur == -1) {
-		log_warning("unknown command '%s'", command);
+	int command_id = lgc_get_command_id(command);
+	if (command_id == -1) {
+		log_warning("unknown command '%s' from #%d", command, client_id);
 		return 0;
 	}
-	log_info("got command '%s'", command);
+	
+	int dur = g_cfg.cmd.duration[command_id];
 	if (dur == 0) {
-		cmd = command_new(env.t, strdup(command), cs);
-		lgc_execute_command(cs, command);
+		cmd = command_new(env.t, g_cfg.cmd.name[command_id], client_id);
+		lgc_execute_command(client_id, command, command_id);
 		command_del(cmd);
 		return 0;
 	}
@@ -129,7 +141,7 @@ static int client_handle_command(int cs, char *command)
 	} else {
 		timeradd(&t, &env.t, &t);
 	}
-	cmd = command_new(t, strdup(command), cs);
+	cmd = command_new(t, strdup(command), client_id);
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
@@ -145,7 +157,8 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		lgc_client_gone(cs);
+		if (client->type == FD_CLIENT)
+			lgc_player_gone(cs);
 		client_gone(cs);
 		return ;
 	}
@@ -165,24 +178,29 @@ static void	client_read(int cs)
 		break ;
 	case RECEPTION_ROUTE_CLIENT:
 		client->fct_handle = client_handle_command;
-		lgc_new_client(cs, reception_find_client_team(cs));
+		lgc_new_player(cs, reception_find_client_team(cs));
 		break ;
 	case RECEPTION_ROUTE_GFX:
-		client->fct_handle = reception_gfx_chat;
+		client->fct_handle = graphic_chat;
+		client->type = FD_GFX;
 		break ;
 	case RECEPTION_ROUTE_ADMIN:
-		client->fct_handle = reception_admin_chat;
+		client->fct_handle = admin_chat;
 		break ;
 	}
 }
 
 static void client_write(int cs)
 {
-	void *data;
+	char *data;
 	
 	while (env.fds[cs].circbuf_write.len) {
-		data = circbuf_pop(&env.fds[cs].circbuf_write);
-		send(cs, data, CIRCBUF_ITEM_SIZE, 0);
+		data = (char *)circbuf_pop(&env.fds[cs].circbuf_write);
+		if (data[CIRCBUF_ITEM_SIZE - 1] != '\0')
+			send(cs, data, CIRCBUF_ITEM_SIZE, 0);
+		else
+			send(cs, data, strlen(data), 0);
+		free(data);
 	}
 }
 
@@ -282,7 +300,7 @@ static void do_select()
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
 		} else {
-			lgc_execute_command(command->client_nb, command->data);
+			lgc_execute_command(command->client_nb, command->data, -1);
 			--env.fds[command->client_nb].pending_commands;
 		}
 		commands_pop(command);
@@ -301,7 +319,13 @@ static void init_fd()
 				FD_SET(i, &env.fd_write);
 			env.max = (env.max > i ? env.max : i);
 		}
+		if (env.fds[i].type == FD_GFX) {
+			circbuf_concat(&env.fds[i].circbuf_write, &env.circbuf_events);
+			if ((env.fds[i].circbuf_write.len) > 0)
+				FD_SET(i, &env.fd_write);
+		}
 	}
+	circbuf_reset(&env.circbuf_events);
 }
 
 static void srv_accept(int s)
@@ -319,7 +343,7 @@ static void srv_accept(int s)
 	env.fds[cs].fct_write = client_write;
 	env.fds[cs].fct_handle = reception_chat;
 	env.fds[cs].circbuf_read = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
-	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
+	env.fds[cs].circbuf_write = circbuf_init(CIRCBUF_SIZE + g_cfg.width, CIRCBUF_ITEM_SIZE);
 
 	env.fds[cs].fct_handle(cs, NULL);
 }
@@ -334,20 +358,16 @@ static void srv_create()
 	xassert((s = socket(PF_INET, SOCK_STREAM, pe->p_proto)) != -1, "socket");
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(g_main_config.port);
+	sin.sin_port = htons(g_cfg.port);
 	xassert(bind(s, (struct sockaddr*)&sin, sizeof(sin)) != -1, "bind");
 	xassert(listen(s, 42) != -1, "listen");
-	log_info("Listen on port %d", g_main_config.port);
+	log_info("Listen on port %d", g_cfg.port);
 	env.fds[s].type = FD_SERV;
 	env.fds[s].fct_read = srv_accept;
 
-	if (g_main_config.t == 1)
-		env.tu.tv_sec = 1;
-	else if (g_main_config.t > 1 && g_main_config.t <= 1000000)
-		env.tu.tv_usec = 1000000 / g_main_config.t;
-	else
-		log_fatal("Invalid time unit: %d", g_main_config.t);
-	timerprint(log_debug, &env.tu, "tu");
+	if (srv_update_t(g_cfg.t) == -1)
+		log_fatal("Invalid time unit (%d): "
+				  "must be in range [1, %d]", g_cfg.t, T_MAX);
 }
 
 static void srv_init()
@@ -356,23 +376,19 @@ static void srv_init()
 	
 	xassert(getrlimit(RLIMIT_NOFILE, &rlp) != -1, "getrlimit");
 	env.maxfd = rlp.rlim_cur;
-	log_debug("maxfd = %d", env.maxfd);
+	log_info("Maximum clients: %d", env.maxfd);
 	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
 	for (int i = 0; i < env.maxfd; ++i) {
 		clean_fd(env.fds + i);
 	}
-	env.deadbodies = (int *)calloc(sizeof(int), env.maxfd);	
+	env.deadbodies = (int *)calloc(sizeof(int), env.maxfd);
+	env.circbuf_events = circbuf_init(CIRCBUF_SIZE, CIRCBUF_ITEM_SIZE);
 }
 
 static void sigh(int n) {
 	(void)n;
-	free(env.fds);
-	free(env.deadbodies);
-	commands_destroy();
-	reception_clear();
-	log_info("Exit");
-	exit(0);
+	srv_stop();
 }
 
 void srv_start()
@@ -387,7 +403,35 @@ void srv_start()
 		do_select();
 		check_fd();
 	}
+}
 
+void srv_stop()
+{
+	commands_destroy();
+	reception_clear();
+	for (int i = 0; i < env.maxfd; ++i)
+		if (env.fds[i].type != FD_FREE && env.fds[i].type != FD_SERV) {
+			circbuf_clear(&env.fds[i].circbuf_read);
+			circbuf_clear(&env.fds[i].circbuf_write);
+		}
+	circbuf_clear(&env.circbuf_events);
+	free(env.fds);
+	free(env.deadbodies);
+	clear_cmd();
+	log_info("Exit");
+	exit(0);
+}
+
+void srv_event(char *msg, ...)
+{
+	char *buf;
+	va_list ap;
+	
+	va_start(ap, msg);
+	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
+	circbuf_push_string(&env.circbuf_events, buf);
+	free(buf);
+	va_end(ap);
 }
 
 void srv_reply_client(int client_nb, char *msg, ...)
@@ -398,17 +442,53 @@ void srv_reply_client(int client_nb, char *msg, ...)
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
 	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+	buf[strlen(buf) - 1] = 0;
+	log_debug("srv -> #%d: '%s'", client_nb, buf);
 	free(buf);
 	va_end(ap);
+}
+
+void srv_flush_client(int client_nb)
+{
+	if ((env.fds[client_nb].circbuf_write.len) > 0)
+		env.fds[client_nb].fct_write(client_nb);
 }
 
 void srv_client_died(int client_nb)
 {
 	int i = 0;
+	log_debug("srv_client_died(%d)", client_nb);
 	
 	while (env.deadbodies[i] != 0 && i <= env.maxfd)
 		++i;
 	env.deadbodies[i] = client_nb;
+}
+
+int srv_update_t(int t)
+{
+	struct timeval tmp;
+
+	memset(&tmp, 0, sizeof(tmp));
+	
+	if (t == 1)
+		tmp.tv_sec = 1;
+	else if (t > 1 && t <= T_MAX)
+		tmp.tv_usec = 1000000 / t;
+	else
+		return -1;
+	env.tu = tmp;
+	return t;
+}
+
+void srv_push_command(char *cmd, int after_t)
+{
+	struct timeval tc;
+	struct timeval t;
+
+	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
+	t = tu2tv(after_t);
+	timeradd(&t, &tc, &t);
+	commands_push(command_new(t, cmd, 0));
 }
 
 #undef CIRCBUF_SIZE

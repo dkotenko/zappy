@@ -15,7 +15,7 @@
 
 # include <sys/time.h>
 
-void xassert(int value, const char *str);
+int xassert(int value, const char *str);
 void timerprint(void (*f)(const char *format, ...), struct timeval *t, char *name);
 int str_starts_with(char *str, char *with);
 

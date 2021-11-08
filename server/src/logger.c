@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:04:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 14:46:57 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 10:41:57 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ static int g_tick;
 
 static void log_print(FILE *f, const char *format, va_list ap, const char *prefix)
 {
-	if (g_main_config.quiet)
+	if (g_cfg.quiet)
 		return ;
 	if (g_tick) {
 		fprintf(f, "\n");
