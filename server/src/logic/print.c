@@ -71,6 +71,7 @@ void	print_player(t_player *player)
 	printf("Player:\tplayer_id: %d | team_id: %d | level: %d | orient: %d | is_egg: %d\n",
 		player->id, player->team_id, player->level, player->orient, player->is_egg);
 	print_inverntory(player->inventory);
+	printf("CURRENT PLAYER CELL:");
 	print_cell(player->curr_cell);
 	printf("\n");
 }
