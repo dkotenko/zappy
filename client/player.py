@@ -97,7 +97,7 @@ class Player:
                     self.command_list.insert(
                         0,
                         Command(Command.Type.SAY,
-                                self.name + ' hi ' + str(self.my_info)))
+                                self.name + ' took ' + str(self.my_info)))
 # -> 1 meet 2, (2 go to 1)
 # -> 2 meet_confirm 1, (1 go to 2)
                 if (data_splited[1] == 'meet' and
@@ -323,11 +323,16 @@ class Player:
                         return [name]
         return []
 
+    def _remove_stones(self):
+        if self.my_info.lvl == 2:
+            self.my_info.li -= 1
+
     def _incantate(self, result, messages):
         if result == '':
             return Command(Command.Type.INCANTATE)
         if result.startswith('niveau actuel'):
             splited = result.split(':')
             self.my_info.lvl = int(splited[1].strip())
+            self._remove_stones()
         self.state = self.state.COLLECTING
         return self._collect('', messages)
