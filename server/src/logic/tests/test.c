@@ -25,19 +25,6 @@ int		g_tests_result;
 t_list	*g_list_game_to_free;
 t_dlist	*g_messages;
 
-
-/*
-void	test_broadcast() {
-	t_player	*emitter = create_player(0,0);
-	t_player	*receiver1 = create_player(1,0);
-	t_player	*receiver2 = create_player(2,0);
-
-	
-	char *msg = strdup("test");
-
-}
-*/
-
 void	test_avance()
 {
 	init_game();
@@ -47,7 +34,6 @@ void	test_avance()
 
 	t_player *player = add_player(player_id, 5);
 	set_player_cell(player, game->map->cells[0][0]);
-	
 	player->orient = ORIENT_N;
 	print_player(player);
 	
@@ -85,7 +71,7 @@ void	test_avance()
 
 void	test_prend()
 {
-	t_player *player;
+	t_player *player = NULL;
 
 	init_game();
 	int player_id = 3;
@@ -108,6 +94,34 @@ void	test_prend()
 
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
+
+void	test_pose()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	char *cmd = "pose nourriture";
+	int local_test_result = 0;
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_prend");
+	}
+	
+	print_player(player);
+	ft_memset(player->inventory, 0, sizeof(int) * RESOURCES_NUMBER);
+	player->inventory[NOURRITURE] = 1;
+	int cell_nourriture = player->curr_cell->inventory[NOURRITURE];
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	print_cell(player->curr_cell);
+	local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
+	local_test_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
+
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+}
+
 
 void	test_inventoire()
 {
@@ -151,6 +165,108 @@ void	test_voir()
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
 
+
+
+
+void	test_broadcast()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	t_player *player2 = add_player(1, 5);
+	
+
+	t_cell *cell = player->curr_cell;
+	set_player_cell(player, game->map->cells[0][0]);
+	set_player_cell(player2, game->map->cells[0][0]);
+	
+	print_cell(player->curr_cell);
+	
+	char *cmd = "broadcast 123";
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_prend");
+	}
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	//local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
+	//local_test_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
+}
+
+
+
+void	testcase()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	print_cell(player->curr_cell);
+	char *cmd = "prend linemate";
+	int local_test_result = 0;
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_prend");
+	}
+	
+	printf("GO\n");
+	print_player(player);
+	char *cmd_avance = "avance";
+	lgc_execute_command(player_id, cmd_avance, lgc_get_command_id(cmd_avance));
+
+	printf("TURN LEFT\n");
+	print_player(player);
+	char *cmd_gauche = "gauche";
+	lgc_execute_command(player_id, cmd_gauche, lgc_get_command_id(cmd_gauche));
+
+	printf("GO\n");
+	print_player(player);
+	lgc_execute_command(player_id, cmd_avance, lgc_get_command_id(cmd_avance));
+
+
+	
+	printf("\nCELL BEFORE TAKE\n");
+	ft_memset(player->curr_cell->inventory, 0, sizeof(int) * RESOURCES_NUMBER);
+	player->curr_cell->inventory[LINEMATE] = 1;
+	int player_nourriture = player->inventory[LINEMATE];
+	print_cell(player->curr_cell);
+
+	
+	printf("\nTAKE LINEMATE\n");
+	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
+	print_player(player);
+
+
+	local_test_result += xassert(player->inventory[LINEMATE] == player_nourriture + 1, "no item in player inv after prend");
+	local_test_result += xassert(player->curr_cell->inventory[LINEMATE] == 0, "prend: item remains at cell");
+	
+}
+
+void	test_set_player_cell()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	print_cell(player->curr_cell);
+	char *cmd = "prend linemate";
+	int local_test_result = 0;
+	int cmd_id = lgc_get_command_id(cmd);
+	if (cmd_id == -1) {
+		handle_error("invalid command in test_prend");
+	}
+	t_cell *cell = player->curr_cell;
+	set_player_cell(player, game->map->cells[0][1]);
+	print_cell(player->curr_cell);
+	print_cell(cell);
+}
+
 void	init_game(void)
 {
 	if (game)
@@ -172,7 +288,10 @@ int main() {
 	//test_avance();
 	//test_voir();
 	//test_inventoire();
-	test_prend();
+	//test_pose();
+	
+	test_broadcast();
+	//testcase();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
