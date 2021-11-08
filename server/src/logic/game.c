@@ -5,9 +5,11 @@
 #include "../utils.h"
 
 t_game *game;
+extern t_dlist *g_messages;
 
 void	mock_srv_reply(int client_nb, char *msg)
 {
+	t_dlist_append(g_messages, t_dlist_node_new(strdup(msg), sizeof(char)));
 	printf("\n%sClient %d received message: %s%s\n\n",
 		ANSI_COLOR_YELLOW, client_nb, msg, ANSI_COLOR_RESET);
 }
@@ -25,13 +27,18 @@ void	reply_except_list(t_list *list, int player_id)
 	t_buffer_clean(game->buf);
 }
 
-void	reply_and_clean_buff(int player_id)
+void	reply_client(int player_id)
 {
 	if (game->is_test == 0) {
 		srv_reply_client(player_id, "%s\n", game->buf->s);
 	} else {
 		mock_srv_reply(player_id, game->buf->s);
 	}
+}
+
+void	reply_and_clean_buff(int player_id)
+{
+	reply_client(player_id);
 	t_buffer_clean(game->buf);
 }
 
@@ -211,7 +218,9 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	if (cmd_id == -1) {
 		cmd_id = lgc_get_command_id(cmd);
 	}
-	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
+	if (game->is_test == 0) {
+		log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
+	}
 	if (g_cfg.cmd.req_arg[cmd_id]) {
 		(g_cfg.cmd.f_arg[cmd_id])(player, cmd);
 	} else {

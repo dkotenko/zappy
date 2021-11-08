@@ -43,6 +43,7 @@ void	set_player_cell(t_player *player, t_cell *cell)
 			player->curr_cell->x, player->curr_cell->y,
 			cell->x, cell->y);
 	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
+	
 	player->curr_cell->visitors_num--;
 	ft_lstadd(&cell->visitors, temp);
 	cell->visitors_num++;
@@ -289,6 +290,12 @@ static int	get_resource_id(char *resource)
 	return (-1);
 }
 
+
+static char *get_resource(char *data)
+{
+	return (NULL);
+}
+
 static void bct_srv_event(t_player *player)
 {
 	srv_event("bct %d %d %d %d %d %d %d %d %d\n",
@@ -325,12 +332,11 @@ void	prend(t_player *player, char *data)
 {
 	char	*resource = data + strlen("prend ");
 	int	resource_id = get_resource_id(resource);
-	
+  
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
-	} else if (player->curr_cell->inventory[resource_id] > 0)
-	{
+	} else if (player->curr_cell->inventory[resource_id] > 0) {	
 		player->curr_cell->inventory[resource_id]--;
 		player->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
@@ -351,14 +357,12 @@ void	pose(t_player *player, char *data)
 
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER ||
 		player->inventory[resource_id] < 1) {
-		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
 	} else {
 		player->inventory[resource_id]--;
 		player->curr_cell->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
-
 		pin_bct_srv_event(player, resource_id, "pdr");
 	}
 }
@@ -487,7 +491,6 @@ int		normalize_side(int orient, int side)
 void	broadcast(t_player *player, char *data)
 {
 	char	*text = data + strlen("broadcast ");
-	t_player	*receiver = NULL;
 
 	int	size_pos = 8;
 	t_buffer_write(game->buf, "message 0");
@@ -497,11 +500,10 @@ void	broadcast(t_player *player, char *data)
 		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
-		receiver = game->players[i];
-		int side = get_broadcast_side(player, receiver);
+		int side = get_broadcast_side(player, game->players[i]);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
 		game->buf->s[size_pos] = side_normalized + '0';
-		srv_reply_client(game->players[i]->id, "%s\n", game->buf->s);
+		reply_client(game->players[i]->id);
 	}
 	t_buffer_clean(game->buf);
 	t_buffer_write(game->buf, "ok");

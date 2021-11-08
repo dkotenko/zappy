@@ -67,7 +67,7 @@ OBJ = $(SRC:.c=.o)
 
 
 
-all: $(NAME)
+all: $(LIBFT) $(NAME)
 
 $(NAME): $(LIBFT) $(OBJ)
 	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) -L$(LIBFT_DIR) -lft
