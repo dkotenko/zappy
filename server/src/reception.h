@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 14:20:59 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:32:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/30 17:35:38 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,9 @@ enum e_reception_state {
 };
 
 typedef struct s_reception {
-	int **teams_clients;		/* array with same indices as in g_main_config.teams
+	int **teams_clients;		/* array with same indices as in g_cfg.teams
 										teams_clients[5] - array of clients in 
-										g_main_config.teams[5] */
+										g_cfg.teams[5] */
 	int *client_states;			/* array of e_reception_state */
 } t_reception;
 
@@ -40,11 +40,10 @@ void reception_init(int max_clients);
 void reception_clear(void);
 void reception_remove_client(int client_nb);
 char *reception_find_client_team(int client_nb);
+int reception_slots_in_team(char *team);
 
 /* Calls in server for all clients by default */
 /* Returns e_reception_route */
 int reception_chat(int client_nb, char *message);
-int reception_gfx_chat(int client_nb, char *message);
-int reception_admin_chat(int client_nb, char *message);
 
 #endif

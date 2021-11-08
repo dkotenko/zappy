@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 21:07:51 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 18:29:31 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/09/29 16:25:46 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,13 @@ t_circbuf circbuf_init(size_t size, size_t data_size)
 	memset(circbuf.buf, 0, circbuf.buf_size);
 	//circbuf.debug = 1;
 	return circbuf;
+}
+
+void circbuf_reset(t_circbuf *circbuf)
+{
+	circbuf->iread = 0;
+	circbuf->iwrite = 0;
+	circbuf->len = 0;
 }
 
 void circbuf_clear(t_circbuf *circbuf)
@@ -140,4 +147,19 @@ char *circbuf_pop_string(t_circbuf *circbuf)
 		free(item);
 	}
 	return pop_buf;
+}
+
+void circbuf_concat(t_circbuf *c1, t_circbuf *c2)
+{
+	void *data;
+	size_t len = c2->len;
+	size_t iread = c2->iread;
+	
+	while (c2->len) {
+		data = circbuf_pop(c2);
+		circbuf_push(c1, data);
+		free(data);
+	}
+	c2->len = len;
+	c2->iread = iread;
 }

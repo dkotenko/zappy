@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   commands.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
+/*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:46:02 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/28 13:42:08 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/10/06 13:25:53 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,41 @@ void commands_pop(t_command *cmd)
 	if (g_commands_debug)
 		log_debug("commands_pop");
 	commands.tree = ft_btree_avl_remove(commands.tree, cmd, cmpf, delf);
+}
+
+static int topop_size;
+static t_command **topop;
+static int topop_i;
+static int topop_client_nb;
+
+static void applyf_popnb(void *v)
+{
+	t_command *c = (t_command *)v;
+	if (topop_i >= topop_size)
+		return ;
+
+	if (c->client_nb != topop_client_nb)
+		return ;
+	++topop_i;
+	topop[topop_i] = c;
+}
+
+
+/* TODO it's not working */
+void commands_popnb(int client_nb, int max_pop)
+{
+	topop_client_nb = client_nb;
+	topop_size = max_pop;
+	topop = (t_command **)calloc(max_pop, sizeof(t_command *));
+	xassert(topop != NULL, "calloc");
+	topop_i = -1;
+
+	ft_btree_apply_prefix((t_btree *)commands.tree, applyf_popnb);
+
+	for (int i = 0; i <= topop_i; ++i)
+		ft_btree_avl_remove(commands.tree, topop[i], cmpf, delf);
+
+	free(topop);
 }
 
 int commands_is_empty(void)
