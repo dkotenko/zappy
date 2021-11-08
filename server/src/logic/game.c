@@ -282,21 +282,22 @@ int lgc_get_player_level(int player_nb)
 {
 	t_player *player = get_player_by_id(player_nb);
 
-	if (!player) {
+	if (!player)
 		return -1;
-	}
 	return player->level;
 }
 
 int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
 {
-	if (player_nb < 0)
+	t_player *player = get_player_by_id(player_nb);
+	if (!player)
 		return -1;
-	*x = game->players[player_nb]->curr_cell->x;
-	*y = game->players[player_nb]->curr_cell->y;
+
+	*x = player->curr_cell->x;
+	*y = player->curr_cell->y;
 
 	for (int i = 0; i < 7; ++i)
-		resources[i] = game->players[player_nb]->inventory[i];
+		resources[i] = player->inventory[i];
 	return 0;
 }
 
