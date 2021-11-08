@@ -125,6 +125,7 @@ void	reply_and_clean_buff(int player_id);
 void	mock_srv_reply(int client_nb, char *msg);
 void	delete_player(t_player *player);
 void	starving_n_death(void);
+void	reply_except_list(t_list *list, int player_id);
 
 /*
  * json

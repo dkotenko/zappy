@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/29 11:48:08 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/07 19:11:54 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/08 11:29:22 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,8 @@ int graphic_chat(int client_nb, char *message)
 		// enw
 		return 0;
 	}
+	log_debug("#%d (gfx) -> srv: '%s'", client_nb, message);
+	
 	char *token = strtok(message, " ");
 	if (!token)
 		return 0;

@@ -25,7 +25,7 @@ t_list *get_winners(void)
 	{
 		if (game->teams[i]->max_level_count >=6)
 		{
-			ft_lstadd(&list, ft_lstnew_pointer(list, game->teams[i]));
+			ft_lstadd(&list, ft_lstnew_pointer(game->teams[i], sizeof(*game->teams[i])));
 		}
 	}
 	return list;
