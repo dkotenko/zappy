@@ -1,6 +1,7 @@
 #include "zappy.h"
 #include "../server.h"
 #include "../logger.h"
+#include "../utils.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) > (b)) ? (b) : (a))
@@ -30,20 +31,24 @@ int		get_y(int coord)
 
 void	mort(t_player *player)
 {
+	srv_reply_client(player->id, "mort\n");
+	srv_client_died(player->id);
 	delete_player(player);
-	t_buffer_write(game->buf, "mort");
 }
-
 
 
 void	set_player_cell(t_player *player, t_cell *cell)
 {
+	log_debug("move visitor from cell(%d %d) to cell(%d %d)", 
+			player->curr_cell->x, player->curr_cell->y,
+			cell->x, cell->y);
 	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
 	
 	player->curr_cell->visitors_num--;
 	ft_lstadd(&cell->visitors, temp);
 	cell->visitors_num++;
 	player->curr_cell = cell;
+	log_debug("value of visitors of cell(%d %d): %p", cell->x, cell->y, player->curr_cell->visitors);
 }
 
 
@@ -59,6 +64,8 @@ void	avance(t_player *player)
 	t_cell *cell = game->map->cells[new_y][new_x];
 	set_player_cell(player, cell);
 	t_buffer_write(game->buf, "ok");
+	srv_event("ppo %d %d %d %d\n",
+			  player->id, new_x, new_y, player->orient);
 }
 
 /*
@@ -68,6 +75,10 @@ void	droite(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 1) % 4];
 	t_buffer_write(game->buf, "ok");
+	srv_event("ppo %d %d %d %d\n",
+			  player->id,
+			  player->curr_cell->x, player->curr_cell->y,
+			  player->orient);
 }
 
 /*
@@ -77,6 +88,10 @@ void	gauche(t_player *player)
 {
 	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
 	t_buffer_write(game->buf, "ok");
+	srv_event("ppo %d %d %d %d\n",
+			  player->id,
+			  player->curr_cell->x, player->curr_cell->y,
+			  player->orient);
 }
 
 /*
@@ -249,6 +264,11 @@ void	expulse(t_player *player)
 		reply_and_clean_buff(player->id);
 		t_buffer_write(game->buf, "deplacement");
 		reply_except_list(player->curr_cell->visitors, player->id);
+
+		srv_event("pex %d\n"
+				  ""			/* TODO pass 'ppo' for all expulsed players */
+				  , player->id);
+		
 	} else {
 		t_buffer_write(game->buf, "ko");
 		reply_and_clean_buff(player->id);
@@ -270,26 +290,60 @@ static int	get_resource_id(char *resource)
 	return (-1);
 }
 
+
 static char *get_resource(char *data)
 {
-	
 	return (NULL);
+}
+
+static void bct_srv_event(t_player *player)
+{
+	srv_event("bct %d %d %d %d %d %d %d %d %d\n",
+			  player->curr_cell->x, player->curr_cell->y,
+			  player->curr_cell->inventory[0],
+			  player->curr_cell->inventory[1],
+			  player->curr_cell->inventory[2],
+			  player->curr_cell->inventory[3],
+			  player->curr_cell->inventory[4],
+			  player->curr_cell->inventory[5],
+			  player->curr_cell->inventory[6]
+		);
+}
+
+static void	pin_bct_srv_event(t_player *player, int res, const char *cmd)
+{
+	srv_event("%s %d %d\n"
+			  "pin %d %d %d %d %d %d %d %d %d %d\n",
+			  cmd, player->id, res,
+			  
+			  player->id, player->curr_cell->x, player->curr_cell->y,
+			  player->inventory[0],
+			  player->inventory[1],
+			  player->inventory[2],
+			  player->inventory[3],
+			  player->inventory[4],
+			  player->inventory[5],
+			  player->inventory[6]
+		);
+	bct_srv_event(player);
 }
 
 void	prend(t_player *player, char *data)
 {
 	char	*resource = data + strlen("prend ");
 	int	resource_id = get_resource_id(resource);
-
+  
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		//t_buffer_json_message(game->buf, "KO");
-		printf("here\n");
 		t_buffer_write(game->buf, "ko");
 	} else if (player->curr_cell->inventory[resource_id] > 0) {	
 		player->curr_cell->inventory[resource_id]--;
 		player->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
+
+		pin_bct_srv_event(player, resource_id, "pgt");
+		
 	} else {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
@@ -302,14 +356,14 @@ void	pose(t_player *player, char *data)
 	int	resource_id = get_resource_id(resource);
 
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER ||
-	player->inventory[resource_id] < 1) {
-		//t_buffer_json_message(game->buf, "KO");
+		player->inventory[resource_id] < 1) {
 		t_buffer_write(game->buf, "ko");
 	} else {
 		player->inventory[resource_id]--;
 		player->curr_cell->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
+		pin_bct_srv_event(player, resource_id, "pdr");
 	}
 }
 
@@ -452,6 +506,9 @@ void	broadcast(t_player *player, char *data)
 		reply_client(game->players[i]->id);
 	}
 	t_buffer_clean(game->buf);
+	t_buffer_write(game->buf, "ok");
+
+	srv_event("pbc %d %s\n", player->id, text);
 }
 
 void	incantation(t_player *player)
@@ -479,6 +536,8 @@ void	incantation(t_player *player)
 	if (incat_counter) {
 		//t_buffer_json_message(game->buf, "ko");
 		t_buffer_write(game->buf, "ko");
+		srv_event("pie %d %d ko\n",
+			  player->curr_cell->x, player->curr_cell->y);
 		return ;
 	}
 
@@ -486,16 +545,26 @@ void	incantation(t_player *player)
 		player->inventory[i] -= incat_consts[i];
 	}
 
+	srv_event("pie %d %d ok\n",
+			  player->curr_cell->x, player->curr_cell->y);
+
 	for (int i = 0; i < incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1; i++) {
 		participants[i]->level++;
+		srv_event("plv %d %d\n",
+				  participants[i]->id, participants[i]->level);
 		if (participants[i]->level == PLAYER_MAX_LEVEL) {
 			game->teams[participants[i]->team_id]->max_level_count++;
 		}
 	}
 	player->level++;
+	srv_event("plv %d %d\n",
+				  player->id, player->level);
+	bct_srv_event(player);
 	if (player->level == PLAYER_MAX_LEVEL) {
 		game->teams[player->team_id]->max_level_count++;
 	}
+	t_buffer_write(game->buf, "niveau actuel: K");
+	game->buf->s[15] = player->level + '0';
 }
 
 /*
@@ -514,6 +583,7 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
+	(void)player;
 	//game->teams[player->team_id]->
 	//
 	

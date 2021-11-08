@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from server import Command
+from server import Command, Message
 
 
 class PlayerInfo:
@@ -34,6 +34,9 @@ class PlayerInfo:
             str(self.th)
         return r
 
+    def __repr__(self):
+        return self.__str__()
+
     def add_stone(self, name):
         if name == 'linemate':
             self.li += 1
@@ -64,6 +67,7 @@ class Player:
     world_y = 0
     command_list = []
     last_cmd = ''
+    meet_target = None
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -83,15 +87,36 @@ class Player:
     def _handle_messages(self, messages):
         while messages:
             m = messages.pop(0)
+            print("got message: " + str(m.t) + ' ' + m.data)
             if m.t == Message.Type.VOICE:
                 data_splited = m.data.split()
+                if data_splited[1] == 'hi' or data_splited[1] == 'took':
+                    self.players_info[data_splited[0]] = PlayerInfo(
+                        data_splited[2])
                 if data_splited[1] == 'hi':
-                    players_info[data_splited[0]] = PlayerInfo(data_splited[2])
                     self.command_list.insert(
-                        0, Command(Command.Type.SAY, self.name + ' hi ' + str(self.my_info)))
-            if m.t == Message.Type.ACTUAL_LEVEL:
-                self.my_info.lvl = int(m.data)
-                self.state = self.State.COLLECTING
+                        0,
+                        Command(Command.Type.SAY,
+                                self.name + ' took ' + str(self.my_info)))
+# -> 1 meet 2, (2 go to 1)
+# -> 2 meet_confirm 1, (1 go to 2)
+                if (data_splited[1] == 'meet' and
+                        data_splited[2] == self.name):
+                    self.state = self.State.MEETING
+                    self.meet_target = data_splited[0]
+                    self.command_list.insert(0,
+                                             Command(Command.Type.SAY,
+                                                     self.name +
+                                                     ' meet_confirm ' +
+                                                     data_splited[0]))
+                if (data_splited[1] == 'meet_confirm' and
+                        data_splited[2] == self.name):
+                    self.state = self.State.MEETING
+                    self.meet_target = data_splited[0]
+
+            # if m.t == Message.Type.ACTUAL_LEVEL:
+            #     self.my_info.lvl = int(m.data)
+            #     self.state = self.State.COLLECTING
 
     def _introduce(self, result, messages):
         if result == '':
@@ -101,9 +126,17 @@ class Player:
         return self._collect('', [])
 
     def _collect(self, result, messages):
+        # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
-        if self.last_cmd and self.last_cmd.t == Command.Type.SEE and result.startswith('{'):
+            # say about lvlup
+            if result == '' and self.my_info.lvl != 1:
+                self.command_list.insert(0, Command(Command.Type.SAY,
+                                                    self.name + ' took ' +
+                                                    str(self.my_info)))
+
+        if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
+           and result.startswith('{'):
             striped = result.strip('{}')
             splited = striped.split(',')
             for i in range(0, len(splited)):
@@ -114,23 +147,40 @@ class Player:
                     if self._do_i_need_this(c):
                         take_list.append(c)
                 if take_list:
+                    print("(I want to take {} from {})".format(take_list, i))
                     self._take(i, take_list)
                     break
 
-        if self.last_cmd and self.last_cmd.t  == Command.Type.TAKE_OBJECT:
-            self.my_info.add_stone(self.last_cmd.arg)
-            if self._can_incantate():
-                self.state = self.State.INCANTATION
-                return self._incantate('', messages)
-            
-                    
+        if (self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT
+                and self.last_cmd.arg != 'nourriture'):
+            if result == 'ok':
+                self.my_info.add_stone(self.last_cmd.arg)
+                self.command_list.insert(0, Command(Command.Type.SAY,
+                                                    self.name + ' took ' +
+                                                    str(self.my_info)))
+            can_incantate = self._can_incantate()
+            if can_incantate:
+                if can_incantate[0] == self.name:
+                    self.state = self.State.INCANTATION
+                    return self._incantate('', messages)
+                self.state = self.State.MEETING
+                self.command_list = []
+                for name in can_incantate:
+                    self.command_list.append(Command(Command.Type.Say,
+                                                     self.name + ' meet ' +
+                                                     name))
+
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
         return cmd
 
     def _do_i_need_this(self, res):
+        print('my_info: ' + str(self.my_info))
         if res == 'nourriture':
             return True
+        if self.state == self.State.MEETING:
+            return False
+
         if self.my_info.lvl == 1:
             if res == 'linemate' and self.my_info.li < 1:
                 return True
@@ -191,7 +241,7 @@ class Player:
                 return True
         return False
 
-    
+    # TODO I waste too much time for walking. Need to upgrade _take to support multiple pos
     def _take(self, pos, contents):
         borders = [0, 3, 8, 15, 24, 35, 48, 63, 80]
         centers = [0, 2, 6, 12, 20, 30, 42, 56, 72]
@@ -201,18 +251,44 @@ class Player:
             if borders[i] >= pos:
                 break
         y = i
-        x = centers[i] - pos    # positive = left, negative = right
+        x = centers[i] - pos  # positive = left, negative = right
         commands = []
+        # go forward
         for i in range(0, y):
             commands.append(Command(Command.Type.GO))
+        # go left or right if need 
         if x != 0:
-            commands.append(Command(Command.Type.TURN_LEFT if x > 0 else Command.Type.TURN_RIGHT))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
         for i in range(0, abs(x)):
             commands.append(Command(Command.Type.GO))
+        # take items from current cell
         for c in contents:
             commands.append(Command(Command.Type.TAKE_OBJECT, c))
+        # turn back
         if x != 0:
-            commands.append(Command(Command.Type.TURN_LEFT if x < 0 else Command.Type.TURN_RIGHT))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            for i in range(0, y):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            for i in range(0, abs(x)):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            
+        elif y != 0:
+            commands.append(Command(Command.Type.TURN_LEFT))
+            commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
+            for i in range(0, y):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT))
+            commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
+            
+        # returned to starting cell
+        commands.append(Command(Command.Type.SEE))
+        
         self.command_list = commands + self.command_list
 
     def _generate_collect_command_list(self):
@@ -239,19 +315,49 @@ class Player:
                 turned = False
             else:
                 turned = True
-                
+
         return cmd_list
 
     def _meet(self, result, messages):
-        return False
+        if self.command_list:
+            return self.command_list.pop(0)
+        if not self.meet_target:
+            return Command(Command.Type.WAIT)
+        print('meet target = ' + self.meet_target)
+        return Command(Command.Type.WAIT)
 
     def _can_incantate(self):
+        '''
+        return list of names to meet with, my name if lvl 1, empty if cannot
+        '''
+        print('my_info: ' + str(self.my_info) + ', ' +
+              'players: ' + str(self.players_info))
         if self.my_info.lvl == 1 and self.my_info.li >= 1:
-            return True
-        return False
+            return [self.name]
+        if self.my_info.lvl == 2:
+            for name in self.players_info.keys():
+                player = self.players_info[name]
+                li = self.my_info.li
+                de = self.my_info.de
+                si = self.my_info.si
+                if player.lvl == 2:
+                    li = li + player.li
+                    de = de + player.de
+                    si = si + player.si
+                    if li >= 1 and de >= 1 and si >= 1:
+                        return [name]
+        return []
+
+    def _remove_stones(self):
+        if self.my_info.lvl == 2:
+            self.my_info.li -= 1
 
     def _incantate(self, result, messages):
         if result == '':
             return Command(Command.Type.INCANTATE)
-        
-        return Comand(Command.Type.WAIT)
+        if result.startswith('niveau actuel'):
+            splited = result.split(':')
+            self.my_info.lvl = int(splited[1].strip())
+            self._remove_stones()
+        self.state = self.state.COLLECTING
+        return self._collect('', messages)

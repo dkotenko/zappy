@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/24 14:52:44 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/08 11:31:05 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,7 +157,8 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		lgc_player_gone(cs);
+		if (client->type == FD_CLIENT)
+			lgc_player_gone(cs);
 		client_gone(cs);
 		return ;
 	}
@@ -429,6 +430,8 @@ void srv_event(char *msg, ...)
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
 	circbuf_push_string(&env.circbuf_events, buf);
+	buf[strlen(buf) - 1] = 0;
+	log_debug("srv -> (gfx): '%s'", buf);
 	free(buf);
 	va_end(ap);
 }
@@ -441,6 +444,8 @@ void srv_reply_client(int client_nb, char *msg, ...)
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
 	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+	buf[strlen(buf) - 1] = 0;
+	log_debug("srv -> #%d: '%s'", client_nb, buf);
 	free(buf);
 	va_end(ap);
 }
@@ -454,6 +459,7 @@ void srv_flush_client(int client_nb)
 void srv_client_died(int client_nb)
 {
 	int i = 0;
+	log_debug("srv_client_died(%d)", client_nb);
 	
 	while (env.deadbodies[i] != 0 && i <= env.maxfd)
 		++i;

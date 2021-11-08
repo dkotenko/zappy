@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/29 11:48:08 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 15:38:30 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/08 11:29:22 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,23 @@
 static void error(int client_nb)
 {
 	srv_reply_client(client_nb, "sbp\n");
+}
+
+static void pnw(int client_nb)
+{
+	extern t_game *game;		/* defined in logic/game.c */
+
+	for (int i = 0; i < game->players_num; ++i) {
+		srv_reply_client(client_nb,
+						 "pnw %d %d %d %d %d %s\n",
+						 game->players[i]->id,
+						 game->players[i]->curr_cell->x,
+						 game->players[i]->curr_cell->y,
+						 game->players[i]->orient,
+						 game->players[i]->level,
+						 g_cfg.teams[game->players[i]->team_id]);
+		srv_flush_client(client_nb);
+	}
 }
 
 static void msz(int client_nb)
@@ -163,10 +180,12 @@ int graphic_chat(int client_nb, char *message)
 		sgt(client_nb);
 		mct(client_nb);
 		tna(client_nb);
-		// pnw
+		pnw(client_nb);
 		// enw
 		return 0;
 	}
+	log_debug("#%d (gfx) -> srv: '%s'", client_nb, message);
+	
 	char *token = strtok(message, " ");
 	if (!token)
 		return 0;
