@@ -121,6 +121,7 @@ void	init_map(t_game *game);
 t_map	*create_map(t_game *game, int w, int h);
 
 t_player	*create_player(int player_id, int team_id);
+void	reply_client(int player_id);
 void	reply_and_clean_buff(int player_id);
 void	mock_srv_reply(int client_nb, char *msg);
 void	delete_player(t_player *player);
