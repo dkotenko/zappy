@@ -321,16 +321,12 @@ static void	pin_bct_srv_event(t_player *player, int res, const char *cmd)
 	bct_srv_event(player);
 }
 
-//NOT TESTED
 void	prend(t_player *player, char *data)
 {
 	char	*resource = data + strlen("prend ");
 	int	resource_id = get_resource_id(resource);
 	
-	// TODO what is "(!resource_id && resource[0] != '0')"  ?
-	// if not nourriture and first symbol is not '0' ? 
-	
-	if (/*(!resource_id && resource[0] != '0') || */resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
 	} else if (player->curr_cell->inventory[resource_id] > 0)
@@ -348,26 +344,22 @@ void	prend(t_player *player, char *data)
 	}
 }
 
-//NOT TESTED
 void	pose(t_player *player, char *data)
 {
 	char	*resource = data + strlen("pose ");
 	int	resource_id = get_resource_id(resource);
 
-	if ((!resource_id && resource[0] != '0') \
-	|| resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER ||
+		player->inventory[resource_id] < 1) {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
-	} else if (player->inventory[resource_id] > 0) {
+	} else {
 		player->inventory[resource_id]--;
 		player->curr_cell->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
 
 		pin_bct_srv_event(player, resource_id, "pdr");
-	} else {
-		//t_buffer_json_message(game->buf, "KO");
-		t_buffer_write(game->buf, "ko");
 	}
 }
 

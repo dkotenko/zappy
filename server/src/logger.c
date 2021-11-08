@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 17:04:14 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/29 10:41:57 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/08 12:57:23 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,9 +57,6 @@ static void log_print(FILE *f, const char *format, va_list ap, const char *prefi
 
 void log_tick(struct timeval *select_timeout)
 {
-#ifndef DEBUG
-	return ;
-#endif
 	static int tick = 1;
 	g_tick = 1;
 
