@@ -39,6 +39,7 @@ void	mort(t_player *player)
 void	set_player_cell(t_player *player, t_cell *cell)
 {
 	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
+	
 	player->curr_cell->visitors_num--;
 	ft_lstadd(&cell->visitors, temp);
 	cell->visitors_num++;
@@ -269,7 +270,12 @@ static int	get_resource_id(char *resource)
 	return (-1);
 }
 
-//NOT TESTED
+static char *get_resource(char *data)
+{
+	
+	return (NULL);
+}
+
 void	prend(t_player *player, char *data)
 {
 	char	*resource = data + strlen("prend ");
@@ -279,8 +285,7 @@ void	prend(t_player *player, char *data)
 		//t_buffer_json_message(game->buf, "KO");
 		printf("here\n");
 		t_buffer_write(game->buf, "ko");
-	} else if (player->curr_cell->inventory[resource_id] > 0)
-	{	
+	} else if (player->curr_cell->inventory[resource_id] > 0) {	
 		player->curr_cell->inventory[resource_id]--;
 		player->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
@@ -291,30 +296,20 @@ void	prend(t_player *player, char *data)
 	}
 }
 
-static char *get_resource(char *data)
-{
-	
-	return (NULL);
-}
-
-//NOT TESTED
 void	pose(t_player *player, char *data)
 {
 	char	*resource = data + strlen("pose ");
 	int	resource_id = get_resource_id(resource);
 
-	if ((!resource_id && resource[0] != '0') \
-	|| resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
+	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER ||
+	player->inventory[resource_id] < 1) {
 		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
-	} else if (player->inventory[resource_id] > 0) {
+	} else {
 		player->inventory[resource_id]--;
 		player->curr_cell->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
-	} else {
-		//t_buffer_json_message(game->buf, "KO");
-		t_buffer_write(game->buf, "ko");
 	}
 }
 
@@ -442,7 +437,6 @@ int		normalize_side(int orient, int side)
 void	broadcast(t_player *player, char *data)
 {
 	char	*text = data + strlen("broadcast ");
-	t_player	*receiver = NULL;
 
 	int	size_pos = 8;
 	t_buffer_write(game->buf, "message 0");
@@ -452,10 +446,10 @@ void	broadcast(t_player *player, char *data)
 		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
-		int side = get_broadcast_side(player, receiver);
+		int side = get_broadcast_side(player, game->players[i]);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
 		game->buf->s[size_pos] = side_normalized + '0';
-		srv_reply_client(game->players[i]->id, "%s\n", game->buf->s);
+		reply_client(game->players[i]->id);
 	}
 	t_buffer_clean(game->buf);
 }

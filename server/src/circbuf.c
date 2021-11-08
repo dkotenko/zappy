@@ -87,6 +87,7 @@ void circbuf_push_string(t_circbuf *circbuf, char *str)
 	size_t len = strlen(str);
 	char *buf;
 
+	
 	if (circbuf->debug)
 		log_debug("%p circbuf_push_string", circbuf);
 	
