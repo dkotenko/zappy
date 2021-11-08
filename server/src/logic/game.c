@@ -50,7 +50,11 @@ int is_session_ends()
 
 t_player	*get_player_by_id(int player_id)
 {
-	return game->players[player_id];
+	for (int i = 0; i < game->players_num; ++i) {
+		if (game->players[i] && game->players[i]->id == player_id)
+			return game->players[i];
+	}
+	return NULL;
 }
 
 t_team	**create_teams()
@@ -74,6 +78,7 @@ t_game	*create_game(map_initiator init_map)
 	t_game	*game;
 
 	game = (t_game *)ft_memalloc(sizeof(t_game));
+	game->teams_num = g_cfg.teams_count;
 	game->teams = create_teams();
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.height, g_cfg.width);
@@ -105,7 +110,11 @@ void	delete_player(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
-	game->players[player->id] = NULL;
+	for (int i = 0; i < game->players_num; ++i)
+		if (game->players[i] == player) {
+			game->players[i] = NULL;
+		}
+
 	free(player->inventory);
 	free(player);
 	free(tmp);
@@ -119,7 +128,6 @@ t_player	*create_player(int player_id, int team_id)
 	player = (t_player *)ft_memalloc(sizeof(t_player));
 	player->id = player_id;
 	player->team_id = team_id;
-	game->players_num++;
 	player->orient = rand() % 4;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	player->inventory[0] += 10;
@@ -134,7 +142,7 @@ t_player	*add_player(int player_id, int team_id)
 
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
-	game->players[player_id] = player;
+	game->players[game->players_num++] = player;
 	add_visitor(cell, player);
 	return player;
 }
@@ -147,14 +155,8 @@ void	add_visitor(t_cell *cell, t_player *player)
 	ft_lstadd(&cell->visitors, new_player);
 	cell->visitors_num++;
 	player->curr_cell = cell;
+	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
 }
-
-// TODO
-// lgc_get_all_players(...)
-
-// Нужно передать о всех клиентах следующую инфу: координаты, ориентация, уровень, название команды
-// например в виде массива структур
-// нужно в визуализаторе при его подключении
 
 void lgc_init()
 {
@@ -190,6 +192,11 @@ void lgc_new_player(int player_nb, char *team)
 void lgc_player_gone(int player_nb)
 {
 	// delete player from game
+
+	// TODO double free when player dies after disconnect. Following line should fix but
+	// segfaults happen
+
+	//delete_player(get_player_by_id(player_nb));
 	log_info("logic: Remove player #%d", player_nb);
 	srv_event("pdi %d\n", player_nb);
 }
@@ -284,21 +291,22 @@ int lgc_get_player_level(int player_nb)
 {
 	t_player *player = get_player_by_id(player_nb);
 
-	if (!player) {
+	if (!player)
 		return -1;
-	}
 	return player->level;
 }
 
 int lgc_get_player_inventory(int player_nb, int *x, int *y, int resources[7])
 {
-	if (player_nb < 0)
+	t_player *player = get_player_by_id(player_nb);
+	if (!player)
 		return -1;
-	*x = game->players[player_nb]->curr_cell->x;
-	*y = game->players[player_nb]->curr_cell->y;
+
+	*x = player->curr_cell->x;
+	*y = player->curr_cell->y;
 
 	for (int i = 0; i < 7; ++i)
-		resources[i] = game->players[player_nb]->inventory[i];
+		resources[i] = player->inventory[i];
 	return 0;
 }
 

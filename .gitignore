@@ -56,3 +56,6 @@ dkms.conf
 .vscode*
 .DS_Store
 server/server
+
+client/__pycache__
+TAGS
