@@ -147,6 +147,7 @@ class Player:
                     if self._do_i_need_this(c):
                         take_list.append(c)
                 if take_list:
+                    print("(I want to take {} from {})".format(take_list, i))
                     self._take(i, take_list)
                     break
 
@@ -174,6 +175,7 @@ class Player:
         return cmd
 
     def _do_i_need_this(self, res):
+        print('my_info: ' + str(self.my_info))
         if res == 'nourriture':
             return True
         if self.state == self.State.MEETING:
@@ -239,6 +241,7 @@ class Player:
                 return True
         return False
 
+    # TODO I waste too much time for walking. Need to upgrade _take to support multiple pos
     def _take(self, pos, contents):
         borders = [0, 3, 8, 15, 24, 35, 48, 63, 80]
         centers = [0, 2, 6, 12, 20, 30, 42, 56, 72]
@@ -250,20 +253,42 @@ class Player:
         y = i
         x = centers[i] - pos  # positive = left, negative = right
         commands = []
+        # go forward
         for i in range(0, y):
             commands.append(Command(Command.Type.GO))
+        # go left or right if need 
         if x != 0:
-            commands.append(
-                Command(Command.Type.TURN_LEFT if x > 0 else Command.Type.
-                        TURN_RIGHT))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
         for i in range(0, abs(x)):
             commands.append(Command(Command.Type.GO))
+        # take items from current cell
         for c in contents:
             commands.append(Command(Command.Type.TAKE_OBJECT, c))
+        # turn back
         if x != 0:
-            commands.append(
-                Command(Command.Type.TURN_LEFT if x < 0 else Command.Type.
-                        TURN_RIGHT))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            for i in range(0, y):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            for i in range(0, abs(x)):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT if x > 0
+                                    else Command.Type.TURN_RIGHT))
+            
+        elif y != 0:
+            commands.append(Command(Command.Type.TURN_LEFT))
+            commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
+            for i in range(0, y):
+                commands.append(Command(Command.Type.GO))
+            commands.append(Command(Command.Type.TURN_LEFT))
+            commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
+            
+        # returned to starting cell
+        commands.append(Command(Command.Type.SEE))
+        
         self.command_list = commands + self.command_list
 
     def _generate_collect_command_list(self):
