@@ -30,7 +30,7 @@ enum e_resources
 
 enum e_orientation
 {
-    ORIENT_N,
+    ORIENT_N = 1,
     ORIENT_E,
     ORIENT_S,
     ORIENT_W

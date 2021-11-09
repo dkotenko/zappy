@@ -28,7 +28,7 @@ def parse_args():
 def dev_mode(server):
     r = ''
     last_cmd = ''
-    print('f - forward (avance), l - left (droite), r - right (gauche),')
+    print('f - forward (avance), l - left (gauche), r - right (droite),')
     print('s - see (voir), i - inventory (inventaire),')
     print('t - take <obj> (prend), d - drop <obj> (pose),')
     print('k - kick (expulse), b - broadcast <text>,')

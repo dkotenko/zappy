@@ -108,9 +108,9 @@ class Server:
             pass
         if cmd.t == Command.Type.GO:
             s = 'avance'
-        if cmd.t == Command.Type.TURN_LEFT:
-            s = 'droite'
         if cmd.t == Command.Type.TURN_RIGHT:
+            s = 'droite'
+        if cmd.t == Command.Type.TURN_LEFT:
             s = 'gauche'
         if cmd.t == Command.Type.SEE:
             s = 'voir'

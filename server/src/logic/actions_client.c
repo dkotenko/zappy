@@ -68,12 +68,32 @@ void	avance(t_player *player)
 			  player->id, new_x, new_y, player->orient);
 }
 
+
+/* Север 1, Восток 2, Юг 3, Запад 4
+right: 1->2, 2->3, 3->4, 4->1
+left: 1->4, 2->1, 3->2, 4->3
+*/
+static int turn(int o, int right)
+{
+	if (right) {
+		++o;
+		if (o == 5)
+			o = 1;
+	} else {
+		--o;
+		if (o == 0)
+			o = 4;
+	}
+	return o;
+}
+
 /*
 ** turn right
 */
 void	droite(t_player *player)
 {
-	player->orient = game->aux->orientation[(player->orient + 1) % 4];
+	//player->orient = game->aux->orientation[(player->orient + 1) % 4 + 1];
+	player->orient = turn(player->orient, 1);
 	t_buffer_write(game->buf, "ok");
 	srv_event("ppo %d %d %d %d\n",
 			  player->id,
@@ -86,7 +106,8 @@ void	droite(t_player *player)
 */
 void	gauche(t_player *player)
 {
-	player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4];
+	//player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4 + 1];
+	player->orient = turn(player->orient, 0);
 	t_buffer_write(game->buf, "ok");
 	srv_event("ppo %d %d %d %d\n",
 			  player->id,
