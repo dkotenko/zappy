@@ -288,9 +288,9 @@ int main() {
 	//test_avance();
 	//test_voir();
 	//test_inventoire();
-	//test_pose();
+	test_pose();
 	
-	test_broadcast();
+	//test_broadcast();
 	//testcase();
 
 	if (g_tests_result == 0) {
