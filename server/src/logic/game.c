@@ -5,11 +5,11 @@
 #include "../utils.h"
 
 t_game *game;
-extern t_dlist *g_messages;
+//extern t_dlist *g_messages;
 
 void	mock_srv_reply(int client_nb, char *msg)
 {
-	t_dlist_append(g_messages, t_dlist_node_new(strdup(msg), sizeof(char)));
+	//t_dlist_append(g_messages, t_dlist_node_new(strdup(msg), sizeof(char)));
 	printf("\n%sClient %d received message: %s%s\n\n",
 		ANSI_COLOR_YELLOW, client_nb, msg, ANSI_COLOR_RESET);
 }
