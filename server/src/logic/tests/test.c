@@ -285,10 +285,10 @@ int main() {
 	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
 	
-	//test_avance();
+	test_avance();
 	//test_voir();
 	//test_inventoire();
-	test_pose();
+	//test_pose();
 	
 	//test_broadcast();
 	//testcase();

@@ -64,8 +64,10 @@ void	avance(t_player *player)
 	t_cell *cell = game->map->cells[new_y][new_x];
 	set_player_cell(player, cell);
 	t_buffer_write(game->buf, "ok");
-	srv_event("ppo %d %d %d %d\n",
-			  player->id, new_x, new_y, player->orient);
+	if (!game->is_test) {
+		srv_event("ppo %d %d %d %d\n",
+			  player->id, new_x, new_y, player->orient);	
+	}
 }
 
 
@@ -92,9 +94,13 @@ static int turn(int o, int right)
 */
 void	droite(t_player *player)
 {
-	//player->orient = game->aux->orientation[(player->orient + 1) % 4 + 1];
 	player->orient = turn(player->orient, 1);
 	t_buffer_write(game->buf, "ok");
+	
+	//тесты не поддерживают вывод инфы в монитор
+	if (game->is_test)
+		return ;
+
 	srv_event("ppo %d %d %d %d\n",
 			  player->id,
 			  player->curr_cell->x, player->curr_cell->y,
@@ -109,6 +115,11 @@ void	gauche(t_player *player)
 	//player->orient = game->aux->orientation[(player->orient + 4 - 1) % 4 + 1];
 	player->orient = turn(player->orient, 0);
 	t_buffer_write(game->buf, "ok");
+
+	//тесты не поддерживают вывод инфы в монитор
+	if (game->is_test)
+		return ;
+
 	srv_event("ppo %d %d %d %d\n",
 			  player->id,
 			  player->curr_cell->x, player->curr_cell->y,
@@ -363,6 +374,10 @@ void	prend(t_player *player, char *data)
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
 
+		//тесты не поддерживают вывод инфы в монитор
+		if (game->is_test)
+			return ;
+
 		pin_bct_srv_event(player, resource_id, "pgt");
 		
 	} else {
@@ -384,6 +399,11 @@ void	pose(t_player *player, char *data)
 		player->curr_cell->inventory[resource_id]++;
 		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
+
+		//тесты не поддерживают вывод инфы в монитор
+		if (game->is_test)
+			return ;
+
 		pin_bct_srv_event(player, resource_id, "pdr");
 	}
 }
@@ -529,6 +549,10 @@ void	broadcast(t_player *player, char *data)
 	t_buffer_clean(game->buf);
 	t_buffer_write(game->buf, "ok");
 
+	//тесты не поддерживают вывод инфы в монитор
+	if (game->is_test)
+		return ;
+
 	srv_event("pbc %d %s\n", player->id, text);
 }
 
@@ -557,6 +581,11 @@ void	incantation(t_player *player)
 	if (incat_counter) {
 		//t_buffer_json_message(game->buf, "ko");
 		t_buffer_write(game->buf, "ko");
+
+		//тесты не поддерживают вывод инфы в монитор
+		if (game->is_test)
+			return ;
+
 		srv_event("pie %d %d ko\n",
 			  player->curr_cell->x, player->curr_cell->y);
 		return ;
@@ -565,6 +594,10 @@ void	incantation(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		player->inventory[i] -= incat_consts[i];
 	}
+
+	//тесты не поддерживают вывод инфы в монитор
+	if (game->is_test)
+		return ;
 
 	srv_event("pie %d %d ok\n",
 			  player->curr_cell->x, player->curr_cell->y);
