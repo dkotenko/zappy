@@ -78,7 +78,6 @@ void	test_prend()
 	if (game->players_num == 0)
 		player = add_player(3, 5);
 	char *cmd = "prend nourriture";
-	int local_test_result = 0;
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_prend");
@@ -89,8 +88,8 @@ void	test_prend()
 	player->curr_cell->inventory[NOURRITURE] = 1;
 	int player_nourriture = player->inventory[NOURRITURE];
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
-	local_test_result += xassert(player->inventory[NOURRITURE] == player_nourriture + 1, "no item in player inv after prend");
-	local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == 0, "prend: item remains at cell");
+	g_tests_result += xassert(player->inventory[NOURRITURE] == player_nourriture + 1, "no item in player inv after prend");
+	g_tests_result += xassert(player->curr_cell->inventory[NOURRITURE] == 0, "prend: item remains at cell");
 
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
@@ -104,7 +103,7 @@ void	test_pose()
 	if (game->players_num == 0)
 		player = add_player(3, 5);
 	char *cmd = "pose nourriture";
-	int local_test_result = 0;
+	
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_prend");
@@ -116,8 +115,8 @@ void	test_pose()
 	int cell_nourriture = player->curr_cell->inventory[NOURRITURE];
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 	print_cell(player->curr_cell);
-	local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
-	local_test_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
+	g_tests_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
+	g_tests_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
 
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
@@ -129,8 +128,7 @@ void	test_inventoire()
 	set_player_cell(player, game->map->cells[0][0]);
 	int player_id = 3;
 	char *cmd = "inventaire";
-	int local_test_result = 0;
-
+	
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_inventoire");
@@ -154,7 +152,7 @@ void	test_voir()
 	set_player_cell(player3, game->map->cells[0][1]);
 	//print_cell(game->map->cells[0][1]);
 	char *cmd = "voir";
-	int local_test_result = 0;
+	
 	//"{sibur phiras thystame, sibur sibur player player, linemate deraumere deraumere deraumere deraumere sibur sibur mendiane phiras}";
 
 	int cmd_id = lgc_get_command_id(cmd);
@@ -164,9 +162,6 @@ void	test_voir()
 	
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
 }
-
-
-
 
 void	test_broadcast()
 {
@@ -191,11 +186,9 @@ void	test_broadcast()
 		handle_error("invalid command in test_prend");
 	}
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
-	//local_test_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
-	//local_test_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
+	//g_tests_result += xassert(player->curr_cell->inventory[NOURRITURE] == cell_nourriture + 1, "no item left from player inv after pose");
+	//g_tests_result += xassert(player->inventory[NOURRITURE] == 0, "pose: item remains at player inv");
 }
-
-
 
 void	testcase()
 {
@@ -243,7 +236,7 @@ void	testcase()
 
 	local_test_result += xassert(player->inventory[LINEMATE] == player_nourriture + 1, "no item in player inv after prend");
 	local_test_result += xassert(player->curr_cell->inventory[LINEMATE] == 0, "prend: item remains at cell");
-	
+	g_tests_result += local_test_result;
 }
 
 void	test_set_player_cell()
@@ -256,7 +249,7 @@ void	test_set_player_cell()
 		player = add_player(3, 5);
 	print_cell(player->curr_cell);
 	char *cmd = "prend linemate";
-	int local_test_result = 0;
+	
 	int cmd_id = lgc_get_command_id(cmd);
 	if (cmd_id == -1) {
 		handle_error("invalid command in test_prend");
@@ -265,6 +258,44 @@ void	test_set_player_cell()
 	set_player_cell(player, game->map->cells[0][1]);
 	print_cell(player->curr_cell);
 	print_cell(cell);
+}
+
+void	test_droite_gauche()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	
+	char *cmd_droite = "droite";
+	char *cmd_gauche = "gauche";
+	
+	int cmd_id_droite = lgc_get_command_id(cmd_droite);
+	int cmd_id_gauche = lgc_get_command_id(cmd_gauche);
+	if (cmd_id_droite == -1 || cmd_id_gauche == -1) {
+		handle_error("invalid command in test_droite_gauche");
+	}
+
+	player->orient = ORIENT_N;
+	lgc_execute_command(player_id, cmd_droite, lgc_get_command_id(cmd_droite));
+	g_tests_result += xassert(player->orient == ORIENT_E, "droite: orientation must be E");
+	lgc_execute_command(player_id, cmd_droite, lgc_get_command_id(cmd_droite));
+	g_tests_result += xassert(player->orient == ORIENT_S, "droite: orientation must be S");
+	lgc_execute_command(player_id, cmd_droite, lgc_get_command_id(cmd_droite));
+	g_tests_result += xassert(player->orient == ORIENT_W, "droite: orientation must be W");
+	lgc_execute_command(player_id, cmd_droite, lgc_get_command_id(cmd_droite));
+	g_tests_result += xassert(player->orient == ORIENT_N, "droite: orientation must be N");
+
+	lgc_execute_command(player_id, cmd_gauche, lgc_get_command_id(cmd_gauche));
+	g_tests_result += xassert(player->orient == ORIENT_W, "gauche: orientation must be W");
+	lgc_execute_command(player_id, cmd_gauche, lgc_get_command_id(cmd_gauche));
+	g_tests_result += xassert(player->orient == ORIENT_S, "gauche: orientation must be S");
+	lgc_execute_command(player_id, cmd_gauche, lgc_get_command_id(cmd_gauche));
+	g_tests_result += xassert(player->orient == ORIENT_E, "gauche: orientation must be E");
+	lgc_execute_command(player_id, cmd_gauche, lgc_get_command_id(cmd_gauche));
+	g_tests_result += xassert(player->orient == ORIENT_N, "gauche: orientation must be N");
 }
 
 void	init_game(void)
@@ -284,8 +315,8 @@ int main() {
 	g_list_game_to_free = (t_list *)ft_memalloc(sizeof(t_list));
 	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
-	
-	test_avance();
+	test_droite_gauche();
+	//test_avance();
 	//test_voir();
 	//test_inventoire();
 	//test_pose();
