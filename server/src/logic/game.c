@@ -128,7 +128,7 @@ t_player	*create_player(int player_id, int team_id)
 	player = (t_player *)ft_memalloc(sizeof(t_player));
 	player->id = player_id;
 	player->team_id = team_id;
-	player->orient = rand() % 4;
+	player->orient = rand() % 4 + 1;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	player->inventory[0] += 10;
 	player->is_egg = 0;
