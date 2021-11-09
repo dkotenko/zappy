@@ -98,6 +98,7 @@ void	delete_player(t_player *player)
 {
 	t_list *tmp = player->curr_cell->visitors;
 	t_player *tmp_player = NULL;
+	
 	while (tmp) {
 		tmp_player = (t_player *)tmp->content;
 		if (player == tmp_player) {
@@ -113,6 +114,7 @@ void	delete_player(t_player *player)
 	for (int i = 0; i < game->players_num; ++i)
 		if (game->players[i] == player) {
 			game->players[i] = NULL;
+			break ;
 		}
 
 	free(player->inventory);
