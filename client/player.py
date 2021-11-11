@@ -16,13 +16,13 @@ class PlayerInfo:
         if msg == '':
             return
         splited = msg.split('_')
-        self.lvl = splited[0]
-        self.li = splited[1]
-        self.de = splited[2]
-        self.si = splited[3]
-        self.me = splited[4]
-        self.ph = splited[5]
-        self.th = splited[6]
+        self.lvl = int(splited[0])
+        self.li = int(splited[1])
+        self.de = int(splited[2])
+        self.si = int(splited[3])
+        self.me = int(splited[4])
+        self.ph = int(splited[5])
+        self.th = int(splited[6])
 
     def __str__(self):
         r = str(self.lvl) + '_' + \
@@ -68,6 +68,7 @@ class Player:
     command_list = []
     last_cmd = ''
     meet_target = None
+    meet_target_source = None
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -87,7 +88,6 @@ class Player:
     def _handle_messages(self, messages):
         while messages:
             m = messages.pop(0)
-            print("got message: " + str(m.t) + ' ' + m.data)
             if m.t == Message.Type.VOICE:
                 data_splited = m.data.split()
                 if data_splited[1] == 'hi' or data_splited[1] == 'took':
@@ -113,6 +113,7 @@ class Player:
                         data_splited[2] == self.name):
                     self.state = self.State.MEETING
                     self.meet_target = data_splited[0]
+                    self.meet_target_source = int(m.source)
 
             # if m.t == Message.Type.ACTUAL_LEVEL:
             #     self.my_info.lvl = int(m.data)
@@ -166,7 +167,7 @@ class Player:
                 self.state = self.State.MEETING
                 self.command_list = []
                 for name in can_incantate:
-                    self.command_list.append(Command(Command.Type.Say,
+                    self.command_list.append(Command(Command.Type.SAY,
                                                      self.name + ' meet ' +
                                                      name))
 
@@ -186,21 +187,21 @@ class Player:
                 return True
             return False
         if self.my_info.lvl == 2:
-            if res == 'linamate' and self.my_info.li < 1:
+            if res == 'linemate' and self.my_info.li < 1:
                 return True
             if res == 'deraumere' and self.my_info.de < 1:
                 return True
             if res == 'sibur' and self.my_info.si < 1:
                 return True
         if self.my_info.lvl == 3:
-            if res == 'linamate' and self.my_info.li < 2:
+            if res == 'linemate' and self.my_info.li < 2:
                 return True
             if res == 'sibur' and self.my_info.de < 1:
                 return True
             if res == 'phiras' and self.my_info.si < 2:
                 return True
         if self.my_info.lvl == 4:
-            if res == 'linamate' and self.my_info.li < 1:
+            if res == 'linemate' and self.my_info.li < 1:
                 return True
             if res == 'deraumere' and self.my_info.li < 1:
                 return True
@@ -209,7 +210,7 @@ class Player:
             if res == 'phiras' and self.my_info.li < 1:
                 return True
         if self.my_info.lvl == 5:
-            if res == 'linamate' and self.my_info.li < 1:
+            if res == 'linemate' and self.my_info.li < 1:
                 return True
             if res == 'deraumere' and self.my_info.li < 2:
                 return True
@@ -218,7 +219,7 @@ class Player:
             if res == 'mendiane' and self.my_info.li < 3:
                 return True
         if self.my_info.lvl == 6:
-            if res == 'linamate' and self.my_info.li < 1:
+            if res == 'linemate' and self.my_info.li < 1:
                 return True
             if res == 'deraumere' and self.my_info.li < 2:
                 return True
@@ -227,7 +228,7 @@ class Player:
             if res == 'phiras' and self.my_info.li < 1:
                 return True
         if self.my_info.lvl == 7:
-            if res == 'linamate' and self.my_info.li < 2:
+            if res == 'linemate' and self.my_info.li < 2:
                 return True
             if res == 'deraumere' and self.my_info.li < 2:
                 return True
@@ -326,11 +327,11 @@ class Player:
         return cmd_list
 
     def _meet(self, result, messages):
+        print('-- meet state, target = ' + str(self.meet_target))
         if self.command_list:
             return self.command_list.pop(0)
         if not self.meet_target:
             return Command(Command.Type.WAIT)
-        print('meet target = ' + self.meet_target)
         return Command(Command.Type.WAIT)
 
     def _can_incantate(self):
