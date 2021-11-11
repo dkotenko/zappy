@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import select
+import datetime
 
 from optparse import OptionParser
 from player import Player
@@ -78,9 +78,11 @@ def prod_mode(server, world_size):
     result = ''
     while True:
         cmd = player.play(result, server.messages)
-        print('exec', cmd.t, cmd.arg)
+        print('[' + str(datetime.datetime.now().time()) +
+              '] exec', cmd.t, cmd.arg)
         result = server.exec_command(cmd)
-        print('result', result)
+        print('[' + str(datetime.datetime.now().time()) +
+              '] result', result)
 
 
 def main(options):

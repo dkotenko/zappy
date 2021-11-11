@@ -52,7 +52,7 @@ class Message:
     t = None
     source = 0
     data = ''
-
+    
     def __init__(self, type_, source, data):
         self.t = type_
         self.source = source
@@ -171,7 +171,7 @@ class Server:
             else:
                 print('unknown message: "' + r + '"')
                 break
-            if cmd == Command.Type.WAIT:
+            if cmd.t == Command.Type.WAIT:
                 return 'ok'
         return 'invalid'
 
