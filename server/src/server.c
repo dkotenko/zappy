@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/08 11:31:05 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/11 19:13:42 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -353,12 +353,15 @@ static void srv_create()
 	int s;
 	struct sockaddr_in sin;
 	struct protoent *pe;
+	int true_val = 1;
 
 	xassert((pe = getprotobyname("tcp")) != NULL, "getprotobyname");
 	xassert((s = socket(PF_INET, SOCK_STREAM, pe->p_proto)) != -1, "socket");
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons(g_cfg.port);
+	/* https://stackoverflow.com/questions/10619952/how-to-completely-destroy-a-socket-connection-in-c */
+	xassert(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &true_val, sizeof(int)) != -1, "setsockopt");
 	xassert(bind(s, (struct sockaddr*)&sin, sizeof(sin)) != -1, "bind");
 	xassert(listen(s, 42) != -1, "listen");
 	log_info("Listen on port %d", g_cfg.port);
