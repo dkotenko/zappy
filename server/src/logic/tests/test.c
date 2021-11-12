@@ -143,13 +143,48 @@ void	test_inventoire()
 void	test_voir()
 {
 	int player_id = 3;
-	t_player *player = add_player(player_id, 5);
-	set_player_cell(player, game->map->cells[0][0]);
+	t_player *player = NULL;
+
+	init_game();
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	
 	player->orient = ORIENT_E;
 	t_player *player2 = add_player(0, 5);
 	t_player *player3 = add_player(1, 5);
-	set_player_cell(player2, game->map->cells[0][1]);
-	set_player_cell(player3, game->map->cells[0][1]);
+	set_player_cell(player, game->map->cells[1][1]);
+
+	for (int i = 0; i < game->map->h; i++) {
+		for (int j = 0; j < game->map->w; j++) {
+			ft_memset(game->map->cells[i][j]->inventory, 0, sizeof(int) * RESOURCES_NUMBER);
+		}
+	}
+
+	/*
+	1S | 1P | 2S
+	4P | 0	| 2P
+	4S | 3P | 3S
+	*/
+	int y0 = game->map->h - 1;
+	int y1 = 0;
+	int y2 = 1;
+	int x0 = game->map->w - 1;
+	int x1 = 0;
+	int x2 = 1;
+	
+
+	game->map->cells[y0][x0]->inventory[SIBUR] = 1;
+	game->map->cells[y0][x1]->inventory[PHIRAS] = 1;
+	game->map->cells[y0][x2]->inventory[SIBUR] = 2;
+	game->map->cells[y2][x0]->inventory[SIBUR] = 4;
+	game->map->cells[y2][x1]->inventory[PHIRAS] = 3;
+	game->map->cells[y2][x2]->inventory[SIBUR] = 3;
+	game->map->cells[y1][x0]->inventory[PHIRAS] = 4;
+	game->map->cells[y1][x2]->inventory[PHIRAS] = 2;
+	player->orient = ORIENT_W;
+	
+	set_player_cell(player2, game->map->cells[5][5]);
+	set_player_cell(player3, game->map->cells[5][5]);
 	//print_cell(game->map->cells[0][1]);
 	char *cmd = "voir";
 	
@@ -173,11 +208,12 @@ void	test_broadcast()
 		player = add_player(3, 5);
 	t_player *player2 = add_player(1, 5);
 	
+	set_player_cell(player, game->map->cells[game->map->h - 1][2]);
+	set_player_cell(player2, game->map->cells[1][0]);
+	player->orient = ORIENT_N;
+	player2->orient = ORIENT_N;
 
-	t_cell *cell = player->curr_cell;
-	set_player_cell(player, game->map->cells[0][0]);
-	set_player_cell(player2, game->map->cells[0][0]);
-	
+
 	print_cell(player->curr_cell);
 	
 	char *cmd = "broadcast 123";
@@ -244,7 +280,6 @@ void	test_set_player_cell()
 	t_player *player = NULL;
 
 	init_game();
-	int player_id = 3;
 	if (game->players_num == 0)
 		player = add_player(3, 5);
 	print_cell(player->curr_cell);
@@ -315,13 +350,13 @@ int main() {
 	g_list_game_to_free = (t_list *)ft_memalloc(sizeof(t_list));
 	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
-	test_droite_gauche();
+	//test_droite_gauche();
 	//test_avance();
 	//test_voir();
 	//test_inventoire();
 	//test_pose();
 	
-	//test_broadcast();
+	test_broadcast();
 	//testcase();
 
 	if (g_tests_result == 0) {
