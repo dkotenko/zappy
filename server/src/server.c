@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/11 19:13:42 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/12 22:25:56 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -379,6 +379,8 @@ static void srv_init()
 	
 	xassert(getrlimit(RLIMIT_NOFILE, &rlp) != -1, "getrlimit");
 	env.maxfd = rlp.rlim_cur;
+	if (env.maxfd >= FD_SETSIZE)
+		env.maxfd = FD_SETSIZE - 1;
 	log_info("Maximum clients: %d", env.maxfd);
 	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
