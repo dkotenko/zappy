@@ -204,7 +204,7 @@ void	voir(t_player *player)
 	int cells_counter = 0;
 
 	t_buffer_write(game->buf, "{");
-	if (orient == ORIENT_N) {
+	if (orient == ORIENT_N || orient == ORIENT_S) {
 		for (int i = 0; i < player->level + 1; i++) {
 
 			int h = get_h(y + (orient == ORIENT_S ? i : -i));
@@ -215,32 +215,21 @@ void	voir(t_player *player)
 				if (cells_counter) {
 					t_buffer_write(game->buf, ", ");
 				}
-				print_voir_cell(player, game->map->cells[h][get_w(w)]);
-				//printed[h][get_w(w)] = 1;
+				int print_w = w;
+				if (orient == ORIENT_S) {
+					if (w < x) {
+						print_w = x + (x - w);
+					} else if (w > x) {
+						print_w = x - (w - x);
+					}
+				}
+				print_voir_cell(player, game->map->cells[h][get_w(print_w)]);
+				printf("%d y %d x\n", h, get_w(print_w));
 				w++;
 				cells_counter++;
 			}
-			
 		}
-	} else if (orient == ORIENT_S) {
-		for (int i = 0; i < player->level + 1; i++) {
-
-			int h = get_h(y + (orient == ORIENT_S ? i : -i));
-			int w = max(x - i, 0);
-			int max_w = min(x + 1 + i, map->w);
-			
-			while (w < max_w) {
-				if (cells_counter) {
-					t_buffer_write(game->buf, ", ");
-				}
-				//printf("y:%d x:%d\n", h, max_w);
-				max_w--;
-				print_voir_cell(player, game->map->cells[h][get_w(max_w)]);
-				cells_counter++;
-			}
-			
-		}
-	} else if (orient == ORIENT_E) {
+	} else if (orient == ORIENT_E || orient == ORIENT_W) {
 		for (int i = 0; i < player->level + 1; i++) {
 
 			int w = get_w(x + (orient == ORIENT_W ? -i : i));
@@ -251,30 +240,18 @@ void	voir(t_player *player)
 				if (cells_counter) {
 					t_buffer_write(game->buf, ", ");
 				}
+				int print_h = h;
+				if (orient == ORIENT_W) {
+					if (h < y) {
+						print_h = y + (y - h);
+					} else if (h > y) {
+						print_h = y - (h - y);
+					}
+				}
 				//printed[get_h(h)][w] = 1;
 				//printf("x:%d y:%d\n", w, h);
-				print_voir_cell(player, game->map->cells[get_h(h)][w]);
+				print_voir_cell(player, game->map->cells[get_h(print_h)][w]);
 				h++;
-				cells_counter++;
-			}
-			
-		}
-	} else if (orient == ORIENT_W) {
-		for (int i = 0; i < player->level + 1; i++) {
-
-			int w = get_w(x + (orient == ORIENT_W ? -i : i));
-			int h = max(y - i, 0);
-			int max_h = min(y + 1 + i, map->h);
-			
-			while (h < max_h) {
-				if (cells_counter) {
-					t_buffer_write(game->buf, ", ");
-				}
-				//printed[get_h(h)][w] = 1;
-				//printf("x:%d y:%d\n", w, h);
-				max_h--;
-				print_voir_cell(player, game->map->cells[get_h(max_h)][w]);
-				
 				cells_counter++;
 			}
 			
