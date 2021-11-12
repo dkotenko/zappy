@@ -316,7 +316,9 @@ class Player:
             return self.command_list.pop(0)  # command to say 'meet'
         if not self.meet_target_source:      # happens after receiving 'meet_confirm'
             return Command(Command.Type.WAIT)
-        self._move_to_target()
+        if self._move_to_target() is True:
+            print('ready to incantate')
+            return Command(Command.Type.WAIT)
         self.command_list.append(Command(Command.Type.SAY,
                                          self.name + ' meet ' +
                                          self.meet_target))
@@ -324,6 +326,8 @@ class Player:
         return self.command_list.pop(0)
 
     def _move_to_target(self):
+        if self.meet_target_source == 0:
+            return True
         if self.meet_target_source == 1:
             self.command_list.append(Command(Command.Type.GO))
         elif self.meet_target_source == 2:
@@ -356,6 +360,7 @@ class Player:
             self.command_list.append(Command(Command.Type.GO))
         else:
             print('unknown meet_target_source: ' + self.meet_target_source)
+        return False
             
 
     def _can_incantate(self):
