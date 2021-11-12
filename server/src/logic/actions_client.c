@@ -204,7 +204,7 @@ void	voir(t_player *player)
 	int cells_counter = 0;
 
 	t_buffer_write(game->buf, "{");
-	if (orient == ORIENT_N || orient == ORIENT_S) {
+	if (orient == ORIENT_N) {
 		for (int i = 0; i < player->level + 1; i++) {
 
 			int h = get_h(y + (orient == ORIENT_S ? i : -i));
@@ -222,7 +222,25 @@ void	voir(t_player *player)
 			}
 			
 		}
-	} else if (orient == ORIENT_W || orient == ORIENT_E) {
+	} else if (orient == ORIENT_S) {
+		for (int i = 0; i < player->level + 1; i++) {
+
+			int h = get_h(y + (orient == ORIENT_S ? i : -i));
+			int w = max(x - i, 0);
+			int max_w = min(x + 1 + i, map->w);
+			
+			while (w < max_w) {
+				if (cells_counter) {
+					t_buffer_write(game->buf, ", ");
+				}
+				//printf("y:%d x:%d\n", h, max_w);
+				max_w--;
+				print_voir_cell(player, game->map->cells[h][get_w(max_w)]);
+				cells_counter++;
+			}
+			
+		}
+	} else if (orient == ORIENT_E) {
 		for (int i = 0; i < player->level + 1; i++) {
 
 			int w = get_w(x + (orient == ORIENT_W ? -i : i));
@@ -241,8 +259,27 @@ void	voir(t_player *player)
 			}
 			
 		}
-	}
-	else {
+	} else if (orient == ORIENT_W) {
+		for (int i = 0; i < player->level + 1; i++) {
+
+			int w = get_w(x + (orient == ORIENT_W ? -i : i));
+			int h = max(y - i, 0);
+			int max_h = min(y + 1 + i, map->h);
+			
+			while (h < max_h) {
+				if (cells_counter) {
+					t_buffer_write(game->buf, ", ");
+				}
+				//printed[get_h(h)][w] = 1;
+				//printf("x:%d y:%d\n", w, h);
+				max_h--;
+				print_voir_cell(player, game->map->cells[get_h(max_h)][w]);
+				
+				cells_counter++;
+			}
+			
+		}
+	} else {
 		log_warning("Invalid orientation");
 	}
 	t_buffer_write(game->buf, "}");
@@ -322,11 +359,12 @@ static int	get_resource_id(char *resource)
 	return (-1);
 }
 
-
+/*
 static char *get_resource(char *data)
 {
 	return (NULL);
 }
+*/
 
 static void bct_srv_event(t_player *player)
 {
@@ -430,15 +468,15 @@ int get_quarter(int xr, int xe, int yr, int ye) {
 	
 	if (xr > xe) {
 		if (yr > ye) {
-			quarter = 2;
-		} else {
 			quarter = 1;
+		} else {
+			quarter = 2;
 		}
 	} else {
 		if (yr > ye) {
-			quarter = 3;
-		} else {
 			quarter = 4;
+		} else {
+			quarter = 3;
 		}
 	}
 	return (quarter);
@@ -451,13 +489,15 @@ int		get_broadcast_side(t_player *emitter, t_player *receiver)
 	int xr = receiver->curr_cell->x;
 	int yr = receiver->curr_cell->y;
 
-	if (xe == ye && xr == yr)
+	if (xe == xr && ye == yr) {
 		return (SIDE_INNER);
+	}
+		
 
 	int	x_min = min(xe, xr);
 	int	y_min = min(ye, yr);
-	int	y_max = max(xe, xr);
-	int	x_max = max(ye, yr);
+	int	x_max = max(xe, xr);
+	int	y_max = max(ye, yr);
 
 	if (abs(xe - xr) > x_min + g_cfg.width - x_max) {
 		if (xe == x_min) {
@@ -473,11 +513,11 @@ int		get_broadcast_side(t_player *emitter, t_player *receiver)
 			yr += g_cfg.height;
 		}
 	}
-	
+	//printf("%d %d %d %d \n", xe, xr, ye, yr);
 	// is parallel
 	if (xe == xr || ye == yr) {
 		if (xe == xr) {
-			if (ye > yr) {
+			if (ye < yr) {
 				return SIDE_UP;
 			} else {
 				return SIDE_DOWN;
@@ -490,14 +530,17 @@ int		get_broadcast_side(t_player *emitter, t_player *receiver)
 			}
 		}
 	}
+	
 
 	int quarter = get_quarter(xr, xe, yr, ye);
 	int abs_x = abs(xe - xr);
 	int abs_y = abs(ye - yr);
 	//is diagonal
+	
 	if (abs_x == abs_y) {
 		return quarter * 2;
 	}
+	
 
 	if (abs_x > abs_y) {
 		if (quarter == 1 || quarter == 2) {
@@ -516,12 +559,14 @@ int		get_broadcast_side(t_player *emitter, t_player *receiver)
 
 int		normalize_side(int orient, int side)
 {
+	if (side == 0)
+		return side;
 	if (orient == ORIENT_E) {
-		side += 6;
+		side += 2;
 	} else if (orient == ORIENT_S) {
 		side += 4;
 	} else if (orient == ORIENT_W) {
-		side += 2;
+		side += 6;
 	}
 	if (side > 8) {
 		side -= 8;
@@ -542,7 +587,9 @@ void	broadcast(t_player *player, char *data)
 			continue ;
 		}
 		int side = get_broadcast_side(player, game->players[i]);
+		//printf("%d side\n", side);
 		int side_normalized = normalize_side(game->players[i]->orient, side);
+		//printf("%d normalized_side\n", side_normalized);
 		game->buf->s[size_pos] = side_normalized + '0';
 		reply_client(game->players[i]->id);
 	}
