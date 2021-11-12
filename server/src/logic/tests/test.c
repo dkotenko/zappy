@@ -149,7 +149,7 @@ void	test_voir()
 	if (game->players_num == 0)
 		player = add_player(3, 5);
 	
-	player->orient = ORIENT_E;
+	
 	t_player *player2 = add_player(0, 5);
 	t_player *player3 = add_player(1, 5);
 	set_player_cell(player, game->map->cells[1][1]);
@@ -168,9 +168,9 @@ void	test_voir()
 	int y0 = game->map->h - 1;
 	int y1 = 0;
 	int y2 = 1;
-	int x0 = game->map->w - 1;
-	int x1 = 0;
-	int x2 = 1;
+	int x0 = 0;
+	int x1 = 1;
+	int x2 = 2;
 	
 
 	game->map->cells[y0][x0]->inventory[SIBUR] = 1;
@@ -211,7 +211,7 @@ void	test_broadcast()
 	set_player_cell(player, game->map->cells[game->map->h - 1][2]);
 	set_player_cell(player2, game->map->cells[1][0]);
 	player->orient = ORIENT_N;
-	player2->orient = ORIENT_N;
+	player2->orient = ORIENT_E;
 
 
 	print_cell(player->curr_cell);
@@ -352,11 +352,11 @@ int main() {
 	
 	//test_droite_gauche();
 	//test_avance();
-	//test_voir();
+	test_voir();
 	//test_inventoire();
 	//test_pose();
 	
-	test_broadcast();
+	//test_broadcast();
 	//testcase();
 
 	if (g_tests_result == 0) {
