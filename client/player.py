@@ -77,15 +77,25 @@ class Player:
     def play(self, result, messages):
         self._handle_messages(messages)
         if self.state == self.State.INTRODUCING:
-            return self._introduce(result, messages)
+            return self._introduce(result)
         if self.state == self.State.COLLECTING:
-            return self._collect(result, messages)
+            return self._collect(result)
         if self.state == self.State.MEETING:
-            return self._meet(result, messages)
+            return self._meet(result)
         if self.state == self.State.INCANTATION:
-            return self._incantate(result, messages)
+            return self._incantate(result)
 
     def _handle_messages(self, messages):
+        """
+        List of messages:
+        '<name> hi <data>' - one-time message on connection to server
+        '<name> took <data>' - say if stone picked or lvlupd
+        '<name> meet <target_name>' - say <target_name> that we should meet
+        '<name> meet_confirm <target_name>' - reply to the previous message
+
+        <name> - name of player (pid)
+        <data> - PlayerInfo.__str__() result
+        """
         while messages:
             m = messages.pop(0)
             if m.t == Message.Type.VOICE:
@@ -98,8 +108,8 @@ class Player:
                         0,
                         Command(Command.Type.SAY,
                                 self.name + ' took ' + str(self.my_info)))
-# -> 1 meet 2, (2 go to 1)
-# -> 2 meet_confirm 1, (1 go to 2)
+                    # -> 1 meet 2, (2 go to 1)
+                    # -> 2 meet_confirm 1, (1 go to 2)
                 if (data_splited[1] == 'meet' and
                         data_splited[2] == self.name):
                     self.state = self.State.MEETING
@@ -119,14 +129,14 @@ class Player:
             #     self.my_info.lvl = int(m.data)
             #     self.state = self.State.COLLECTING
 
-    def _introduce(self, result, messages):
+    def _introduce(self, result):
         if result == '':
             return Command(Command.Type.SAY,
                            self.name + ' hi ' + str(self.my_info))
         self.state = self.State.COLLECTING
-        return self._collect('', [])
+        return self._collect('')
 
-    def _collect(self, result, messages):
+    def _collect(self, result):
         # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
@@ -163,7 +173,7 @@ class Player:
             if can_incantate:
                 if can_incantate[0] == self.name:
                     self.state = self.State.INCANTATION
-                    return self._incantate('', messages)
+                    return self._incantate('')
                 self.state = self.State.MEETING
                 self.command_list = []
                 for name in can_incantate:
@@ -271,31 +281,6 @@ class Player:
         if x != 0:
             commands.append(Command(Command.Type.TURN_LEFT if x < 0
                                     else Command.Type.TURN_RIGHT))
-
-        
-        # turn back
-        # if x != 0:
-        #     commands.append(Command(Command.Type.TURN_LEFT if x > 0
-        #                             else Command.Type.TURN_RIGHT))
-        #     for i in range(0, y):
-        #         commands.append(Command(Command.Type.GO))
-        #     commands.append(Command(Command.Type.TURN_LEFT if x > 0
-        #                             else Command.Type.TURN_RIGHT))
-        #     for i in range(0, abs(x)):
-        #         commands.append(Command(Command.Type.GO))
-        #     commands.append(Command(Command.Type.TURN_LEFT if x > 0
-        #                             else Command.Type.TURN_RIGHT))
-            
-        # elif y != 0:
-        #     commands.append(Command(Command.Type.TURN_LEFT))
-        #     commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
-        #     for i in range(0, y):
-        #         commands.append(Command(Command.Type.GO))
-        #     commands.append(Command(Command.Type.TURN_LEFT))
-        #     commands.append(Command(Command.Type.TURN_LEFT)) # turn 180
-            
-        # # returned to starting cell
-        # commands.append(Command(Command.Type.SEE))
         
         self.command_list = commands + self.command_list
 
@@ -326,13 +311,52 @@ class Player:
 
         return cmd_list
 
-    def _meet(self, result, messages):
-        print('-- meet state, target = ' + str(self.meet_target))
+    def _meet(self, result):
         if self.command_list:
-            return self.command_list.pop(0)
-        if not self.meet_target:
+            return self.command_list.pop(0)  # command to say 'meet'
+        if not self.meet_target_source:      # happens after receiving 'meet_confirm'
             return Command(Command.Type.WAIT)
-        return Command(Command.Type.WAIT)
+        self._move_to_target()
+        self.command_list.append(Command(Command.Type.SAY,
+                                         self.name + ' meet ' +
+                                         self.meet_target))
+
+        return self.command_list.pop(0)
+
+    def _move_to_target(self):
+        if self.meet_target_source == 1:
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 2:
+            self.command_list.append(Command(Command.Type.GO))
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 3:
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 4:
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.GO))
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 5:
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.TURN_LEFT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 6:
+            self.command_list.append(Command(Command.Type.TURN_RIGHT))
+            self.command_list.append(Command(Command.Type.GO))
+            self.command_list.append(Command(Command.Type.TURN_RIGHT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 7:
+            self.command_list.append(Command(Command.Type.TURN_RIGHT))
+            self.command_list.append(Command(Command.Type.GO))
+        elif self.meet_target_source == 8:
+            self.command_list.append(Command(Command.Type.GO))
+            self.command_list.append(Command(Command.Type.TURN_RIGHT))
+            self.command_list.append(Command(Command.Type.GO))
+        else:
+            print('unknown meet_target_source: ' + self.meet_target_source)
+            
 
     def _can_incantate(self):
         '''
@@ -360,7 +384,7 @@ class Player:
         if self.my_info.lvl == 2:
             self.my_info.li -= 1
 
-    def _incantate(self, result, messages):
+    def _incantate(self, result):
         if result == '':
             return Command(Command.Type.INCANTATE)
         if result.startswith('niveau actuel'):
@@ -368,4 +392,4 @@ class Player:
             self.my_info.lvl = int(splited[1].strip())
             self._remove_stones()
         self.state = self.state.COLLECTING
-        return self._collect('', messages)
+        return self._collect('')
