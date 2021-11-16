@@ -582,67 +582,94 @@ void	broadcast(t_player *player, char *data)
 
 void	incantation(t_player *player)
 {
-	t_list *temp = player->curr_cell->visitors;
+	t_list *visitor = player->curr_cell->visitors;
 	int	*incat_consts = game->aux->incantation[player->level - 1];
-
-	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		if (player->inventory[i] < incat_consts[i]) {
-			t_buffer_write(game->buf, "ko");
-			//t_buffer_json_message(game->buf, "ko");
-			return ;	
-		}
-	}
-
 	int	incat_counter = incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1;
-	t_player *participants[incat_counter];
-	while (temp && incat_counter) {
-		t_player *temp_player = (t_player *)temp->content;
-		if (temp_player != player && temp_player->level == player->level) {
-			participants[--incat_counter] = temp_player;
-		}
-		temp = temp->next;
-	}
-	if (incat_counter) {
-		//t_buffer_json_message(game->buf, "ko");
-		t_buffer_write(game->buf, "ko");
+	char event_str[512];
+	char *event_str_ptr = event_str;
 
-		//тесты не поддерживают вывод инфы в монитор
-		if (game->is_test)
+	event_str_ptr = &event_str[sprintf(event_str_ptr, "pic %d %d %d %d",
+									   player->curr_cell->x,
+									   player->curr_cell->y,
+									   player->level + 1,
+									   player->id)];
+
+	/* check all players are same level */
+	while (visitor && incat_counter) {
+		t_player *p = (t_player *)visitor->content;
+		if (p->level != player->level) {
+			t_buffer_write(game->buf, "ko");
 			return ;
+		}
+		if (p != player) {
+			event_str_ptr = &event_str[sprintf(event_str_ptr, " %d", p->id)];
+			--incat_counter;
+		}
+		visitor = visitor->next;
+	}
 
-		srv_event("pie %d %d ko\n",
-			  player->curr_cell->x, player->curr_cell->y);
+	/* check number of players is valid */
+	if (incat_counter > 0) {
+		t_buffer_write(game->buf, "ko");
 		return ;
 	}
 
-	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		player->inventory[i] -= incat_consts[i];
+	/* check current cell contains all stones */
+	for (int i = 1; i < RESOURCES_NUMBER; ++i) {
+		if (player->curr_cell->inventory[i] < incat_consts[i]) {
+			t_buffer_write(game->buf, "ko");
+			return ;
+		}
 	}
 
-	//тесты не поддерживают вывод инфы в монитор
+	visitor = player->curr_cell->visitors;
+	while (visitor) {
+		t_player *p = (t_player *)visitor->content;
+		p->is_incantating = 1;
+		if (p != player)
+			srv_reply_client(p->id, "elevation en cours\n");
+		visitor = visitor->next;
+	}
+
+	srv_push_command(player->id,
+					 g_cfg.cmd.name[CMD_INCANTATION_END],
+					 g_cfg.cmd.duration[CMD_INCANTATION_END]);
+		
+	t_buffer_write(game->buf, "elevation en cours");
+
 	if (game->is_test)
 		return ;
+	srv_event("%s\n", event_str);
+}
 
+void	incantation_end(t_player *player)
+{
+	int	*incat_consts = game->aux->incantation[player->level - 1];
+	
+	/* remove stones from cell */
+	for (int i = 1; i < RESOURCES_NUMBER; i++) {
+		player->curr_cell->inventory[i] -= incat_consts[i];
+	}
+
+	/* level up all visitors of player's cell */
+	t_list *visitor = player->curr_cell->visitors;
+	while (visitor) {
+		t_player *p = (t_player *)visitor->content;
+		if (p->is_incantating) {
+			p->is_incantating = 0;
+			++p->level;
+			srv_event("plv %d %d\n", p->id, p->level);
+			srv_reply_client(p->id, "niveau actuel: %d\n", p->level);
+		}
+		visitor = visitor->next;
+	}
+	if (game->is_test)
+		return ;
+	/* should return "ko" if players/stones combination 
+	   not satisfy requirements, but we trust clients :) */
 	srv_event("pie %d %d ok\n",
 			  player->curr_cell->x, player->curr_cell->y);
-
-	for (int i = 0; i < incat_consts[RESOURCES_NUMBER_OF_PLAYERS] - 1; i++) {
-		participants[i]->level++;
-		srv_event("plv %d %d\n",
-				  participants[i]->id, participants[i]->level);
-		if (participants[i]->level == PLAYER_MAX_LEVEL) {
-			game->teams[participants[i]->team_id]->max_level_count++;
-		}
-	}
-	player->level++;
-	srv_event("plv %d %d\n",
-				  player->id, player->level);
 	bct_srv_event(player);
-	if (player->level == PLAYER_MAX_LEVEL) {
-		game->teams[player->team_id]->max_level_count++;
-	}
-	t_buffer_write(game->buf, "niveau actuel: K");
-	game->buf->s[15] = player->level + '0';
 }
 
 /*
@@ -701,7 +728,8 @@ void	init_cmd()
 	g_cfg.cmd.duration[CMD_POSE] = 7;
 	g_cfg.cmd.duration[CMD_EXPULSE] = 7;
 	g_cfg.cmd.duration[CMD_BROADCAST] = 7;
-	g_cfg.cmd.duration[CMD_INCANTATION] = 300;
+	g_cfg.cmd.duration[CMD_INCANTATION] = 0;
+	g_cfg.cmd.duration[CMD_INCANTATION_END] = 300;
 	g_cfg.cmd.duration[CMD_FORK] = 42;
 	g_cfg.cmd.duration[CMD_CONNECT_NBR] = 0;
 
@@ -715,6 +743,7 @@ void	init_cmd()
 	g_cfg.cmd.name[CMD_EXPULSE] = strdup("expulse");
 	g_cfg.cmd.name[CMD_BROADCAST] = strdup("broadcast");
 	g_cfg.cmd.name[CMD_INCANTATION] = strdup("incantation");
+	g_cfg.cmd.name[CMD_INCANTATION_END] = strdup("incantation_end");
 	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
 	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
 
@@ -725,6 +754,7 @@ void	init_cmd()
 	g_cfg.cmd.f[CMD_INVENTAIRE] = inventory;
 	g_cfg.cmd.f[CMD_EXPULSE] = expulse;
 	g_cfg.cmd.f[CMD_INCANTATION] = incantation;
+	g_cfg.cmd.f[CMD_INCANTATION_END] = incantation_end;
 	g_cfg.cmd.f[CMD_FORK] = do_fork;
 	g_cfg.cmd.f[CMD_CONNECT_NBR] = connect_nbr;
 
@@ -758,6 +788,7 @@ void clear_cmd()
 	free(g_cfg.cmd.name[CMD_EXPULSE]);
 	free(g_cfg.cmd.name[CMD_BROADCAST]);
 	free(g_cfg.cmd.name[CMD_INCANTATION]);
+	free(g_cfg.cmd.name[CMD_INCANTATION_END]);
 	free(g_cfg.cmd.name[CMD_FORK]);
 	free(g_cfg.cmd.name[CMD_CONNECT_NBR]);
 	free(g_cfg.cmd.duration);

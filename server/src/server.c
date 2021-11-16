@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/12 22:25:56 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/16 04:25:58 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -487,7 +487,7 @@ int srv_update_t(int t)
 	return t;
 }
 
-void srv_push_command(char *cmd, int after_t)
+void srv_push_command(int client_nb, char *cmd, int after_t)
 {
 	struct timeval tc;
 	struct timeval t;
@@ -495,7 +495,7 @@ void srv_push_command(char *cmd, int after_t)
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	t = tu2tv(after_t);
 	timeradd(&t, &tc, &t);
-	commands_push(command_new(t, cmd, 0));
+	commands_push(command_new(t, cmd, client_nb));
 }
 
 #undef CIRCBUF_SIZE

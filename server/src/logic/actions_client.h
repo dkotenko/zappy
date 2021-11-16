@@ -16,6 +16,7 @@ enum e_command
 	CMD_EXPULSE,
 	CMD_BROADCAST,
 	CMD_INCANTATION,
+	CMD_INCANTATION_END,
 	CMD_FORK,
 	CMD_CONNECT_NBR
 };
@@ -43,6 +44,7 @@ void	gauche(t_player *player); //Повернуть налево
 void	inventory(t_player *player);
 void	voir(t_player *player);
 void	incantation(t_player *player);
+void	incantation_end(t_player *player);
 void	expulse(t_player *player);
 void	connect_nbr();
 void	do_fork(t_player *player);
