@@ -261,6 +261,8 @@ int lgc_get_command_id(char *cmd)
 		return CMD_BROADCAST;
 	if (strcmp(cmd, "incantation") == 0)
 		return CMD_INCANTATION;
+	if (strcmp(cmd, "incantation_end") == 0)
+		return CMD_INCANTATION_END;
 	if (strcmp(cmd, "fork") == 0)
 		return CMD_FORK;
 	if (strcmp(cmd, "connect_nbr") == 0)

@@ -47,6 +47,7 @@ typedef struct s_player
     int     level;
     int     orient;
 	int     is_egg;
+	int		is_incantating;
     int     team_id;
     int     last_meal_tick;
     int     *inventory;

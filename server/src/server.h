@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/08 13:21:01 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/16 04:26:19 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ void srv_client_died(int client_nb);
 int srv_update_t(int t);
 /* msg will be passed to all gfx clients */
 void srv_event(char *msg, ...) __attribute__ ((format (printf, 1, 2)));
-/* in result, calls lgc_execute_command(0, `cmd') after `after_t'  */
-void srv_push_command(char *cmd, int after_t);
+/* in result, calls lgc_execute_command(`client_nb', `cmd') after `after_t'  */
+void srv_push_command(int client_nb, char *cmd, int after_t);
 
 #endif
