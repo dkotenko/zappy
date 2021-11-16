@@ -224,7 +224,7 @@ void	voir(t_player *player)
 					}
 				}
 				print_voir_cell(player, game->map->cells[h][get_w(print_w)]);
-				printf("%d y %d x\n", h, get_w(print_w));
+				/* printf("%d y %d x\n", h, get_w(print_w)); */
 				w++;
 				cells_counter++;
 			}
