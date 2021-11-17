@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/16 04:25:58 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/17 22:05:57 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,9 +129,7 @@ static int client_handle_command(int client_id, char *command)
 	
 	int dur = g_cfg.cmd.duration[command_id];
 	if (dur == 0) {
-		cmd = command_new(env.t, g_cfg.cmd.name[command_id], client_id);
 		lgc_execute_command(client_id, command, command_id);
-		command_del(cmd);
 		return 0;
 	}
 	struct timeval t = tu2tv(dur);
@@ -441,10 +439,16 @@ void srv_event(char *msg, ...)
 	va_end(ap);
 }
 
+static void foo() {
+	log_debug("wtf");
+}
+
 void srv_reply_client(int client_nb, char *msg, ...)
 {
 	char *buf;
 	va_list ap;
+	if (strcmp(msg, "\n") == 0 || *msg == 0) 
+		foo();
 
 	va_start(ap, msg);
 	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");

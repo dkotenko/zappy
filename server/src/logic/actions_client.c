@@ -659,10 +659,16 @@ void	incantation_end(t_player *player)
 			p->is_incantating = 0;
 			++p->level;
 			srv_event("plv %d %d\n", p->id, p->level);
-			srv_reply_client(p->id, "niveau actuel: %d\n", p->level);
+			if (p != player) {
+				srv_reply_client(p->id, "niveau actuel: %d\n", p->level);
+			}
 		}
 		visitor = visitor->next;
 	}
+	t_buffer_write(game->buf, "niveau actuel: ");
+	char new_level[] = "L";
+	new_level[0] = player->level + '0';
+	t_buffer_write(game->buf, new_level);
 	if (game->is_test)
 		return ;
 	/* should return "ko" if players/stones combination 
