@@ -26,13 +26,13 @@ def parse_args():
 
 
 def dev_mode(server):
-    r = ''
     last_cmd = ''
     print('f - forward (avance), l - left (gauche), r - right (droite),')
     print('s - see (voir), i - inventory (inventaire),')
     print('t - take <obj> (prend), d - drop <obj> (pose),')
     print('k - kick (expulse), b - broadcast <text>,')
     print('x - incantation, f - fork, c - connect_nbr')
+    print('w - wait (check for messages)')
     print('-------------------------------------------------------------')
     while True:
         inp = input('-> ')
@@ -63,9 +63,10 @@ def dev_mode(server):
             r = server.exec_command(Command(Command.Type.FORK))
         elif c == 'c':
             r = server.exec_command(Command(Command.Type.CONNECT_NBR))
-        else:
-            continue
-        print('response: ' + r)
+        elif c == 'w':
+            r = server.exec_command(Command(Command.Type.WAIT))
+        if r and r != 'w':
+            print('response: ' + r)
         if server.messages:
             print('messages:')
             while server.messages:
