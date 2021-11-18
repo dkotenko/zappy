@@ -295,6 +295,18 @@ void	test_set_player_cell()
 	print_cell(cell);
 }
 
+void	test_player_delete()
+{
+	t_player *player = NULL;
+
+	init_game();
+	int player_id = 3;
+	if (game->players_num == 0)
+		player = add_player(3, 5);
+	delete_player(player);
+}
+
+
 void	test_droite_gauche()
 {
 	t_player *player = NULL;
@@ -352,12 +364,13 @@ int main() {
 	
 	//test_droite_gauche();
 	//test_avance();
-	test_voir();
+	//test_voir();
 	//test_inventoire();
 	//test_pose();
 	
 	//test_broadcast();
 	//testcase();
+	test_player_delete();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",

@@ -1,7 +1,7 @@
 #ifndef ACTIONS_CLIENT_H
 # define ACTIONS_CLIENT_H
 
-# define CMD_NUMBER 12
+# define CMD_NUMBER 13
 
 # include "zappy.h"
 enum e_command
