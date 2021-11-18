@@ -60,6 +60,7 @@ typedef struct s_team
     char        *name;
     t_player    **players;
     int         max_level_count;
+    int         players_num;
 } t_team;
 
 typedef struct s_config {

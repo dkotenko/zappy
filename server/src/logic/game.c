@@ -145,6 +145,7 @@ t_player	*add_player(int player_id, int team_id)
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
 	game->players[game->players_num++] = player;
+	game->teams[player->team_id]->players_num++;
 	add_visitor(cell, player);
 	return player;
 }
@@ -198,9 +199,10 @@ void lgc_player_gone(int player_nb)
 	// TODO double free when player dies after disconnect. Following line should fix but
 	// segfaults happen
 
-	delete_player(get_player_by_id(player_nb));
+	
 	log_info("logic: Remove player #%d", player_nb);
 	srv_event("pdi %d\n", player_nb);
+	//delete_player(get_player_by_id(player_nb));
 }
 
 void lgc_update(void)
