@@ -694,8 +694,11 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
-	(void)player;
-	//game->teams[player->team_id]->
+	if (game->teams[player->team_id]->players_num == 6) {
+		t_buffer_write(game->buf, "ko");
+			return ;
+	}
+	//
 	//
 	
 	//add_player(pla);
