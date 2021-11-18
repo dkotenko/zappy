@@ -198,7 +198,7 @@ void lgc_player_gone(int player_nb)
 	// TODO double free when player dies after disconnect. Following line should fix but
 	// segfaults happen
 
-	//delete_player(get_player_by_id(player_nb));
+	delete_player(get_player_by_id(player_nb));
 	log_info("logic: Remove player #%d", player_nb);
 	srv_event("pdi %d\n", player_nb);
 }

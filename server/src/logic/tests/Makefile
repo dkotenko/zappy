@@ -58,7 +58,7 @@ HEADER_NAMES = $(BASE_PATH)/server.h \
 			$(LOGIC_PATH)/color.h \
 			$(LOGIC_PATH)/const.h \
 			$(LOGIC_PATH)/zappy.h \
-			$(LOGIC_PATH)/actions_client.c
+			$(LOGIC_PATH)/actions_client.h
 
 
 HEADER = $(HEADER_NAMES)
