@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/19 11:17:48 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 13:34:41 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -496,6 +496,8 @@ void srv_push_command(int client_nb, char *cmd, int after_t)
 	t = tu2tv(after_t);
 	timeradd(&t, &tc, &t);
 	commands_push(command_new(t, cmd, client_nb));
+	if (client_nb)
+		++env.fds[client_nb].pending_commands;
 }
 
 #undef CIRCBUF_SIZE
