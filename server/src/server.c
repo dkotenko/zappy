@@ -491,13 +491,16 @@ void srv_push_command(int client_nb, char *cmd, int after_t)
 {
 	struct timeval tc;
 	struct timeval t;
+	t_fd *client = &env.fds[client_nb];
 
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	t = tu2tv(after_t);
 	timeradd(&t, &tc, &t);
-	commands_push(command_new(t, cmd, client_nb));
+	t_command *command = command_new(t, cmd, client_nb);
+	commands_push(command);
 	if (client_nb)
-		++env.fds[client_nb].pending_commands;
+		++client->pending_commands;
+		client->last_command = command;
 }
 
 #undef CIRCBUF_SIZE
