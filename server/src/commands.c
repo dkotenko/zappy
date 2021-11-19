@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/25 06:46:02 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/06 13:25:53 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 10:42:56 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include "commands.h"
 #include "utils.h"
 #include "logger.h"
+#include "server.h"
 
 static t_commands commands;
 
@@ -92,39 +93,34 @@ void commands_pop(t_command *cmd)
 	commands.tree = ft_btree_avl_remove(commands.tree, cmd, cmpf, delf);
 }
 
-static int topop_size;
-static t_command **topop;
-static int topop_i;
-static int topop_client_nb;
+static t_command **commands_pop_client_poppointer;
+static int commands_pop_client_nb;
 
-static void applyf_popnb(void *v)
+static void applyf_save_client(void *v)
 {
 	t_command *c = (t_command *)v;
-	if (topop_i >= topop_size)
-		return ;
 
-	if (c->client_nb != topop_client_nb)
-		return ;
-	++topop_i;
-	topop[topop_i] = c;
+	if (c->client_nb == commands_pop_client_nb) {
+		*commands_pop_client_poppointer = c;
+		++commands_pop_client_poppointer;
+	}
 }
 
-
-/* TODO it's not working */
-void commands_popnb(int client_nb, int max_pop)
+void commands_pop_client(int client_nb)
 {
-	topop_client_nb = client_nb;
-	topop_size = max_pop;
-	topop = (t_command **)calloc(max_pop, sizeof(t_command *));
-	xassert(topop != NULL, "calloc");
-	topop_i = -1;
+	/* find and save all commands with `client_nb' */
+	t_command *commands_to_pop[MAX_PENDING_COMMANDS + 1];
+	t_command **ptr = commands_to_pop;
 
-	ft_btree_apply_prefix((t_btree *)commands.tree, applyf_popnb);
+	memset(commands_to_pop, 0, sizeof(commands_to_pop));
+	commands_pop_client_poppointer = ptr;
+	commands_pop_client_nb = client_nb;
+	ft_btree_apply_prefix((t_btree *)commands.tree, applyf_save_client);
 
-	for (int i = 0; i <= topop_i; ++i)
-		ft_btree_avl_remove(commands.tree, topop[i], cmpf, delf);
-
-	free(topop);
+	while (*ptr) {
+		ft_btree_avl_remove(commands.tree, *ptr, cmpf, delf);
+		++ptr;
+	}
 }
 
 int commands_is_empty(void)

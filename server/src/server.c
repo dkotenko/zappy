@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/17 22:05:57 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 10:43:08 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,12 +34,6 @@
 #include "reception.h"
 #include "graphic.h"
 #include "admin.h"
-
-# define T_MAX						1000
-#define MAX_PENDING_COMMANDS		10
-
-#define CIRCBUF_SIZE				64
-#define CIRCBUF_ITEM_SIZE			32
 
 enum e_type {
 	FD_FREE,
@@ -94,8 +88,7 @@ static void client_gone(int cs)
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
 	reception_remove_client(cs);
-	/* TODO */
-	/* commands_popnb(cs, MAX_PENDING_COMMANDS); */ 
+	commands_pop_client(cs);
 	log_info("Client #%d gone away", cs);
 }
 

@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/16 04:26:19 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 10:19:11 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,12 @@
 # define DEBUG
 
 # include "logic/actions_client.h"
+
+# define T_MAX						1000
+# define MAX_PENDING_COMMANDS		10
+
+# define CIRCBUF_SIZE				64
+# define CIRCBUF_ITEM_SIZE			32
 
 typedef struct s_main_config {
 	int		port;
