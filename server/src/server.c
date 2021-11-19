@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/19 10:43:08 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 11:17:48 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ typedef struct s_env {
 
 t_env env;
 
-
+int g_player_count;
 
 static void clean_fd(t_fd *fd)
 {
@@ -148,8 +148,10 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		if (client->type == FD_CLIENT)
+		if (client->type == FD_CLIENT) {
+			--g_player_count;
 			lgc_player_gone(cs);
+		}
 		client_gone(cs);
 		return ;
 	}
@@ -169,6 +171,7 @@ static void	client_read(int cs)
 		break ;
 	case RECEPTION_ROUTE_CLIENT:
 		client->fct_handle = client_handle_command;
+		++g_player_count;
 		lgc_new_player(cs, reception_find_client_team(cs));
 		break ;
 	case RECEPTION_ROUTE_GFX:

@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/19 10:19:11 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 11:12:59 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ typedef struct s_main_config {
 	int		height;
 	char	**teams; // pointer to first team in argv
 	int		teams_count; // size of `teams'
+	int		max_clients;
 	int		max_clients_at_team;
 	int		t;
 	int		quiet;
@@ -36,6 +37,7 @@ typedef struct s_main_config {
 } t_main_config;
 
 extern t_main_config g_cfg;
+extern int g_player_count;
 
 /* on program start  */
 void srv_start(void);
