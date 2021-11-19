@@ -6,7 +6,7 @@
 /*   By: gmelisan <gmelisan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/28 15:10:18 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/09/30 17:43:40 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 11:15:26 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,6 +140,11 @@ int reception_chat(int client_nb, char *message)
 		clients_in_team = count_clients_in_team(team_index);
 		if (clients_in_team >= g_cfg.max_clients_at_team) {
 			srv_reply_client(client_nb, "Team is full\n");
+			reception.client_states[client_nb] = 0;
+			return RECEPTION_ROUTE_EXIT;
+		}
+		if (g_player_count >= g_cfg.max_clients) {
+			srv_reply_client(client_nb, "Reached maximum number of players\n");
 			reception.client_states[client_nb] = 0;
 			return RECEPTION_ROUTE_EXIT;
 		}

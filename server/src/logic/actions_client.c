@@ -694,7 +694,7 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
-	if (game->teams[player->team_id]->players_num == 6) {
+	if (game->teams[player->team_id]->players_num == g_cfg.max_clients_at_team) {
 		t_buffer_write(game->buf, "ko");
 			return ;
 	}
