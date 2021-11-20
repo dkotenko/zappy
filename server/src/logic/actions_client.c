@@ -694,7 +694,7 @@ t_token *create_token(int team_id)
 
 void	do_fork(t_player *player)
 {
-	if (game->teams[player->team_id]->players_num == g_cfg.max_clients_at_team) {
+	if (game->teams[player->team_id]->players_num == 6) {
 		t_buffer_write(game->buf, "ko");
 			return ;
 	}
@@ -770,12 +770,19 @@ void	init_cmd()
 	g_cfg.cmd.f_arg[CMD_PREND] = prend;
 	g_cfg.cmd.f_arg[CMD_POSE] = pose;
 	g_cfg.cmd.f_arg[CMD_BROADCAST] = broadcast;
-
-	memset(g_cfg.cmd.req_arg, 0, CMD_NUMBER * sizeof(int));
 	
+	g_cfg.cmd.req_arg[CMD_AVANCE] = 0;
+	g_cfg.cmd.req_arg[CMD_DROITE] = 0;
+	g_cfg.cmd.req_arg[CMD_GAUCHE] = 0;
+	g_cfg.cmd.req_arg[CMD_VOIR] = 0;
+	g_cfg.cmd.req_arg[CMD_INVENTAIRE] = 0;
 	g_cfg.cmd.req_arg[CMD_PREND] = 1;
 	g_cfg.cmd.req_arg[CMD_POSE] = 1;
+	g_cfg.cmd.req_arg[CMD_EXPULSE] = 0;
 	g_cfg.cmd.req_arg[CMD_BROADCAST] = 1;
+	g_cfg.cmd.req_arg[CMD_INCANTATION] = 0;
+	g_cfg.cmd.req_arg[CMD_FORK] = 0;
+	g_cfg.cmd.req_arg[CMD_CONNECT_NBR] = 0;
 }
 
 void clear_cmd()
