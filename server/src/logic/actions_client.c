@@ -343,17 +343,17 @@ static char *get_resource(char *data)
 }
 */
 
-static void bct_srv_event(t_player *player)
+static void bct_srv_event(t_cell *cell)
 {
 	srv_event("bct %d %d %d %d %d %d %d %d %d\n",
-			  player->curr_cell->x, player->curr_cell->y,
-			  player->curr_cell->inventory[0],
-			  player->curr_cell->inventory[1],
-			  player->curr_cell->inventory[2],
-			  player->curr_cell->inventory[3],
-			  player->curr_cell->inventory[4],
-			  player->curr_cell->inventory[5],
-			  player->curr_cell->inventory[6]
+			  cell->x, cell->y,
+			  cell->inventory[0],
+			  cell->inventory[1],
+			  cell->inventory[2],
+			  cell->inventory[3],
+			  cell->inventory[4],
+			  cell->inventory[5],
+			  cell->inventory[6]
 		);
 }
 
@@ -372,16 +372,22 @@ static void	pin_bct_srv_event(t_player *player, int res, const char *cmd)
 			  player->inventory[5],
 			  player->inventory[6]
 		);
-	bct_srv_event(player);
+	bct_srv_event(player->curr_cell);
 }
 
-void	restore_resource(int resource)
+void	restore_resource(t_player *player, char *data)
 {
-	get_random_cell(game->map)->inventory[resource]++;
+	(void)player;
+	char *resource_str = data + strlen(g_cfg.cmd.name[CMD_RESTORE_RESOURCE]) + 1;
+	int resource_int = atoi(resource_str);
+	t_cell *cell = get_random_cell(game->map);
+	cell->inventory[resource_int]++;
+	bct_srv_event(cell);
 }
 
-void	schedule_restore_resource(int resource, t_player *player)
+void	schedule_restore_resource(int resource, t_cell *cell)
 {
+	(void)cell;
 	int is_food = resource == 0;
 
 	if ((is_food && !FOOD_RESPAWN) || !is_food && !RESOURCE_RESPAWN) {
@@ -392,7 +398,7 @@ void	schedule_restore_resource(int resource, t_player *player)
 	int buff_size = 20;
 	char buf[buff_size];
 	memset(buf, 0, buff_size);
-	sprintf(buf, "restore_resource %d", resource);
+	sprintf(buf, "%s %d", g_cfg.cmd.name[CMD_RESTORE_RESOURCE], resource);
 	srv_push_command(0, buf, execute_time);
 }
 
@@ -692,7 +698,7 @@ void	incantation_end(t_player *player)
 	   not satisfy requirements, but we trust clients :) */
 	srv_event("pie %d %d ok\n",
 			  player->curr_cell->x, player->curr_cell->y);
-	bct_srv_event(player);
+	bct_srv_event(player->curr_cell);
 }
 
 /*
@@ -772,6 +778,7 @@ void	init_cmd()
 	g_cfg.cmd.name[CMD_INCANTATION_END] = strdup("incantation_end");
 	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
 	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
+	g_cfg.cmd.name[CMD_RESTORE_RESOURCE] = strdup("restore_resource");
 
 	g_cfg.cmd.f[CMD_AVANCE] = avance;
 	g_cfg.cmd.f[CMD_DROITE] = droite;
@@ -787,6 +794,7 @@ void	init_cmd()
 	g_cfg.cmd.f_arg[CMD_PREND] = prend;
 	g_cfg.cmd.f_arg[CMD_POSE] = pose;
 	g_cfg.cmd.f_arg[CMD_BROADCAST] = broadcast;
+	g_cfg.cmd.f_arg[CMD_RESTORE_RESOURCE] = restore_resource;
 	
 	g_cfg.cmd.req_arg[CMD_AVANCE] = 0;
 	g_cfg.cmd.req_arg[CMD_DROITE] = 0;
@@ -800,6 +808,7 @@ void	init_cmd()
 	g_cfg.cmd.req_arg[CMD_INCANTATION] = 0;
 	g_cfg.cmd.req_arg[CMD_FORK] = 0;
 	g_cfg.cmd.req_arg[CMD_CONNECT_NBR] = 0;
+	g_cfg.cmd.req_arg[CMD_RESTORE_RESOURCE] = 1;
 }
 
 void clear_cmd()
@@ -817,6 +826,7 @@ void clear_cmd()
 	free(g_cfg.cmd.name[CMD_INCANTATION_END]);
 	free(g_cfg.cmd.name[CMD_FORK]);
 	free(g_cfg.cmd.name[CMD_CONNECT_NBR]);
+	free(g_cfg.cmd.name[CMD_RESTORE_RESOURCE]);
 	free(g_cfg.cmd.duration);
 	free(g_cfg.cmd.name);
 	free(g_cfg.cmd.f_arg);
