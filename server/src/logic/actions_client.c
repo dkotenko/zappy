@@ -168,7 +168,7 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 	t_list *temp = cell->visitors;
 
 	for (int i = 0; i < RESOURCES_NUMBER; i++) {
-		for (int j =0; j < cell->inventory[i]; j++) {
+		for (int j = 0; j < cell->inventory[i]; j++) {
 			if (printed) {
 				t_buffer_add_char(game->buf, ' ');
 			}
@@ -375,28 +375,45 @@ static void	pin_bct_srv_event(t_player *player, int res, const char *cmd)
 	bct_srv_event(player);
 }
 
+void	restore_resource(int resource)
+{
+	get_random_cell(game->map)->inventory[resource]++;
+}
+
+void	schedule_restore_resource(int resource, t_player *player)
+{
+	int is_food = resource == 0;
+
+	if ((is_food && !FOOD_RESPAWN) || !is_food && !RESOURCE_RESPAWN) {
+		return ;
+	}
+
+	int execute_time = is_food ? FOOD_RESPAWN_TIME : RESOURCE_RESPAWN_TIME;
+	int buff_size = 20;
+	char buf[buff_size];
+	memset(buf, 0, buff_size);
+	sprintf(buf, "restore_resource %d", resource);
+	srv_push_command(0, buf, execute_time);
+}
+
 void	prend(t_player *player, char *data)
 {
 	char	*resource = data + strlen("prend ");
 	int	resource_id = get_resource_id(resource);
   
 	if (resource_id == -1 || resource_id >= RESOURCES_NUMBER) {
-		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
 	} else if (player->curr_cell->inventory[resource_id] > 0) {	
 		player->curr_cell->inventory[resource_id]--;
 		player->inventory[resource_id]++;
-		//t_buffer_json_message(game->buf, "OK");
 		t_buffer_write(game->buf, "ok");
-
+		schedule_restore_resource(resource_id, player->curr_cell);
 		//тесты не поддерживают вывод инфы в монитор
 		if (game->is_test)
 			return ;
 
 		pin_bct_srv_event(player, resource_id, "pgt");
-		
 	} else {
-		//t_buffer_json_message(game->buf, "KO");
 		t_buffer_write(game->buf, "ko");
 	}
 }
