@@ -5,11 +5,9 @@
 #include "../utils.h"
 
 t_game *game;
-//extern t_dlist *g_messages;
 
 void	mock_srv_reply(int client_nb, char *msg)
 {
-	//t_dlist_append(g_messages, t_dlist_node_new(strdup(msg), sizeof(char)));
 	printf("\n%sClient %d received message: %s%s\n\n",
 		ANSI_COLOR_YELLOW, client_nb, msg, ANSI_COLOR_RESET);
 }
@@ -81,7 +79,7 @@ t_game	*create_game(map_initiator init_map)
 	game->teams_num = g_cfg.teams_count;
 	game->teams = create_teams();
     game->aux = create_aux();
-	game->map = create_map(game, g_cfg.height, g_cfg.width);
+	game->map = create_map(game, g_cfg.width, g_cfg.height);
 	(*init_map)(game);
 	game->buf = t_buffer_create(0);
 	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * \
@@ -140,8 +138,6 @@ t_player	*create_player(int player_id, int team_id)
 
 t_player	*add_player(int player_id, int team_id)
 {
-	//int	team_id = get_team_id(team);
-
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
 	game->players[game->players_num++] = player;
@@ -165,7 +161,7 @@ void lgc_init()
 {
 	log_info("logic: Setup world");
 	srand(time(NULL));
-	game = create_game(init_random_map);
+	game = create_game(init_cluster_map);
 }
 
 int	get_team_id(char *team_name)

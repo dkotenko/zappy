@@ -33,7 +33,7 @@ t_map	*create_map(t_game *game, int w, int h)
      return (map);
 }
 
-void	init_random_food(t_game *game, int food_amount)
+void	init_random_food(t_game *game)
 {
 	int food_amount = game->aux->incantation_sum[RESOURCES_NUMBER_OF_PLAYERS] * \
 		game->teams_num * /*R_RICH * */ R_LEVEL;
@@ -62,9 +62,13 @@ void	init_random_map(t_game *game)
 	init_random_resources(game);
 }
 
-void	init_logic_food(t_game *game, int cluster_size, int food_amount)
+void	init_cluster_food(t_game *game)
 {
 	int curr_cell = 0;
+	int food_amount = game->aux->incantation_sum[RESOURCES_NUMBER_OF_PLAYERS] * \
+		game->teams_num * /*R_RICH * */ R_LEVEL;
+	int map_size = game->map->h * game->map->w;
+	int cluster_size = (int)ceil((double)map_size /(double)food_amount);
 
 	while (food_amount) {
 		int temp_x = curr_cell % game->map->w;
@@ -75,33 +79,30 @@ void	init_logic_food(t_game *game, int cluster_size, int food_amount)
 	}
 }
 
-void	init_logic_resources(t_game *game)
+void	init_cluster_resources(t_game *game)
 {
+	int map_size = game->map->h * game->map->w;
+
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
+
 		int amount = game->aux->incantation_sum[i] * R_LEVEL;
+		int cluster_size = (int)ceil((double)map_size /(double)amount);
+		int curr_cell = 0;
+
 		while (amount) {
 			int temp_x = curr_cell % game->map->w;
 			int temp_y = curr_cell / game->map->w;
-			game->map->cells[temp_y][temp_x]->inventory[NOURRITURE]++;
-			food_amount--;
+			game->map->cells[temp_y][temp_x]->inventory[i]++;
+			amount--;
 			curr_cell = (curr_cell + cluster_size) % (game->map->w * game->map->h);
 		}
 	}
 }
 
-void	init_logic_map(t_game *game)
+void	init_cluster_map(t_game *game)
 {
-	int food_amount = game->aux->incantation_sum[RESOURCES_NUMBER_OF_PLAYERS] * \
-		game->teams_num * /*R_RICH * */ R_LEVEL;
-
-	int map_size = game->map->h * game->map->w;
-	int cluster_size = (int)ceil((double)map_size /(double)food_amount);
-	if (cluster_size <= 1) {
-		init_random_map(game);
-	} else {
-		init_logic_food(game, cluster_size, food_amount);
-		init_logic_resources(game, cluster_size);
-	}
+	init_cluster_food(game);
+	init_cluster_resources(game);
 }
 
 void	mock_init_map(t_game *game)

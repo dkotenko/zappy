@@ -10,8 +10,8 @@ void	init_game(void);
 static char *default_teams[] = {"team1", "team2", "team3"};
 t_main_config g_cfg = {
 	.port = 9876,
-	.width = 10,
-	.height = 10,
+	.width = 11,
+	.height = 12,
 	.teams = default_teams,
 	.teams_count = 10,
 	.max_clients_at_team = 5,
@@ -364,13 +364,13 @@ int main() {
 	
 	//test_droite_gauche();
 	//test_avance();
-	//test_voir();
+	test_voir();
 	//test_inventoire();
 	//test_pose();
 	
 	//test_broadcast();
 	//testcase();
-	test_player_delete();
+	//test_player_delete();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
