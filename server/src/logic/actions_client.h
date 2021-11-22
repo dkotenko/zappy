@@ -18,7 +18,8 @@ enum e_command
 	CMD_INCANTATION,
 	CMD_INCANTATION_END,
 	CMD_FORK,
-	CMD_CONNECT_NBR
+	CMD_CONNECT_NBR,
+	CMD_RESTORE_RESOURCE,
 };
 
 typedef void	(*action)(t_player *);

@@ -226,7 +226,8 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	} else {
 		(g_cfg.cmd.f[cmd_id])(player);
 	}
-	reply_and_clean_buff(player_nb);
+	if (player_nb)
+		reply_and_clean_buff(player_nb);
 	/*
 	if (strcmp(cmd, "connect_nbr") == 0) {
 		// TODO get team name from logic, not from reception (search is long)
@@ -265,6 +266,8 @@ int lgc_get_command_id(char *cmd)
 		return CMD_FORK;
 	if (strcmp(cmd, "connect_nbr") == 0)
 		return CMD_CONNECT_NBR;
+	if (strncmp(cmd, "restore_resource", 16) == 0)
+		return CMD_RESTORE_RESOURCE;
 	return -1;
 }
 
