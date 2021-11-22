@@ -40,7 +40,7 @@ class Player:
     command_list = []  # item = Command obj
     last_cmd = ''
     meet_target = None
-    meet_target_source = None
+    meet_target_source = -1
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -92,9 +92,11 @@ class Player:
                                 ' meet_confirm ' + data_splited[0]))
                 if (data_splited[1] == 'meet_confirm'
                         and data_splited[2] == self.name):
+                    if self.state != self.State.MEETING:
+                        self.state.command_list = []
                     self.state = self.State.MEETING
                     self.meet_target = data_splited[0]
-                    self.meet_target_source = int(m.source)
+                    self.meet_target_source = m.source
 
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.my_info.lvl = int(m.data)
@@ -243,12 +245,14 @@ class Player:
                 turned = True
 
         return cmd_list
-
+ 
     def _meet(self, result):
         if self.command_list:
             return self.command_list.pop(0)  # command to say 'meet'
-        if not self.meet_target_source:  # happens after receiving 'meet_confirm'
+        if self.meet_target_source == -1:
+            # happens after receiving 'meet_confirm'
             return Command(Command.Type.WAIT)
+        print('self.meet_target_source = ' + str(self.meet_target_source))
         if self._move_to_target() is True:
             print('ready to incantate')
             return Command(Command.Type.WAIT)
@@ -291,7 +295,7 @@ class Player:
             self.command_list.append(Command(Command.Type.TURN_RIGHT))
             self.command_list.append(Command(Command.Type.GO))
         else:
-            print('unknown meet_target_source: ' + self.meet_target_source)
+            print('unknown meet_target_source: ' + str(self.meet_target_source))
         return False
 
     def _can_incantate(self):
