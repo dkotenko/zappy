@@ -496,11 +496,12 @@ void srv_push_command(int client_nb, char *cmd, int after_t)
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	t = tu2tv(after_t);
 	timeradd(&t, &tc, &t);
-	t_command *command = command_new(t, cmd, client_nb);
+	t_command *command = command_new(t, strdup(cmd), client_nb);
 	commands_push(command);
-	if (client_nb)
+	if (client_nb) {
 		++client->pending_commands;
 		client->last_command = command;
+	}
 }
 
 #undef CIRCBUF_SIZE
