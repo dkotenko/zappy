@@ -78,7 +78,7 @@ static void mct(int client_nb)
 	
 	for (int i = 0; i < g_cfg.height; ++i) {
 		for (int j = 0; j < g_cfg.width; ++j) {
-			if (lgc_get_cell_resources(i, j, resources) == 1)
+			if (lgc_get_cell_resources(j, i, resources) == 1)
 				srv_reply_client(client_nb, "bct %d %d %d %d %d %d %d %d %d\n",
 								 j, i, resources[0], resources[1], resources[2],
 								 resources[3], resources[4], resources[5], resources[6]);
