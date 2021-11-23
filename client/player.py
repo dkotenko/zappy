@@ -77,6 +77,7 @@ class Player:
 
     def play(self, result: str, messages: List[Message]):
         self._handle_messages(messages)
+        print('state', self.state)
         if self.state == self.State.INTRODUCING:
             return self._introduce(result)
         if self.state == self.State.COLLECTING:
@@ -108,39 +109,14 @@ class Player:
                     self.players_info[mv.source] = PlayerInfo(mv.data)
                     messages.remove(m)
                 if mv.command == 'meet' and mv.data == self.name:
-                    if self.state != self.State.MEETING:
+                    if self.state == self.State.COLLECTING:
                         self.command_list.clear()
                         self.state = self.State.MEETING
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.state = self.State.INCANTATION
-
-        # i = 0
-        # while messages:
-        #     m = messages[i]
-        #     if m.t == Message.Type.VOICE:
-        #         data_splited = m.data.split()
-        #         msg_source = data_splited[0]
-        #         msg_command = data_splited[1]
-        #         msg_data = data_splited[2]
-
-        #         if msg_command == 'hi' or msg_command == 'took':
-        #             self.players_info[msg_source] = PlayerInfo(msg_data)
-        #             messages.pop(0)
-        #         if msg_command == 'hi':
-        #             self.command_list.insert(0, Command(Command.Type.SAY,
-        #                                                 self.name + ' took '+
-        #                                                 str(self.my_info)))
-        #         if (msg_command == 'meet' and msg_data == self.name):
-        #             self.state = self.State.MEETING
-        #             self.meet_context.initiator_direction = m.source
-
-        #         if (msg_command == 'meet_confirm' and msg_data == self.name):
-        #             self.meet_context.meet_confirm_heard = True
-        #             self.meet_context.players[msg_source] = m.source
-
-        #     if m.t == Message.Type.ACTUAL_LEVEL:
-        #         self.my_info.lvl = int(m.data)
-        #         self.state = self.State.COLLECTING
+            if m.t == Message.Type.ELEVATION:
+                self.state = self.State.INCANTATION
+                messages.remove(m)
 
     def _introduce(self, result: str) -> Command:
         if result == '':
@@ -188,7 +164,6 @@ class Player:
             if self.meet_list:
                 if self.meet_list[0] == self.name:
                     self.command_list = []
-                    self._drop_stones()
                     self.state = self.State.INCANTATION
                     return self._incantate('', [])
                 self.state = self.State.MEETING
@@ -287,33 +262,6 @@ class Player:
 
         return cmd_list
 
-    # def _meet_from_initiator(self, messages: List[Message]):
-    #     for m in messages:
-    #         if m.t == Message.Type.VOICE:
-    #             mv = MessageVoice.fromStr(m.data)
-    #             if mv.command == 'meet_confirm' and mv.data == self.name:
-    #                 if self.meet_context.players.get(mv.source, None):
-    #                     self.meet_context.players[mv.source] = m.source
-    #                 if m.source != 0:
-    #                     meet_cmd = MessageVoice(self.name, 'meet',
-    #                                             mv.source).toCommand()
-    #                     self.command_list.append(meet_cmd)
-    #                 else:
-    #                     print(mv.source + ' arrived to initiator (me)')
-    #                 messages.remove(m)
-
-    # def _meet_from_participant(self, messages: List[Message]):
-    #     for m in messages:
-    #         if m.t == Message.Type.VOICE:
-    #             mv = MessageVoice.fromStr(m.data)
-    #             if mv.command == 'meet' and mv.data == self.name:
-    #                 if self._move_to_target(m.source):
-    #                     print('arrived to initiator (' + mv.source + ')')
-    #                 confirm_cmd = MessageVoice(self.name, 'meet_confirm',
-    #                                            mv.source).toCommand()
-    #                 self.command_list.append(confirm_cmd)
-    #                 messages.remove(m)
-
     def _check_met(self, see_result: str) -> bool:
         striped = see_result.strip('{}')
         splited_comma = striped.split(',')
@@ -338,20 +286,21 @@ class Player:
                     if self._move_to_target(m.source):
                         self.met_list.append(mv.source)
                         reply = 'has_met'
-                        self._drop_stones()
+                        self.state = self.State.INCANTATION
                     else:
                         reply = 'meet'
                     meet_cmd = MessageVoice(self.name, reply,
                                             mv.source).toCommand()
                     self.command_list.append(meet_cmd)
                     messages.remove(m)
+                    if self.state == self.State.INCANTATION:
+                        return self._incantate('', [])
                 if mv.command == 'has_met' and mv.data == self.name:
                     self.met_list.append(mv.source)
                     messages.remove(m)
 
         if self.last_cmd.t == Command.Type.SEE:
             if self._check_met(result):
-                self._drop_stones()
                 self.state = self.State.INCANTATION
                 return self._incantate('', [])
 
@@ -463,16 +412,19 @@ class Player:
             self.command_list.append(
                 Command(Command.Type.DROP_OBJECT, 'thystame'))
             my_stones_copy.th -= 1
-        print('schedule dropping: ' + str(self.command_list))
+        # print('schedule dropping: ' + str(self.command_list))
 
     def _incantate(self, result: str, messages: List[Message]) -> Command:
         for m in messages:
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.my_info.lvl = m.data
+                print('new level: ' + str(self.my_info.lvl))
                 self.state = self.State.COLLECTING
                 messages.remove(m)
                 return self._collect('')
         if result == '':
+            self.command_list.append(Command(Command.Type.INVENTORY))
+            self._drop_stones()
             self.command_list.append(Command(Command.Type.INCANTATE))
         if self.command_list:
             return self.command_list.pop(0)  # drop stones and incantate

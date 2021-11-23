@@ -50,7 +50,8 @@ class Message:
     class Type(Enum):
         VOICE = auto()
         DEPLACEMENT = auto()
-        ACTUAL_LEVEL = auto()   # not used
+        ACTUAL_LEVEL = auto()
+        ELEVATION = auto()
 
     t = None
     source = 0
@@ -169,6 +170,8 @@ class Server:
             elif r.startswith('niveau actuel:'):
                 self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
                                              data=int(r.split(':')[1].strip())))
+            elif r.startswith('elevation en cours'):
+                self.messages.append(Message(Message.Type.ELEVATION))
             else:
                 print('unknown message: "' + r + '"')
                 break

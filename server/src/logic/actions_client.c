@@ -648,6 +648,10 @@ void	incantation(t_player *player)
 	visitor = player->curr_cell->visitors;
 	while (visitor) {
 		t_player *p = (t_player *)visitor->content;
+		if (p->is_incantating) {
+			t_buffer_write(game->buf, "ko");
+			return ;
+		}
 		p->is_incantating = 1;
 		if (p != player)
 			srv_reply_client(p->id, "elevation en cours\n");
