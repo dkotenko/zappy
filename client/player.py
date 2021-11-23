@@ -28,7 +28,7 @@ class MessageVoice:
 
 class PlayerInfo:
     lvl = 1
-    stones_pack = StonesPack(0, 0, 0, 0, 0, 0)
+    stones_pack = StonesPack()
 
     def __init__(self, msg=''):
         if msg == '':
@@ -111,6 +111,8 @@ class Player:
                     if self.state != self.State.MEETING:
                         self.command_list.clear()
                         self.state = self.State.MEETING
+            if m.t == Message.Type.ACTUAL_LEVEL:
+                self.state = self.State.INCANTATION
 
         # i = 0
         # while messages:
@@ -402,25 +404,37 @@ class Player:
         '''
         print('my_info: ' + str(self.my_info) + ', ' + 'players: ' +
               str(self.players_info))
+
         if self.my_info.lvl == 1 and self.my_info.stones_pack.li >= 1:
             return [self.name]
-        if self.my_info.lvl == 2:
-            for name in self.players_info.keys():
-                player = self.players_info[name]
-                li = self.my_info.stones_pack.li
-                de = self.my_info.stones_pack.de
-                si = self.my_info.stones_pack.si
-                if player.lvl == 2:
-                    li = li + player.stones_pack.li
-                    de = de + player.stones_pack.de
-                    si = si + player.stones_pack.si
-                    if li >= 1 and de >= 1 and si >= 1:
-                        return [name]
+
+        result = []
+        stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
+        players_need = GameRules.players_need_for_level(self.my_info.lvl)
+        stones_collected = self.my_info.stones_pack
+        for name in self.players_info.keys():
+            player = self.players_info[name]
+            if player.lvl == self.my_info.lvl:
+                stones_collected += player.stones_pack
+                result.append(name)
+                if (stones_need <= stones_collected and
+                        len(result) + 1 == players_need):
+                    return result
         return []
 
-    # def _remove_stones(self):
-    #     if self.my_info.lvl == 2:
-    #         self.my_info.li -= 1
+        # if self.my_info.lvl == 2:
+        #     for name in self.players_info.keys():
+        #         player = self.players_info[name]
+        #         li = self.my_info.stones_pack.li
+        #         de = self.my_info.stones_pack.de
+        #         si = self.my_info.stones_pack.si
+        #         if player.lvl == 2:
+        #             li = li + player.stones_pack.li
+        #             de = de + player.stones_pack.de
+        #             si = si + player.stones_pack.si
+        #             if li >= 1 and de >= 1 and si >= 1:
+        #                 return [name]
+        # return []
 
     def _drop_stones(self):
         stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
@@ -449,6 +463,7 @@ class Player:
             self.command_list.append(
                 Command(Command.Type.DROP_OBJECT, 'thystame'))
             my_stones_copy.th -= 1
+        print('schedule dropping: ' + str(self.command_list))
 
     def _incantate(self, result: str, messages: List[Message]) -> Command:
         for m in messages:

@@ -6,7 +6,7 @@ class StonesPack:
     ph = 0
     th = 0
 
-    def __init__(self, li, de, si, me, ph, th):
+    def __init__(self, li=0, de=0, si=0, me=0, ph=0, th=0):
         self.li = li
         self.de = de
         self.si = si
@@ -49,6 +49,24 @@ class StonesPack:
                 self.th <= other.th):
             return True
         return False
+
+    def __eq__(self, other):
+        if (self.li == other.li and
+                self.de == other.de and
+                self.si == other.si and
+                self.me == other.me and
+                self.ph == other.ph and
+                self.th == other.th):
+            return True
+        return False
+
+    def __add__(self, other):
+        return StonesPack(self.li + other.li,
+                          self.de + other.de,
+                          self.si + other.si,
+                          self.me + other.me,
+                          self.ph + other.ph,
+                          self.th + other.th)
 
 
 class GameRules:
