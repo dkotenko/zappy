@@ -1,9 +1,8 @@
 #ifndef ACTIONS_CLIENT_H
 # define ACTIONS_CLIENT_H
 
-# define CMD_NUMBER 13
-
 # include "zappy.h"
+
 enum e_command
 {
 	CMD_AVANCE,
@@ -20,6 +19,7 @@ enum e_command
 	CMD_FORK,
 	CMD_CONNECT_NBR,
 	CMD_RESTORE_RESOURCE,
+	CMD_NUMBER //used in malloc, must be last
 };
 
 typedef void	(*action)(t_player *);
