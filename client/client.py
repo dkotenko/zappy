@@ -83,7 +83,7 @@ def prod_mode(server, world_size):
               '] exec', cmd.t, cmd.arg)
         result = server.exec_command(cmd)
         print('[' + str(datetime.datetime.now().time()) +
-              '] result', result)
+              '] result', '"' + result + '"')
 
 
 def main(options):
