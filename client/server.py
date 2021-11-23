@@ -158,14 +158,14 @@ class Server:
             elif r.startswith('message'):
                 splited = r.split(',')
                 self.messages.append(Message(Message.Type.VOICE,
-                                             source=splited[0].split(' ')[1],
+                                             source=int(splited[0].split(' ')[1]),
                                              data=splited[1].strip()))
             elif r.startswith('deplacement'):
                 self.messages.append(Message(Message.Type.DEPLACEMENT,
-                                             source=r.split(' ')[1]))
+                                             source=int(r.split(' ')[1])))
             elif r.startswith('niveau actuel:'):
                 self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
-                                             data=r.split(':')[1].strip()))
+                                             data=int(r.split(':')[1].strip())))
             else:
                 print('unknown message: "' + r + '"')
                 break
