@@ -125,6 +125,31 @@ class Player:
         self.state = self.State.COLLECTING
         return self._collect('')
 
+    def _see_to_map(self, see_result: str):
+        """
+        transforms "{a, b c d, e f g, h i j}" to list of lists:
+        [
+         [ [a] ],
+         [ [b, c, d], [e, f, g], [h, i, j]]
+        ]
+        """
+        striped = see_result.strip('{} ')
+        cells = striped.split(',')
+        result = []
+        i = 0
+        j = 0
+        j_max = 1
+        result.append([])
+        for items in cells:
+            result[i].append(items.strip().split())
+            j += 1
+            if (j == j_max):
+                i += 1
+                j = 0
+                j_max += 2
+                result.append([])
+        return result
+
     def _collect(self, result: str) -> Command:
         # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
@@ -136,21 +161,10 @@ class Player:
                     Command(Command.Type.SAY,
                             self.name + ' took ' + str(self.my_info)))
 
-        if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
-           and result.startswith('{'):
-            striped = result.strip('{}')
-            splited = striped.split(',')
-            for i in range(0, len(splited)):
-                content = splited[i].strip()
-                content_splited = content.split(' ')
-                take_list = []
-                for c in content_splited:
-                    if self._do_i_need_this(c):
-                        take_list.append(c)
-                if take_list:
-                    print("(I want to take {} from {})".format(take_list, i))
-                    self._take(i, take_list)
-                    break
+        if (self.last_cmd and self.last_cmd.t == Command.Type.SEE
+                and result.startswith('{')):
+            see_map = self._see_to_map(result)
+            self._take(see_map)
 
         if (self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT
                 and self.last_cmd.arg != 'nourriture'):
@@ -198,41 +212,65 @@ class Player:
             return True
         return False
 
-    # stones_need: 1 1 1 0 0 0
-    # my_stones:   2 2 0 0 2 2
+    def _take(self, see_map):
+        """
+        see_map: result of self._see_to_map()
+        in result, player will go snakepath through all cells
 
-    # TODO I waste too much time for walking. Need to upgrade _take to support multiple pos
-    def _take(self, pos, contents):
-        borders = [0, 3, 8, 15, 24, 35, 48, 63, 80]
-        centers = [0, 2, 6, 12, 20, 30, 42, 56, 72]
-        i = 0
-        x = 0
-        for i in range(0, len(borders)):
-            if borders[i] >= pos:
-                break
-        y = i
-        x = centers[i] - pos  # positive = left, negative = right
+        example:
+        [[4, 5, 6, 7, 8],
+         [1, 2, 3],
+         [0]],
+        where numbers are lists of resources, ex: 5 = ['nourriture', 'sibur']
+
+        player will go in this way:
+
+        4 <- 5 <- 6 <- 7 <- 8
+         -> 1 -> 2 -> 3 -> (up)
+        (up) <- 0
+
+        on every cell he checks if he needs item and take it if true
+        """
+        print('see_map: ' + str(see_map))
+        right = False
+        current_turn = right
+
+        def turn(commands, left) -> None:
+            if left:
+                commands.append(Command(Command.Type.TURN_LEFT))
+            else:
+                commands.append(Command(Command.Type.TURN_RIGHT))
+            commands.append(Command(Command.Type.GO))
+            if left:
+                commands.append(Command(Command.Type.TURN_LEFT))
+            else:
+                commands.append(Command(Command.Type.TURN_RIGHT))
+
         commands = []
-        # go forward
-        for i in range(0, y):
-            commands.append(Command(Command.Type.GO))
-        # go left or right if need
-        if x != 0:
-            commands.append(
-                Command(Command.Type.TURN_LEFT if x > 0 else Command.Type.
-                        TURN_RIGHT))
-        for i in range(0, abs(x)):
-            commands.append(Command(Command.Type.GO))
+        for item in see_map[0][0]:
+            if self._do_i_need_this(item):
+                commands.append(Command(Command.Type.TAKE_OBJECT,
+                                        item))
 
-        # take items from current cell
-        for c in contents:  # TODO don't take linamte on level 1
-            commands.append(Command(Command.Type.TAKE_OBJECT, c))
+        commands += [Command(Command.Type.TURN_LEFT), Command(Command.Type.GO)]
+        for i in range(1, self.my_info.lvl + 1):
+            turn(commands, current_turn)
+            if not see_map[i]:
+                continue
+            if (i % 2 == 0):
+                see_map[i].reverse()
+            print('!!', i)
+            for cell in see_map[i]:
+                for item in cell:
+                    if self._do_i_need_this(item):
+                        commands.append(Command(Command.Type.TAKE_OBJECT,
+                                                item))
+                commands.append(Command(Command.Type.GO))
+            current_turn = not current_turn
 
-        if x != 0:
-            commands.append(
-                Command(Command.Type.TURN_LEFT if x < 0 else Command.Type.
-                        TURN_RIGHT))
-
+        commands.append(Command(Command.Type.TURN_RIGHT
+                                if current_turn == right
+                                else Command.Type.TURN_LEFT))
         self.command_list = commands + self.command_list
 
     def _generate_collect_command_list(self):
@@ -259,7 +297,6 @@ class Player:
                 turned = False
             else:
                 turned = True
-
         return cmd_list
 
     def _check_met(self, see_result: str) -> bool:
