@@ -272,6 +272,8 @@ class Player:
                 players_count += 1
         if players_count == GameRules.players_need_for_level(self.my_info.lvl):
             if set(self.meet_list) == set(self.met_list):
+                print('self.meet_list: ' + str(set(self.meet_list)))
+                print('self.met_list: ' + str(set(self.met_list)))
                 print('ready to incantate')
                 return True
         return False

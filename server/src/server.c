@@ -152,7 +152,6 @@ static void	client_read(int cs)
 			--g_player_count;
 			lgc_player_gone(cs);
 		}
-		client_gone(cs);
 		return ;
 	}
 	circbuf_push(&client->circbuf_read, buf);
