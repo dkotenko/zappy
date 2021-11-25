@@ -161,4 +161,6 @@ void	print_visitors(t_list *visitors);
 void	print_inverntory(int *inv);
 void 	print_map(t_game *game, int (*f)(t_cell *));
 
+void    bct_srv_event(t_cell *cell);
+
 #endif

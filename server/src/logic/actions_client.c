@@ -31,6 +31,7 @@ int		get_y(int coord)
 
 void	mort(t_player *player)
 {
+	srv_event("pdi %d\n", player->id);
 	srv_reply_client(player->id, "mort\n");
 	srv_client_died(player->id);
 	delete_player(player);
@@ -343,7 +344,7 @@ static char *get_resource(char *data)
 }
 */
 
-static void bct_srv_event(t_cell *cell)
+void bct_srv_event(t_cell *cell)
 {
 	srv_event("bct %d %d %d %d %d %d %d %d %d\n",
 			  cell->x, cell->y,

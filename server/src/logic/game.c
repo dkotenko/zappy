@@ -109,6 +109,7 @@ void	delete_player(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
+	bct_srv_event(tmp_player->curr_cell);
 	for (int i = 0; i < game->players_num; ++i)
 		if (game->players[i] == player) {
 			game->players[i] = NULL;
@@ -190,14 +191,9 @@ void lgc_new_player(int player_nb, char *team)
 
 void lgc_player_gone(int player_nb)
 {
-	// delete player from game
-
-	// TODO double free when player dies after disconnect. Following line should fix but
-	// segfaults happen
-
-	
 	log_info("logic: Remove player #%d", player_nb);
 	srv_event("pdi %d\n", player_nb);
+	srv_client_died(player_nb);
 	delete_player(get_player_by_id(player_nb));
 }
 
