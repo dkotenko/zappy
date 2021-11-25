@@ -371,20 +371,6 @@ class Player:
                     return result
         return []
 
-        # if self.my_info.lvl == 2:
-        #     for name in self.players_info.keys():
-        #         player = self.players_info[name]
-        #         li = self.my_info.stones_pack.li
-        #         de = self.my_info.stones_pack.de
-        #         si = self.my_info.stones_pack.si
-        #         if player.lvl == 2:
-        #             li = li + player.stones_pack.li
-        #             de = de + player.stones_pack.de
-        #             si = si + player.stones_pack.si
-        #             if li >= 1 and de >= 1 and si >= 1:
-        #                 return [name]
-        # return []
-
     def _drop_stones(self):
         stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
         my_stones_copy = self.my_info.stones_pack
