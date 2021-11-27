@@ -105,7 +105,7 @@ void	delete_player(t_player *player)
 		tmp = tmp->next;
 	}
 	xassert(tmp_player != NULL, "delete_player error: no player at cell");
-	ft_lstpop(&player->curr_cell->visitors, tmp_player);	
+	tmp = ft_lstpop(&player->curr_cell->visitors, tmp_player);	
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
