@@ -105,17 +105,12 @@ void	delete_player(t_player *player)
 		tmp = tmp->next;
 	}
 	xassert(tmp_player != NULL, "delete_player error: no player at cell");
-	ft_lstpop(&player->curr_cell->visitors, tmp);	
+	ft_lstpop(&player->curr_cell->visitors, tmp_player);	
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
 	bct_srv_event(tmp_player->curr_cell);
-	for (int i = 0; i < game->players_num; ++i)
-		if (game->players[i] == player) {
-			game->players[i] = NULL;
-			break ;
-		}
-
+	game->players[player->id] = NULL;
 	free(player->inventory);
 	free(player);
 	free(tmp);
@@ -141,7 +136,9 @@ t_player	*add_player(int player_id, int team_id)
 {
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
-	game->players[game->players_num++] = player;
+
+	game->players[player_id] = player;
+	game->players_num++;
 	game->teams[player->team_id]->players_num++;
 	add_visitor(cell, player);
 	return player;
