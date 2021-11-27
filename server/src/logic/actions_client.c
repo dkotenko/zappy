@@ -197,8 +197,6 @@ void	voir(t_player *player)
 {	
 	t_map *map = game->map;
 
-	//int printed[map->h][map->w];
-	//memset(printed, 0, sizeof(printed));
 	int x = player->curr_cell->x;
 	int y = player->curr_cell->y;
 	int orient = player->orient;
@@ -249,8 +247,6 @@ void	voir(t_player *player)
 						print_h = y - (h - y);
 					}
 				}
-				//printed[get_h(h)][w] = 1;
-				//printf("x:%d y:%d\n", w, h);
 				print_voir_cell(player, game->map->cells[get_h(print_h)][w]);
 				h++;
 				cells_counter++;
