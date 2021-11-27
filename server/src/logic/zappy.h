@@ -47,6 +47,7 @@ typedef struct s_player
     int     level;
     int     orient;
 	int     is_egg;
+	int		can_connect;
 	int		is_incantating;
     int     team_id;
     int     last_meal_tick;
@@ -82,6 +83,13 @@ typedef struct s_map
     int     h;
 } t_map;
 
+typedef struct s_hatchery
+{
+	int			id_counter;
+	int			eggs_num;
+	t_player	**eggs;
+} t_hatchery;
+
 typedef struct s_game
 {
     t_aux       *aux;
@@ -93,6 +101,7 @@ typedef struct s_game
     t_buffer    *buf;
 	int		    is_test;
     int         curr_tick;
+	t_hatchery	*hatchery;
 } t_game;
 
 
