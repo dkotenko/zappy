@@ -111,6 +111,8 @@ void	delete_player(t_player *player)
 	}
 	bct_srv_event(tmp_player->curr_cell);
 	game->players[player->id] = NULL;
+	game->players_num--;
+	game->teams[player->id]->players_num--;
 	free(player->inventory);
 	free(player);
 	free(tmp);
@@ -130,6 +132,11 @@ t_player	*create_player(int player_id, int team_id)
 	player->is_egg = 0;
 	player->level = 1;
 	return (player);
+}
+
+void		add_player_egg(int hatchery_id)
+{
+	
 }
 
 t_player	*add_player(int player_id, int team_id)

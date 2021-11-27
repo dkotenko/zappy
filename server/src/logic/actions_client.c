@@ -716,12 +716,58 @@ t_token *create_token(int team_id)
 	return (new);
 }
 
+static void	write_shift_pointer(char **dest, char *src)
+{
+	ft_memcpy(*dest, src, strlen(src));
+	*dest += strlen(src);
+}
+
+void	hatch_egg(t_player *player)
+{
+
+}
+
+static void send_egg_hatched(t_player *player)
+{
+	int buf_size = strlen(game->teams[player->team_id]->name) + 20;
+	char buf[buf_size];
+	char *curr_buf = buf;
+	ft_memset(buf, 0, buf_size);
+	char *cmd = "egg_hatched ";
+	char *token = ft_itoa(game->hatchery->id_counter);
+
+	write_shift_pointer(&curr_buf, cmd);
+	write_shift_pointer(&curr_buf, game->teams[player->team_id]->name);
+	write_shift_pointer(&curr_buf, " ");
+	write_shift_pointer(&curr_buf, token);
+	write_shift_pointer(&curr_buf, "\n");
+	free(token);
+
+	srv_push_command(0, buf, 600);
+}
+
+void	hatch_egg(t_player *player)
+{
+	
+	send_egg_hatched(player);
+}
+
 void	do_fork(t_player *player)
 {
+	/*
 	if (game->teams[player->team_id]->players_num == 6) {
 		t_buffer_write(game->buf, "ko");
 			return ;
 	}
+	*/
+	t_buffer_write(game->buf, "ok");
+	srv_event("pfk %d\n", player->id);
+	srv_push_command(0, "hatch_egg", 0);
+
+	
+	
+	
+
 	//
 	//
 	
