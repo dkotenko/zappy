@@ -51,7 +51,7 @@ void	test_avance()
 	lgc_execute_command(player_id, "gauche", lgc_get_command_id("gauche"));
 	local_test_result += xassert(player->orient == ORIENT_W, "gauche FAILED");
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
-	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
+	local_test_result += xassert(player->curr_cell->x == g_cfg.width - 1 && player->curr_cell->y == g_cfg.height - 1, "avance ORIENT W FAILED");
 	
 	//must be x=9 y=0
 	lgc_execute_command(player_id, "droite", lgc_get_command_id("droite"));
@@ -60,7 +60,7 @@ void	test_avance()
 	local_test_result += xassert(player->orient == ORIENT_S, "triple droite FAILED");
 	
 	lgc_execute_command(player_id, cmd, lgc_get_command_id(cmd));
-	local_test_result += xassert(player->curr_cell->x == 9 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
+	local_test_result += xassert(player->curr_cell->x == g_cfg.width - 1 && player->curr_cell->y == 0, "avance ORIENT S FAILED");
 
 	//must be x=0 y=0
 	lgc_execute_command(player_id, "gauche", lgc_get_command_id("gauche"));
@@ -363,14 +363,19 @@ int main() {
 	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
 	//test_droite_gauche();
-	//test_avance();
-	test_voir();
-	//test_inventoire();
-	//test_pose();
+	test_avance();
 	
-	//test_broadcast();
-	//testcase();
-	//test_player_delete();
+	test_voir();
+	
+	test_inventoire();
+	
+	test_pose();
+	
+	
+	test_broadcast();
+	testcase();
+	exit(0);
+	test_player_delete();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
