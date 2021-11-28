@@ -727,6 +727,8 @@ void	hatch_egg(t_player *player)
 
 }
 
+
+
 static void send_egg_hatched(t_player *player)
 {
 	int buf_size = strlen(game->teams[player->team_id]->name) + 20;
@@ -746,40 +748,81 @@ static void send_egg_hatched(t_player *player)
 	srv_push_command(0, buf, 600);
 }
 
-void	hatch_egg(t_player *player)
+t_player	*get_egg_by_id(int token)
 {
+	t_list *tmp = game->hatchery->eggs;
 	
+	while (tmp) {
+		t_player *tmp_egg = (t_player *)tmp->content;
+		if (tmp_egg->id == token) {
+			return tmp_egg;
+		}
+		tmp = tmp->next;
+	}
+	return NULL;
+}
+
+void	hatch_egg(t_player *player, char *data)
+{
+	char *char_token = data + strlen("hatch_egg ");
+	int	token = atoi(char_token);
+	t_player *egg = get_egg_by_id(token);
+	egg->can_connect = 1;
+	egg->last_meal_tick = game->curr_tick;
 	send_egg_hatched(player);
+	
 }
 
 void	do_fork(t_player *player)
 {
-	/*
-	if (game->teams[player->team_id]->players_num == 6) {
-		t_buffer_write(game->buf, "ko");
-			return ;
-	}
-	*/
-	return ;
-	t_buffer_write(game->buf, "ok");
 	srv_event("pfk %d\n", player->id);
-	srv_push_command(0, "hatch_egg", 0);
+	srv_push_command(0, "do_fork_end", 42);
+}
 
-	
-	
-	
+t_player	*lay_egg(t_player*player)
+{
+	t_player *egg = create_player(game->hatchery->id_counter++, player->team_id);
+	egg->is_egg = 1;
+	ft_lstadd(&game->hatchery->eggs, ft_lstnew(player, sizeof(t_player)));
+	return egg;
+}
 
-	//
-	//
+void	do_fork_end(t_player *player)
+{
+	t_player *egg = lay_egg(player);
+	//enw #e #n X Y
+	t_buffer_write(game->buf, "ok");
 	
-	//add_player(pla);
-	//player->is_egg = 1;
-	//t_buf write OK, write token
+	int buf_size = 20;
+	char buf[buf_size];
+	char *curr_buf = buf;
+	ft_memset(buf, 0, buf_size);
+	char *cmd = "hatch_egg ";
+	char *token = ft_itoa(egg->id);
+	write_shift_pointer(&curr_buf, cmd);
+	write_shift_pointer(&curr_buf, token);
+	free(token);
+
+	srv_push_command(0, buf, 600);
+	srv_event("enw %d %d %d %d\n", egg->id, player->id,
+		player->curr_cell->x, player->curr_cell->y);
 }
 
 void	connect_nbr(t_player *player)
 {
-	player = NULL;
+	int	connect_nbr = 0;
+	t_list *tmp = game->hatchery->eggs;
+	
+	while (tmp) {
+		t_player *tmp_egg = (t_player *)tmp->content;
+		if (tmp_egg->team_id == player->id) {
+			connect_nbr++;
+		}
+		tmp = tmp->next;
+	}
+	char *num = ft_itoa(connect_nbr);
+	t_buffer_write(game->buf, num);
+	free(num);
 }
 
 void	init_cmd()
