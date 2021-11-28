@@ -83,11 +83,19 @@ typedef struct s_map
     int     h;
 } t_map;
 
+typedef	struct s_egg
+{
+	int	id;
+	int	parent_id;
+	int	team_number;
+	
+} t_egg;
+
 typedef struct s_hatchery
 {
 	int			id_counter;
 	int			eggs_num;
-	t_player	**eggs;
+	t_list		*eggs;
 } t_hatchery;
 
 typedef struct s_game

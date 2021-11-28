@@ -69,8 +69,6 @@ t_team	**create_teams()
 	return new;
 }
 
-
-
 t_game	*create_game(map_initiator init_map)
 {
 	t_game	*game;
@@ -84,6 +82,7 @@ t_game	*create_game(map_initiator init_map)
 	game->buf = t_buffer_create(0);
 	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * \
 		g_cfg.max_clients_at_team * g_cfg.teams_count);
+	game->hatchery = (t_hatchery *)ft_memalloc(sizeof(t_hatchery));
 	return (game);
 }
 
@@ -129,7 +128,6 @@ t_player	*create_player(int player_id, int team_id)
 	player->orient = rand() % 4 + 1;
 	player->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
 	player->inventory[0] += 10;
-	player->is_egg = 0;
 	player->level = 1;
 	return (player);
 }
@@ -144,10 +142,13 @@ t_player	*add_player(int player_id, int team_id)
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
 
+	player->last_meal_tick = game->curr_tick;
+	add_visitor(cell, player);
+
 	game->players[player_id] = player;
 	game->players_num++;
 	game->teams[player->team_id]->players_num++;
-	add_visitor(cell, player);
+	
 	return player;
 }
 
