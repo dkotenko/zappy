@@ -145,8 +145,7 @@ t_player	*add_player(int player_id, int team_id)
 	player->last_meal_tick = game->curr_tick;
 	add_visitor(cell, player);
 
-	game->players[player_id] = player;
-	game->players_num++;
+	game->players[game->players_num++] = player;
 	game->teams[player->team_id]->players_num++;
 	
 	return player;
