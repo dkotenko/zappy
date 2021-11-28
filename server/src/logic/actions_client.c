@@ -722,12 +722,6 @@ static void	write_shift_pointer(char **dest, char *src)
 	*dest += strlen(src);
 }
 
-void	hatch_egg(t_player *player)
-{
-
-}
-
-
 
 static void send_egg_hatched(t_player *player)
 {
