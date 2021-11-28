@@ -760,6 +760,7 @@ void	do_fork(t_player *player)
 			return ;
 	}
 	*/
+	return ;
 	t_buffer_write(game->buf, "ok");
 	srv_event("pfk %d\n", player->id);
 	srv_push_command(0, "hatch_egg", 0);
