@@ -266,7 +266,7 @@ static void do_select()
 	memset(&to, 0, sizeof(to));
 	command = commands_min(); /* minimal by time, what we should execute after select */
 	if (commands_is_empty())
-		lgc_init();
+		lgc_init(0);
 	
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	if (commands_is_empty()) {	/* init */
@@ -514,6 +514,11 @@ void srv_push_command(int client_nb, char *cmd, int after_t)
 		++client->pending_commands;
 		client->last_command = command;
 	}
+}
+
+int	srv_get_maxfd()
+{
+	return env.maxfd;
 }
 
 #undef CIRCBUF_SIZE

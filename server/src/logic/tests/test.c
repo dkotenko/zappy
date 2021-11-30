@@ -16,7 +16,7 @@ t_main_config g_cfg = {
 	.teams_count = 10,
 	.max_clients_at_team = 5,
 	.t = 1,
-	.quiet = 0,
+	.quiet = 1,
 	.d = 0,
 	.cmd = {NULL, NULL, NULL, NULL, NULL}
 };	
@@ -32,7 +32,7 @@ void	test_avance()
 	int player_id = 3;
 	char *cmd = "avance";
 	int local_test_result = 0;
-
+	
 	t_player *player = add_player(player_id, 5);
 	set_player_cell(player, game->map->cells[0][0]);
 	player->orient = ORIENT_N;
@@ -125,6 +125,7 @@ void	test_pose()
 
 void	test_inventoire()
 {
+	init_game();
 	t_player *player = add_player(3, 5);
 	set_player_cell(player, game->map->cells[0][0]);
 	int player_id = 3;
@@ -304,7 +305,10 @@ void	test_player_delete()
 	int player_id = 3;
 	if (game->players_num == 0)
 		player = add_player(3, 5);
+	printf("player deleted: %s\n", game->players[player_id] == NULL ? "yes" : "no");
 	delete_player(player);
+	
+	printf("player deleted: %s\n", game->players[player_id] == NULL ? "yes" : "no");
 }
 
 
@@ -354,8 +358,7 @@ void	init_game(void)
 	}
 	g_tests_result = 0;
 	init_cmd();
-	lgc_init();
-	game->is_test = 1;
+	lgc_init(1);
 }
 
 int main() {
@@ -363,20 +366,18 @@ int main() {
 	g_list_game_to_free = (t_list *)ft_memalloc(sizeof(t_list));
 	g_messages = (t_dlist *)ft_memalloc(sizeof(t_dlist));
 	
-	//test_droite_gauche();
+	/*
+	test_droite_gauche();
 	test_avance();
-	
 	test_voir();
-	
 	test_inventoire();
-	
 	test_pose();
-	
-	
 	test_broadcast();
 	testcase();
-	exit(0);
+	*/
+	
 	test_player_delete();
+	exit(0);
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",
