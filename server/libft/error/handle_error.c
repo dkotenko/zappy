@@ -15,6 +15,6 @@
 int	handle_error(char *s)
 {
 	ft_dprintf(STDERR_FILENO, "%sERROR:\t%s%s\n", C_RED, s, C_NRM);
-	//exit(0);
+	exit(0);
 	return 0;
 }

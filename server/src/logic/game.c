@@ -4,6 +4,8 @@
 #include "../reception.h"
 #include "../utils.h"
 
+#define MAX_FD_MACOS 12288
+
 t_game *game;
 
 void	mock_srv_reply(int client_nb, char *msg)
@@ -48,11 +50,7 @@ int is_session_ends()
 
 t_player	*get_player_by_id(int player_id)
 {
-	for (int i = 0; i < game->players_num; ++i) {
-		if (game->players[i] && game->players[i]->id == player_id)
-			return game->players[i];
-	}
-	return NULL;
+	return game->players[player_id];
 }
 
 t_team	**create_teams()
@@ -69,23 +67,35 @@ t_team	**create_teams()
 	return new;
 }
 
-t_game	*create_game(map_initiator init_map)
+int	get_maxfd()
+{
+	return MAX_FD_MACOS;
+	srv_get_maxfd();
+}
+
+t_game	*create_game(map_initiator init_map, int is_test)
 {
 	t_game	*game;
 
 	game = (t_game *)ft_memalloc(sizeof(t_game));
+	game->is_test = is_test;
 	game->teams_num = g_cfg.teams_count;
 	game->teams = create_teams();
     game->aux = create_aux();
 	game->map = create_map(game, g_cfg.width, g_cfg.height);
 	(*init_map)(game);
 	game->buf = t_buffer_create(0);
-	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * \
-		g_cfg.max_clients_at_team * g_cfg.teams_count);
+	/*
+	** game->players initialization moved to add_player due to get_maxfd issue
+	*/
 	game->hatchery = (t_hatchery *)ft_memalloc(sizeof(t_hatchery));
 	return (game);
 }
 
+int get_players_num()
+{
+	return 0;
+}
 
 
  /*
@@ -108,13 +118,18 @@ void	delete_player(t_player *player)
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
 		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
 	}
-	bct_srv_event(tmp_player->curr_cell);
+
 	game->players[player->id] = NULL;
 	game->players_num--;
-	game->teams[player->id]->players_num--;
+	game->teams[player->team_id]->players_num--;
 	free(player->inventory);
 	free(player);
 	free(tmp);
+
+	if (game->is_test)
+		return ;
+	bct_srv_event(tmp_player->curr_cell);
+	
 }
 
 
@@ -139,19 +154,35 @@ void		add_player_egg(int hatchery_id)
 
 t_player	*add_player(int player_id, int team_id)
 {
+	if (!game->players) {
+		game->players = (t_player **)ft_memalloc(sizeof(t_player *) * get_maxfd());
+	}
+	
+	int is_error = xassert(game->players[player_id] == NULL, "add_player: player already exists");
+	
+	if (is_error) {
+		char *player_id_str = ft_itoa(player_id);
+		xassert(0, "player with id: ");
+		xassert(0, player_id_str);
+		free(player_id_str);
+		return NULL;
+	}	
+	
 	t_cell *cell = get_random_cell(game->map);
 	t_player *player = create_player(player_id, team_id);
 
 	player->last_meal_tick = game->curr_tick;
 	add_visitor(cell, player);
-
-	game->players[game->players_num++] = player;
+	game->players[player->id] = player;
+	game->players_num++;
 	game->teams[player->team_id]->players_num++;
 	
 	return player;
 }
 
-void	add_visitor(t_cell *cell, t_player *player)
+void	
+
+add_visitor(t_cell *cell, t_player *player)
 {
 	t_list *new_player;
 
@@ -162,11 +193,11 @@ void	add_visitor(t_cell *cell, t_player *player)
 	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
 }
 
-void lgc_init()
+void lgc_init(int is_test)
 {
-	log_info("logic: Setup world");
 	srand(time(NULL));
-	game = create_game(init_cluster_map);
+	game = create_game(init_cluster_map, is_test);
+	log_info("logic: World setup completed");
 }
 
 int	get_team_id(char *team_name)
@@ -218,9 +249,7 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	if (cmd_id == -1) {
 		cmd_id = lgc_get_command_id(cmd);
 	}
-	if (game->is_test == 0) {
-		log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
-	}
+	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
 	if (g_cfg.cmd.req_arg[cmd_id]) {
 		(g_cfg.cmd.f_arg[cmd_id])(player, cmd);
 	} else {
