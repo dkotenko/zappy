@@ -1,8 +1,10 @@
 import os
 from typing import Dict, List
-from enum import Enum
+from enum import Enum, auto
 from server import Command, Message
 from stones import StonesPack, GameRules
+
+MINIMAL_FOOD_BEFORE_MEETING = 15
 
 
 class MessageVoice:
@@ -46,30 +48,38 @@ class PlayerInfo:
         return self.__str__()
 
 
+class PlayerMeetInfo:
+    ready = False
+    has_met = False
+
+    def __init__(self, ready=False, has_met=False):
+        self.ready = ready
+        self.has_met = has_met
+
+    def __repr__(self):
+        return '(ready: ' + str(self.ready) \
+            + ', has_met: ' + str(self.has_met) + ')'
+
+
 class Player:
     class State(Enum):
-        INTRODUCING = 0
-        COLLECTING = 1
-        MEETING = 2
-        INCANTATION = 3
+        INTRODUCING = auto()
+        COLLECTING = auto()
+        COLLECTING_FOOD = auto()
+        MEETING_READY = auto()
+        MEETING = auto()
+        INCANTATION = auto()
 
     state = State.INTRODUCING
     name = str(os.getpid())
     my_info = PlayerInfo()
     players_info = {}           # Dict[str, PlayerInfo]
+    inventory_food = 0
     world_x = 0
     world_y = 0
     command_list = List[Command]
     last_cmd = ''
-    meet_list = []       # list of who I want to meet
-    met_list = []        # list of who I has met
-
-    # class MeetContext:
-    #     is_initiator = False
-    #     players = {}  # Dict[str, int]  # {player name, direction}
-    #     initiator_direction = 0
-    #     meet_confirm_heard = False
-    # meet_context = MeetContext()
+    meet_targets = {}              # Dict[str, PlayerMeetInfo]
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -82,6 +92,10 @@ class Player:
             return self._introduce(result)
         if self.state == self.State.COLLECTING:
             return self._collect(result)
+        if self.state == self.State.COLLECTING_FOOD:
+            return self._collect_food(result)
+        if self.state == self.State.MEETING_READY:
+            return self._meet_ready(result, messages)
         if self.state == self.State.MEETING:
             return self._meet(result, messages)
         if self.state == self.State.INCANTATION:
@@ -108,10 +122,14 @@ class Player:
                 if mv.command == 'hi' or mv.command == 'took':
                     self.players_info[mv.source] = PlayerInfo(mv.data)
                     messages.remove(m)
-                if mv.command == 'meet' and mv.data == self.name:
+                if (mv.command == 'meet_ready' and
+                        self._i_am_in_meetlist(mv.data)):
                     if self.state == self.State.COLLECTING:
                         self.command_list.clear()
-                        self.state = self.State.MEETING
+                        self.state = self.State.MEETING_READY
+                if (mv.command == 'meet' and
+                        self._i_am_in_meetlist(mv.data)):
+                    self.state = self.State.MEETING
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.state = self.State.INCANTATION
             if m.t == Message.Type.ELEVATION:
@@ -160,19 +178,63 @@ class Player:
                     0,
                     Command(Command.Type.SAY,
                             self.name + ' took ' + str(self.my_info)))
-            self.meet_list = self._can_incantate()
-            if self.meet_list:
-                if self.meet_list[0] == self.name:
+            self.meet_targets = self._can_incantate()
+            if self.meet_targets:
+                if self.meet_targets.get(self.name) is not None:
                     self.command_list = []
                     self.state = self.State.INCANTATION
                     return self._incantate('', [])
-                self.state = self.State.MEETING
+                self.state = self.State.COLLECTING_FOOD
                 self.command_list.clear()
-                for name in self.meet_list:
-                    self.command_list.append(
-                        MessageVoice(self.name, 'meet', name).toCommand())
-                return self._meet('')
+                return self._collect_food('')
 
+        cmd = self.command_list.pop(0)
+        self.last_cmd = cmd
+        return cmd
+
+    def _get_food_from_inventory_result(self, data: str):
+        striped = data.strip('{}')
+        splited = striped.split(',')
+        splited_food = splited[0].split()
+        if splited_food[0] != 'nourriture':
+            print('! wrong inventory result')
+        self.inventory_food = int(splited_food[1])
+
+    def _collect_food(self, result: str) -> Command:
+        if result == '':
+            self.inventory_food = 0
+            self.command_list = [Command(Command.Type.INVENTORY)]
+
+        if self.last_cmd and self.last_cmd.t == Command.Type.INVENTORY:
+            self._get_food_from_inventory_result(result)
+
+        if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
+           and result.startswith('{'):
+            striped = result.strip('{}')
+            splited = striped.split(',')
+            for i in range(0, len(splited)):
+                content = splited[i].strip()
+                content_splited = content.split(' ')
+                take_list = []
+                for c in content_splited:
+                    if self._do_i_need_this(c):
+                        take_list.append(c)
+                if take_list:
+                    print("(I want to take {} from {})".format(take_list, i))
+                    self._take(i, take_list)
+                    break
+
+        if (self.last_cmd and self.last_cmd.t == Command.Type.TAKE_OBJECT
+                and self.last_cmd.arg == 'nourriture'):
+            self.inventory_food += 1
+
+        if self.inventory_food >= MINIMAL_FOOD_BEFORE_MEETING:
+            self.state = self.State.MEETING_READY
+            self.command_list.clear()
+            return self._meet_ready('', [])
+
+        if not self.command_list:
+            self.command_list = [Command(Command.Type.SEE)]
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
         return cmd
@@ -181,7 +243,8 @@ class Player:
         # print('my_info: ' + str(self.my_info))
         if res == 'nourriture':
             return True
-        if self.state == self.State.MEETING:
+        if self.state == self.State.MEETING \
+                or self.state == self.State.COLLECTING_FOOD:
             return False
         stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
         if res == 'linemate' and self.my_info.stones_pack.li < stones_need.li:
@@ -262,55 +325,128 @@ class Player:
 
         return cmd_list
 
-    def _check_met(self, see_result: str) -> bool:
-        striped = see_result.strip('{}')
-        splited_comma = striped.split(',')
-        splited_space = splited_comma[0].split()
-        players_count = 1       # I am first
-        for i in splited_space:
-            if i == 'player':
-                players_count += 1
-        if players_count == GameRules.players_need_for_level(self.my_info.lvl):
-            if set(self.meet_list) == set(self.met_list):
-                print('self.meet_list: ' + str(set(self.meet_list)))
-                print('self.met_list: ' + str(set(self.met_list)))
-                print('ready to incantate')
+    # def _check_met(self, see_result: str) -> bool:
+    #     striped = see_result.strip('{}')
+    #     splited_comma = striped.split(',')
+    #     splited_space = splited_comma[0].split()
+    #     players_count = 1       # I am first
+    #     for i in splited_space:
+    #         if i == 'player':
+    #             players_count += 1
+    #     if players_count == GameRules.players_need_for_level(self.my_info.lvl):
+    #         if set(self.meet_list) == set(self.met_list):
+    #             print('self.meet_list: ' + str(set(self.meet_list)))
+    #             print('self.met_list: ' + str(set(self.met_list)))
+    #             print('ready to incantate')
+    #             return True
+    #     return False
+
+    def _i_am_in_meetlist(self, data):
+        splited = data.split(';')
+        for s in splited:
+            if s == self.name:
                 return True
         return False
 
-    def _meet(self, result: str, messages: List[Message] = []) -> Command:
+    def _meet_ready(self, result: str, messages: List[Message]) -> Command:
+        if not self.meet_targets.get(self.name):
+            self.meet_targets[self.name] = PlayerMeetInfo(True, True)
+        if result == '':
+            meet_list_to_send = []
+            for name in self.meet_targets.keys():
+                meet_list_to_send.append(name)
+            self.command_list.append(
+                MessageVoice(self.name, 'meet_ready',
+                             ';'.join(meet_list_to_send)).toCommand())
+        for m in messages:
+            if m.t == Message.Type.VOICE:
+                mv = MessageVoice.fromStr(m.data)
+                if (mv.command == 'meet_ready' and
+                        self._i_am_in_meetlist(mv.data)):
+                    for s in mv.data.split(';'):
+                        self.meet_targets[s] = PlayerMeetInfo(ready=True)
+                    reply = MessageVoice(self.name,
+                                         'meet_ready_confirm',
+                                         mv.source).toCommand()
+                    self.command_list.append(reply)
+                    messages.remove(m)
+                if mv.command == 'meet_ready_confirm' and mv.data == self.name:
+                    self.meet_targets[mv.source] = PlayerMeetInfo(ready=True)
+                    messages.remove(m)
+
+        print(self.meet_targets)
+        ready_for_meet = True
+        for k, v in self.meet_targets.items():
+            if k != self.name and v.ready is False:
+                ready_for_meet = False
+                break
+        if ready_for_meet:
+            self.state = self.State.MEETING
+            return self._meet('', [])
+
+        if self.command_list:
+            return self.command_list.pop(0)
+        return Command(Command.Type.WAIT)
+
+    def _meet_as_master(self, result, messages):
+        if result == '':
+            for name in self.meet_targets.keys():
+                self.command_list.append(
+                    MessageVoice(self.name, 'meet', name).toCommand())
         for m in messages:
             if m.t == Message.Type.VOICE:
                 mv = MessageVoice.fromStr(m.data)
                 if mv.command == 'meet' and mv.data == self.name:
-                    self.command_list.clear()
-                    reply = ''
-                    if self._move_to_target(m.source):
-                        self.met_list.append(mv.source)
+                    self.command_list.append(
+                        MessageVoice(self.name, 'meet', mv.source).toCommand())
+                    messages.remove(m)
+                if mv.command == 'has_met' and mv.data == self.name:
+                    self.meet_targets[mv.source].has_met = True
+                    messages.remove(m)
+
+        ready_for_incantation = True
+        for k, v in self.meet_targets.items():
+            if k != self.name and v.has_met is False:
+                ready_for_incantation = False
+                break
+        if ready_for_incantation:
+            self.state = self.State.INCANTATION
+            return self._incantate('', [])
+
+        if self.command_list:
+            return self.command_list.pop(0)
+        return Command(Command.Type.WAIT)
+
+    def _meet_as_slave(self, result, messages):
+        for m in messages:
+            if m.t == Message.Type.VOICE:
+                mv = MessageVoice.fromStr(m.data)
+                if mv.command == 'meet' and self._i_am_in_meetlist(mv.data):
+                    print('going')
+                    arrived = self._move_to_target(m.source)
+                    if arrived:
+                        self._drop_stones()
                         reply = 'has_met'
-                        self.state = self.State.INCANTATION
                     else:
                         reply = 'meet'
-                    meet_cmd = MessageVoice(self.name, reply,
-                                            mv.source).toCommand()
-                    self.command_list.append(meet_cmd)
+                    self.command_list.append(
+                        MessageVoice(self.name, reply, mv.source).toCommand())
                     messages.remove(m)
-                    if self.state == self.State.INCANTATION:
-                        return self._incantate('', [])
                 if mv.command == 'has_met' and mv.data == self.name:
-                    self.met_list.append(mv.source)
+                    self.meet_targets[mv.source].has_met = True
                     messages.remove(m)
 
-        if self.last_cmd.t == Command.Type.SEE:
-            if self._check_met(result):
-                self.state = self.State.INCANTATION
-                return self._incantate('', [])
+        if self.command_list:
+            return self.command_list.pop(0)
+        return Command(Command.Type.WAIT)
 
-        if not self.command_list:
-            self.command_list.append(Command(Command.Type.SEE))
-        cmd = self.command_list.pop(0)
-        self.last_cmd = cmd
-        return cmd
+    def _meet(self, result: str, messages: List[Message] = []) -> Command:
+        if min(self.meet_targets.keys()) == self.name:
+            print('master')
+            return self._meet_as_master(result, messages)
+        else:
+            print('slave')
+            return self._meet_as_slave(result, messages)
 
     def _move_to_target(self, t: int) -> bool:
         if t == 0:
@@ -349,7 +485,7 @@ class Player:
             print('unknown target: ' + str(t))
         return False
 
-    def _can_incantate(self) -> List[str]:
+    def _can_incantate(self):
         '''
         return list of names to meet with, my name if lvl 1, empty if cannot
         '''
@@ -357,9 +493,9 @@ class Player:
               str(self.players_info))
 
         if self.my_info.lvl == 1 and self.my_info.stones_pack.li >= 1:
-            return [self.name]
+            return {self.name: PlayerMeetInfo()}
 
-        result = []
+        result = {}
         stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
         players_need = GameRules.players_need_for_level(self.my_info.lvl)
         stones_collected = self.my_info.stones_pack
@@ -367,11 +503,11 @@ class Player:
             player = self.players_info[name]
             if player.lvl == self.my_info.lvl:
                 stones_collected += player.stones_pack
-                result.append(name)
+                result[name] = PlayerMeetInfo()
                 if (stones_need <= stones_collected and
                         len(result) + 1 == players_need):
                     return result
-        return []
+        return {}
 
     def _drop_stones(self):
         stones_need = GameRules.stones_need_for_level(self.my_info.lvl)
@@ -408,7 +544,8 @@ class Player:
                 self.my_info.lvl = m.data
                 print('new level: ' + str(self.my_info.lvl))
                 self.state = self.State.COLLECTING
-                messages.remove(m)
+                # messages.remove(m)
+                messages.clear()
                 return self._collect('')
         if result == '':
             self.command_list.append(Command(Command.Type.INVENTORY))
