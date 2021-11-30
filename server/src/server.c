@@ -375,7 +375,7 @@ static void srv_init()
 	if (env.maxfd >= FD_SETSIZE)
 		env.maxfd = FD_SETSIZE - 1;
 	log_info("Maximum clients: %d", env.maxfd);
-	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
+	env.fds = (t_fd *)ft_memalloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
 	for (int i = 0; i < env.maxfd; ++i) {
 		clean_fd(env.fds + i);
