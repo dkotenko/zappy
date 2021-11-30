@@ -33,6 +33,7 @@ typedef struct s_main_config {
 	int		max_clients_at_team;
 	int		t;
 	int		quiet;
+	int		d;
 	t_dict	cmd;
 } t_main_config;
 
