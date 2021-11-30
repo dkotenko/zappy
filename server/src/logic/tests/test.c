@@ -17,6 +17,7 @@ t_main_config g_cfg = {
 	.max_clients_at_team = 5,
 	.t = 1,
 	.quiet = 0,
+	.d = 0,
 	.cmd = {NULL, NULL, NULL, NULL, NULL}
 };	
 

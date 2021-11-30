@@ -434,22 +434,35 @@ void srv_event(char *msg, ...)
 	va_end(ap);
 }
 
-static void foo() {
-	log_debug("wtf");
-}
-
 void srv_reply_client(int client_nb, char *msg, ...)
 {
 	char *buf;
 	va_list ap;
-	if (strcmp(msg, "\n") == 0 || *msg == 0) 
-		foo();
 
 	va_start(ap, msg);
-	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
-	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
-	buf[strlen(buf) - 1] = 0;
-	log_debug("srv -> #%d: '%s'", client_nb, buf);
+	int size = vasprintf(&buf, msg, ap);
+	xassert(size != -1, "vasprintf");
+	if (size > CIRCBUF_SIZE * CIRCBUF_ITEM_SIZE) {
+		char *start = buf;
+		int i = 0;
+		while (i < size - CIRCBUF_ITEM_SIZE) {
+			char *tmp = start + CIRCBUF_ITEM_SIZE;
+			char c = *tmp;
+			*tmp = '\0';
+			circbuf_push_string(&env.fds[client_nb].circbuf_write, start);
+			log_debug("srv -> #%d (chunk): '%s'", client_nb, start);
+			env.fds[client_nb].fct_write(client_nb);
+			*tmp = c;
+			start = tmp;
+			i += CIRCBUF_ITEM_SIZE;
+		}
+		circbuf_push_string(&env.fds[client_nb].circbuf_write, start);
+		env.fds[client_nb].fct_write(client_nb);
+	} else {
+		circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+		buf[strlen(buf) - 1] = '\0';
+		log_debug("srv -> #%d: '%s'", client_nb, buf);
+	}
 	free(buf);
 	va_end(ap);
 }

@@ -25,6 +25,8 @@
 #define COLOR_YELLOW	"\e[0;33m"
 #define COLOR_RESET		"\e[0m"
 
+static FILE *log_file;
+static FILE *log_file_error;
 
 static char *get_time()
 {
@@ -55,16 +57,29 @@ static void log_print(FILE *f, const char *format, va_list ap, const char *prefi
 	fprintf(f, "\n");
 }
 
+void log_init(void)
+{
+	if (g_cfg.d) {
+		log_file = fopen("/tmp/zappy_server.log", "w");
+		xassert(log_file != NULL, "fopen(\"zappy_server.log\", \"w\")");
+		log_file_error = log_file;
+	} else {
+		log_file = stdout;
+		log_file_error = stderr;
+	}
+}
+
 void log_tick(struct timeval *select_timeout)
 {
 	static int tick = 1;
 	g_tick = 1;
 
-	//if (tick == 10000)
-	//	exit(0);
-
-	fprintf(stderr, "[%s] tick %d (select timeout %zu.%06d)\r",
-			get_time(), tick, select_timeout->tv_sec, select_timeout->tv_usec);
+	/* if (tick == 10)
+		exit(0);
+	*/
+	fprintf(log_file_error, "[%s] tick %d (select timeout %zu.%06d)%s",
+			get_time(), tick, select_timeout->tv_sec, select_timeout->tv_usec, 
+			g_cfg.d ? "\n" : "\r");
 	++tick;
 }
 
@@ -77,7 +92,7 @@ void log_debug(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-	log_print(stdout, format, ap, "DEBUG");
+	log_print(log_file, format, ap, "DEBUG");
 	va_end(ap);
 }
 
@@ -86,7 +101,7 @@ void log_info(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-	log_print(stdout, format, ap, COLOR_GREEN "INFO" COLOR_RESET);
+	log_print(log_file, format, ap, COLOR_GREEN "INFO" COLOR_RESET);
 	va_end(ap);
 }
 
@@ -95,7 +110,7 @@ void log_warning(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-	log_print(stdout, format, ap, COLOR_YELLOW "WARNING" COLOR_RESET);
+	log_print(log_file, format, ap, COLOR_YELLOW "WARNING" COLOR_RESET);
 	va_end(ap);
 }
 
@@ -104,7 +119,7 @@ void log_error(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-	log_print(stderr, format, ap, COLOR_RED "ERROR" COLOR_RESET);
+	log_print(log_file_error, format, ap, COLOR_RED "ERROR" COLOR_RESET);
 	va_end(ap);
 }
 
@@ -113,7 +128,7 @@ void log_fatal(const char *format, ...)
 	va_list ap;
 
 	va_start(ap, format);
-	log_print(stderr, format, ap, COLOR_RED "FATAL" COLOR_RESET);
+	log_print(log_file_error, format, ap, COLOR_RED "FATAL" COLOR_RESET);
 	va_end(ap);
 	exit(1);
 }
