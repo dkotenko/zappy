@@ -4,8 +4,6 @@
 #include "../reception.h"
 #include "../utils.h"
 
-#define MAX_FD_MACOS 12288
-
 t_game *game;
 
 void	mock_srv_reply(int client_nb, char *msg)
@@ -67,12 +65,6 @@ t_team	**create_teams()
 	return new;
 }
 
-int	get_maxfd()
-{
-	return MAX_FD_MACOS;
-	srv_get_maxfd();
-}
-
 t_game	*create_game(map_initiator init_map, int is_test)
 {
 	t_game	*game;
@@ -85,9 +77,6 @@ t_game	*create_game(map_initiator init_map, int is_test)
 	game->map = create_map(game, g_cfg.width, g_cfg.height);
 	(*init_map)(game);
 	game->buf = t_buffer_create(0);
-	/*
-	** game->players initialization moved to add_player due to get_maxfd issue
-	*/
 	game->hatchery = (t_hatchery *)ft_memalloc(sizeof(t_hatchery));
 	return (game);
 }
@@ -149,13 +138,13 @@ t_player	*create_player(int player_id, int team_id)
 
 void		add_player_egg(int hatchery_id)
 {
-	
+	(void)hatchery_id;
 }
 
 t_player	*add_player(int player_id, int team_id)
 {
 	if (!game->players) {
-		game->players = (t_player **)ft_memalloc(sizeof(t_player *) * get_maxfd());
+		
 	}
 	
 	int is_error = xassert(game->players[player_id] == NULL, "add_player: player already exists");
@@ -180,9 +169,7 @@ t_player	*add_player(int player_id, int team_id)
 	return player;
 }
 
-void	
-
-add_visitor(t_cell *cell, t_player *player)
+void add_visitor(t_cell *cell, t_player *player)
 {
 	t_list *new_player;
 
@@ -193,10 +180,12 @@ add_visitor(t_cell *cell, t_player *player)
 	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
 }
 
-void lgc_init(int is_test)
+void lgc_init(int max_players, int is_test)
 {
 	srand(time(NULL));
 	game = create_game(init_cluster_map, is_test);
+	game->players_size = max_players;
+	game->players = (t_player **)ft_memalloc(sizeof(t_player *) * game->players_size);
 	log_info("logic: World setup completed");
 }
 

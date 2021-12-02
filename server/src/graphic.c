@@ -27,15 +27,19 @@ static void pnw(int client_nb)
 {
 	extern t_game *game;		/* defined in logic/game.c */
 
-	for (int i = 0; i < game->players_num; ++i) {
-		srv_reply_client(client_nb,
-						 "pnw %d %d %d %d %d %s\n",
-						 game->players[i]->id,
-						 game->players[i]->curr_cell->x,
-						 game->players[i]->curr_cell->y,
-						 game->players[i]->orient,
-						 game->players[i]->level,
-						 g_cfg.teams[game->players[i]->team_id]);
+	int c = 0;
+	for (int i = 0; i < game->players_size && c < game->players_num; ++i) {
+		if (game->players[i]) {
+			++c;
+			srv_reply_client(client_nb,
+						 	"pnw %d %d %d %d %d %s\n",
+						 	game->players[i]->id,
+						 	game->players[i]->curr_cell->x,
+						 	game->players[i]->curr_cell->y,
+						 	game->players[i]->orient,
+						 	game->players[i]->level,
+						 	g_cfg.teams[game->players[i]->team_id]);
+		}
 		srv_flush_client(client_nb);
 	}
 }
