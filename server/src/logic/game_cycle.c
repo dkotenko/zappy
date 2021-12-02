@@ -33,7 +33,7 @@ t_list *get_winners(void)
 
 void	starving_n_death(void)
 {
-	for (int i = 0; i < game->players_num; i++) {
+	for (int i = 0; i < game->players_size; i++) {
 		if (!game->players[i]) {
 			continue ;
 		}

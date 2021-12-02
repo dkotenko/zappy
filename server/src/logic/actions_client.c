@@ -579,7 +579,7 @@ void	broadcast(t_player *player, char *data)
 	t_buffer_write(game->buf, "message 0");
 	t_buffer_add_char(game->buf, ',');
 	t_buffer_write(game->buf, text);
-	for (int i = 0; i < game->players_num; i++) {
+	for (int i = 0, c = 0; i < game->players_size && c < game->players_num - 1; i++) {
 		if (!game->players[i] || game->players[i]->id == player->id) {
 			continue ;
 		}
@@ -589,6 +589,7 @@ void	broadcast(t_player *player, char *data)
 		//printf("%d normalized_side\n", side_normalized);
 		game->buf->s[size_pos] = side_normalized + '0';
 		reply_client(game->players[i]->id);
+		++c;
 	}
 	t_buffer_clean(game->buf);
 	t_buffer_write(game->buf, "ok");

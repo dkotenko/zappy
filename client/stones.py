@@ -86,6 +86,8 @@ class GameRules:
             return StonesPack(1, 2, 3, 0, 1, 0)
         elif level == 7:
             return StonesPack(2, 2, 2, 2, 2, 1)
+        elif level == 8:
+            return StonesPack(0, 0, 0, 0, 0, 0)
         print('unknown level')
 
     def players_need_for_level(level):
@@ -97,5 +99,7 @@ class GameRules:
             return 4
         if level == 6 or level == 7:
             return 6
+        if level == 8:
+            return 99
         print('unknown level')
 

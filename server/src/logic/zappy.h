@@ -103,8 +103,9 @@ typedef struct s_game
     t_aux       *aux;
     t_team      **teams;
 	t_player	**players;
+    int         players_size; /* size of `players' array */
     int         teams_num;
-	int		    players_num;
+	int		    players_num; /* number of players */
 	t_map       *map;
     t_buffer    *buf;
 	int		    is_test;

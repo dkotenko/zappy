@@ -37,7 +37,11 @@ static char *get_time()
 	xassert(gettimeofday(&t, NULL) != -1, "gettimeofday");
 	timeinfo = localtime(&t.tv_sec);
 	strftime(buf, 80, "%d.%m.%Y %H:%M:%S", timeinfo);
+#ifdef __MACH__
 	sprintf(strchr(buf, '\0'), ".%06d", t.tv_usec);
+#else
+	sprintf(strchr(buf, '\0'), ".%06ld", t.tv_usec);
+#endif
 	return buf;
 }
 
@@ -74,10 +78,12 @@ void log_tick(struct timeval *select_timeout)
 	static int tick = 1;
 	g_tick = 1;
 
-	/* if (tick == 10)
-		exit(0);
-	*/
-	fprintf(log_file_error, "[%s] tick %d (select timeout %zu.%06d)%s",
+	fprintf(log_file_error, "[%s] tick %d"
+#ifdef __MACH__
+			" (select timeout %zu.%06d)%s",
+#else
+			" (select timeout %zu.%06ld)%s",
+#endif
 			get_time(), tick, select_timeout->tv_sec, select_timeout->tv_usec, 
 			g_cfg.d ? "\n" : "\r");
 	++tick;

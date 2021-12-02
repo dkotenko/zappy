@@ -13,10 +13,12 @@
 #include <sys/select.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#define __STDC_WANT_LIB_EXT2__ 1 /* https://stackoverflow.com/questions/67157429/ */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -56,6 +58,8 @@ typedef struct s_fd {
 
 typedef struct s_env {
 	t_fd *fds;					/* each client is represented as fd */
+	/* Warning: in whole program fd 0 means invalid fd, which is technially not correct.
+				Invalid fd is used for some logic, like in srv_push_command() */
 	int maxfd;					/* max fd in system, size of fds */
 	int max;					/* first argument of select (-1) */
 	int r;						/* return value of select */
@@ -136,6 +140,8 @@ static int client_handle_command(int client_id, char *command)
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
+	/* log_warning("++client->pending_commands (%d, '%s') -> %d", client_id, command,
+						client->pending_commands); */
 	return 0;
 }
 
@@ -260,13 +266,14 @@ static void do_select()
 {
 	struct timeval tc;			/* time current */
 	static struct timeval to;	/* timeout */
+	struct timeval to_copy;		/* on linux `to' is zeroed after select, use it save copy for log_tick() */
 	struct timeval t;			/* tmp */
 	t_command *command;
 
 	memset(&to, 0, sizeof(to));
 	command = commands_min(); /* minimal by time, what we should execute after select */
 	if (commands_is_empty())
-		lgc_init(0);
+		lgc_init(env.maxfd, 0);
 	
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	if (commands_is_empty()) {	/* init */
@@ -282,19 +289,26 @@ static void do_select()
 			log_warning("Out of time on command execution");
 		}
 	}
+	memcpy(&to_copy, &to, sizeof(to));
 	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
 	if (env.r == -1)
 		log_warning("select: %s", strerror(errno));
 	xassert(gettimeofday(&env.t, NULL) != -1, "gettimeofday");
 	if (env.r == 0) {			/* select woke up for command, not for read/write */
 		if (command->data == NULL) {
-			log_tick(&to);
+			log_tick(&to_copy);
 			lgc_update();
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
 		} else {
 			lgc_execute_command(command->client_nb, command->data, -1);
-			--env.fds[command->client_nb].pending_commands;
+			if (command->client_nb) {
+				--env.fds[command->client_nb].pending_commands;
+				/* log_warning("--client->pending_commands (%d, '%s') -> %d", 
+					command->client_nb, command->data, env.fds[command->client_nb].pending_commands); */
+			}
+			/* if (env.fds[command->client_nb].pending_commands < 0)
+				raise(SIGSEGV); */
 		}
 		commands_pop(command);
 	}
@@ -512,13 +526,10 @@ void srv_push_command(int client_nb, char *cmd, int after_t)
 	commands_push(command);
 	if (client_nb) {
 		++client->pending_commands;
+		/* log_warning("++client->pending_commands (%d, '%s') -> %d", 
+					client_nb, cmd, client->pending_commands); */
 		client->last_command = command;
 	}
-}
-
-int	srv_get_maxfd()
-{
-	return env.maxfd;
 }
 
 #undef CIRCBUF_SIZE

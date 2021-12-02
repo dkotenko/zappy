@@ -21,6 +21,22 @@ static t_commands commands;
 
 static int g_commands_debug = 0;
 
+/* On push, time should never be the same to not override command in case of
+   simultaneous commands.
+   */
+static int cmpf_push(void *a, void *b)
+{
+	t_command *c1 = (t_command *)a;
+	t_command *c2 = (t_command *)b;
+
+	if (timercmp(&c1->t, &c2->t, >))
+		return 1;
+	if (timercmp(&c1->t, &c2->t, <))
+		return -1;
+	++c1->t.tv_usec;
+	return 1;
+}
+
 static int cmpf(void *a, void *b)
 {
 	t_command *c1 = (t_command *)a;
@@ -66,7 +82,7 @@ void commands_push(t_command *cmd)
 {
 	if (g_commands_debug)
 		timerprint(log_debug, &cmd->t, "commands_push");
-	commands.tree = ft_btree_avl_insert(commands.tree, cmd, cmpf);
+	commands.tree = ft_btree_avl_insert(commands.tree, cmd, cmpf_push);
 }
 
 static t_btree_avl *find_min(t_btree_avl *root)
