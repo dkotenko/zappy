@@ -157,6 +157,8 @@ static void	client_read(int cs)
 		if (client->type == FD_CLIENT) {
 			--g_player_count;
 			lgc_player_gone(cs);
+		} else if (client->type == FD_GFX) {
+			client_gone(cs);
 		}
 		return ;
 	}
@@ -471,6 +473,7 @@ void srv_reply_client(int client_nb, char *msg, ...)
 			i += CIRCBUF_ITEM_SIZE;
 		}
 		circbuf_push_string(&env.fds[client_nb].circbuf_write, start);
+		log_debug("srv -> #%d (chunk): '%s'", client_nb, start);
 		env.fds[client_nb].fct_write(client_nb);
 	} else {
 		circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
