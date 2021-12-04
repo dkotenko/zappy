@@ -27,7 +27,7 @@ def parse_args():
 
 def dev_mode(server):
     last_cmd = ''
-    print('f - forward (avance), l - left (gauche), r - right (droite),')
+    print('g - go (avance), l - left (gauche), r - right (droite),')
     print('s - see (voir), i - inventory (inventaire),')
     print('t - take <obj> (prend), d - drop <obj> (pose),')
     print('k - kick (expulse), b - broadcast <text>,')
@@ -39,7 +39,7 @@ def dev_mode(server):
         splited = inp.split(' ')
         c = splited.pop(0)
         arg = ' '.join(splited)
-        if c == 'f':
+        if c == 'g':
             r = server.exec_command(Command(Command.Type.GO))
         elif c == 'l':
             r = server.exec_command(Command(Command.Type.TURN_LEFT))
