@@ -31,11 +31,14 @@ class MessageVoice:
 class PlayerInfo:
     lvl = 1
     stones_pack = StonesPack()
+    meeting = False             # flag denoting player in a meeting state
 
     def __init__(self, msg=''):
-        if msg == '':
-            return
-        splited = msg.split('_')
+        if msg:
+            self.update(msg)
+
+    def update(self, data):
+        splited = data.split('_')
         self.lvl = int(splited[0])
         self.stones_pack = StonesPack(int(splited[1]), int(splited[2]),
                                       int(splited[3]), int(splited[4]),
@@ -45,7 +48,7 @@ class PlayerInfo:
         return str(self.lvl) + '_' + str(self.stones_pack)
 
     def __repr__(self):
-        return self.__str__()
+        return self.__str__() + ' ' + str(self.meeting)
 
 
 class PlayerMeetInfo:
@@ -77,9 +80,9 @@ class Player:
     inventory_food = 0
     world_x = 0
     world_y = 0
-    command_list = List[Command]
+    command_list = []           # List[Command]
     last_cmd = ''
-    meet_targets = {}              # Dict[str, PlayerMeetInfo]
+    meet_targets = {}           # Dict[str, PlayerMeetInfo]
 
     def __init__(self, world_size):
         self.world_x = int(world_size[0])
@@ -120,13 +123,23 @@ class Player:
                                          str(self.my_info)).toCommand()
                     self.command_list.insert(0, reply)
                 if mv.command == 'hi' or mv.command == 'took':
-                    self.players_info[mv.source] = PlayerInfo(mv.data)
+                    if not self.players_info.get(mv.source):
+                        self.players_info[mv.source] = PlayerInfo(mv.data)
+                    else:
+                        old_lvl = self.players_info[mv.source].lvl
+                        self.players_info[mv.source].update(mv.data)
+                        new_lvl = self.players_info[mv.source].lvl
+                        if new_lvl > old_lvl:
+                            self.players_info[mv.source].meeting = False
                     messages.remove(m)
-                if (mv.command == 'meet_ready' and
-                        self._i_am_in_meetlist(mv.data)):
-                    if self.state == self.State.COLLECTING:
-                        self.command_list.clear()
-                        self.state = self.State.MEETING_READY
+                if mv.command == 'meet_ready':
+                    if self._i_am_in_meetlist(mv.data):
+                        if self.state == self.State.COLLECTING:
+                            self.command_list.clear()
+                            self.state = self.State.MEETING_READY
+                    else:
+                        self._mark_players_meeting(mv.data)
+                        messages.remove(m)
                 if (mv.command == 'meet' and
                         self._i_am_in_meetlist(mv.data)):
                     self.state = self.State.MEETING
@@ -149,10 +162,12 @@ class Player:
             self.command_list = self._generate_collect_command_list()
             # say about lvlup
             if result == '' and self.my_info.lvl != 1:
-                self.command_list.insert(
-                    0,
+                tmp = [
                     Command(Command.Type.SAY,
-                            self.name + ' took ' + str(self.my_info)))
+                            self.name + ' took ' + str(self.my_info)),
+                    Command(Command.Type.GO)
+                ]
+                self.command_list = tmp + self.command_list
 
         if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
            and result.startswith('{'):
@@ -163,6 +178,10 @@ class Player:
                 content_splited = content.split(' ')
                 take_list = []
                 for c in content_splited:
+                    # if player on cell, don't take items, mb he incantates
+                    if c == 'player':
+                        take_list.clear()
+                        break
                     if self._do_i_need_this(c):
                         take_list.append(c)
                 if take_list:
@@ -178,15 +197,15 @@ class Player:
                     0,
                     Command(Command.Type.SAY,
                             self.name + ' took ' + str(self.my_info)))
-            self.meet_targets = self._can_incantate()
-            if self.meet_targets:
-                if self.meet_targets.get(self.name) is not None:
-                    self.command_list = []
-                    self.state = self.State.INCANTATION
-                    return self._incantate('', [])
-                self.state = self.State.COLLECTING_FOOD
-                self.command_list.clear()
-                return self._collect_food('')
+        self.meet_targets = self._can_incantate()
+        if self.meet_targets:
+            if self.meet_targets.get(self.name) is not None:
+                self.command_list = []
+                self.state = self.State.INCANTATION
+                return self._incantate('', [])
+            self.state = self.State.COLLECTING_FOOD
+            self.command_list.clear()
+            return self._collect_food('')
 
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
@@ -348,6 +367,12 @@ class Player:
                 return True
         return False
 
+    def _mark_players_meeting(self, data):
+        splited = data.split(';')
+        for name in splited:
+            if self.players_info.get(name):
+                self.players_info[name].meeting = True
+
     def _meet_ready(self, result: str, messages: List[Message]) -> Command:
         if not self.meet_targets.get(self.name):
             self.meet_targets[self.name] = PlayerMeetInfo(True, True)
@@ -501,6 +526,8 @@ class Player:
         stones_collected = self.my_info.stones_pack
         for name in self.players_info.keys():
             player = self.players_info[name]
+            if player.meeting is True:
+                continue
             if player.lvl == self.my_info.lvl:
                 stones_collected += player.stones_pack
                 result[name] = PlayerMeetInfo()
