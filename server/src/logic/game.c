@@ -40,12 +40,6 @@ void	reply_and_clean_buff(int player_id)
 	t_buffer_clean(game->buf);
 }
 
-int is_session_ends()
-{
-    return (0);
-}
-
-
 t_player	*get_player_by_id(int player_id)
 {
 	return game->players[player_id];
@@ -58,9 +52,8 @@ t_team	**create_teams()
 	new = (t_team **)ft_memalloc(sizeof(t_team *) * g_cfg.teams_count);
 	for (int i = 0; i < g_cfg.teams_count; i++) {
 		new[i] = ft_memalloc(sizeof(t_team));
-		new[i]->id = i + 1;
+		new[i]->id = i;
 		new[i]->name = g_cfg.teams[i];
-		new[i]->players = (t_player **)ft_memalloc(sizeof(t_player *) * g_cfg.max_clients_at_team);
 	}
 	return new;
 }
@@ -80,12 +73,6 @@ t_game	*create_game(map_initiator init_map, int is_test)
 	game->hatchery = (t_hatchery *)ft_memalloc(sizeof(t_hatchery));
 	return (game);
 }
-
-int get_players_num()
-{
-	return 0;
-}
-
 
  /*
     The winning team is the one that will have its 6 players reach the maximum level.
@@ -111,6 +98,7 @@ void	delete_player(t_player *player)
 	game->players[player->id] = NULL;
 	game->players_num--;
 	game->teams[player->team_id]->players_num--;
+	ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
 	free(player->inventory);
 	free(player);
 	free(tmp);
@@ -118,7 +106,6 @@ void	delete_player(t_player *player)
 	if (game->is_test)
 		return ;
 	bct_srv_event(tmp_player->curr_cell);
-	
 }
 
 
@@ -136,17 +123,8 @@ t_player	*create_player(int player_id, int team_id)
 	return (player);
 }
 
-void		add_player_egg(int hatchery_id)
-{
-	(void)hatchery_id;
-}
-
 t_player	*add_player(int player_id, int team_id)
-{
-	if (!game->players) {
-		
-	}
-	
+{	
 	int is_error = xassert(game->players[player_id] == NULL, "add_player: player already exists");
 	
 	if (is_error) {
@@ -161,15 +139,15 @@ t_player	*add_player(int player_id, int team_id)
 	t_player *player = create_player(player_id, team_id);
 
 	player->last_meal_tick = game->curr_tick;
-	add_visitor(cell, player);
+	t_list *player_node = add_visitor(cell, player);
 	game->players[player->id] = player;
 	game->players_num++;
 	game->teams[player->team_id]->players_num++;
-	
+	ft_lstadd(&game->teams[player->team_id]->players, player_node);
 	return player;
 }
 
-void add_visitor(t_cell *cell, t_player *player)
+t_list *add_visitor(t_cell *cell, t_player *player)
 {
 	t_list *new_player;
 
@@ -178,6 +156,7 @@ void add_visitor(t_cell *cell, t_player *player)
 	cell->visitors_num++;
 	player->curr_cell = cell;
 	log_debug("add_visitor: cell %d %d", cell->x, cell->y);
+	return new_player;
 }
 
 void lgc_init(int max_players, int is_test)
@@ -189,20 +168,44 @@ void lgc_init(int max_players, int is_test)
 	log_info("logic: World setup completed");
 }
 
-int	get_team_id(char *team_name)
+int	get_team_id(char *team_name, int *is_egg)
 {
 	for (int i = 0; i < g_cfg.teams_count; ++i)
 	{
 		if (strcmp(team_name, g_cfg.teams[i]) == 0)
 			return i;
 	}
+
+	t_list *hatchery_node = ft_lstfind(game->hatchery->eggs, team_name);
+	if (hatchery_node) {
+		*is_egg = 1;
+		return ((t_egg *)hatchery_node->content)->team_id;
+	}
 	return -1;
+}
+
+void delete_egg(char *token)
+{
+	t_list *hatchery_node = ft_lstfind(game->hatchery->eggs, token);
+	t_egg *egg = (t_egg *)hatchery_node->content;
+	ft_lstpop(&game->hatchery->eggs, egg);
+	game->hatchery->eggs_num--;
+	free(egg);
+	free(hatchery_node);
 }
 
 void lgc_new_player(int player_nb, char *team)
 {
-	int team_id = get_team_id(team);
-	t_player *player =  add_player(player_nb, team_id);
+	int is_egg = 0;
+	int team_id = get_team_id(team, &is_egg);
+	t_player *player = NULL;
+	xassert(team_id != -1, "team does not exist");
+	
+	player =  add_player(player_nb, team_id);
+	if (is_egg) {
+		delete_egg(team);
+	}
+	
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
 
 	//SEND TO MONITEUR
@@ -224,8 +227,8 @@ void lgc_player_gone(int player_nb)
 void lgc_update(void)
 {
 	game->curr_tick++;
-	if (is_session_ends()) {
-		get_winners();
+	if (is_session_end()) {
+		end_game();
 	} else {
 		starving_n_death();
 	}
