@@ -98,7 +98,7 @@ void	delete_player(t_player *player)
 	game->players[player->id] = NULL;
 	game->players_num--;
 	game->teams[player->team_id]->players_num--;
-  ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
+	ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
 	if (game->is_test)
 		goto cleanup;
 	bct_srv_event(tmp_player->curr_cell);
