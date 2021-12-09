@@ -19,6 +19,8 @@ enum e_command
 	CMD_FORK,
 	CMD_CONNECT_NBR,
 	CMD_RESTORE_RESOURCE,
+	CMD_FORK_END,
+	CMD_HATCH_EGG,
 	CMD_NUMBER //used in malloc, must be last
 };
 
@@ -63,7 +65,9 @@ int		get_quarter(int xr, int xe, int yr, int ye);
 void	starving_n_death(void);
 int		is_session_end(void);
 t_list *get_winners(void);
+void	end_game(void);
 void	mort(t_player *player);
+void	mort_egg(t_egg *egg);
 
 
 void	set_player_cell(t_player *player, t_cell *cell);

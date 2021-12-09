@@ -6,7 +6,6 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) > (b)) ? (b) : (a))
 
-
 extern t_game *game;
 
 void	get_forward_coords(t_player *player, int *new_x, int *new_y);
@@ -35,6 +34,12 @@ void	mort(t_player *player)
 	srv_reply_client(player->id, "mort\n");
 	srv_client_died(player->id);
 	delete_player(player);
+}
+
+void	mort_egg(t_egg *egg)
+{
+	srv_event("edi %d\n", egg->id);
+	delete_egg(egg->token);
 }
 
 
@@ -701,20 +706,9 @@ void	incantation_end(t_player *player)
 	srv_event("pie %d %d ok\n",
 			  player->curr_cell->x, player->curr_cell->y);
 	bct_srv_event(player->curr_cell);
-}
-
-/*
-** 8-symbol token, symbols in range [A : Z]
-*/
-t_token *create_token(int team_id)
-{
-	t_token	*new = (t_token *)ft_memalloc(sizeof(t_token));
-	new->team_id = team_id;
-	new->token = ft_strnew(9);
-	for (int i = 0; i < 8; i++) {
-		new->token[i] = get_random_from_to(65, 91);
+	if (is_session_end()) {
+		end_game();
 	}
-	return (new);
 }
 
 static void	write_shift_pointer(char **dest, char *src)
@@ -743,13 +737,13 @@ static void send_egg_hatched(t_player *player)
 	srv_push_command(0, buf, 600);
 }
 
-t_player	*get_egg_by_id(int token)
+t_egg	*get_egg_by_token(char *token)
 {
 	t_list *tmp = game->hatchery->eggs;
 	
 	while (tmp) {
-		t_player *tmp_egg = (t_player *)tmp->content;
-		if (tmp_egg->id == token) {
+		t_egg *tmp_egg = (t_egg *)tmp->content;
+		if (!strcmp(tmp_egg->token, token)) {
 			return tmp_egg;
 		}
 		tmp = tmp->next;
@@ -759,13 +753,13 @@ t_player	*get_egg_by_id(int token)
 
 void	hatch_egg(t_player *player, char *data)
 {
-	char *char_token = data + strlen("hatch_egg ");
-	int	token = atoi(char_token);
-	t_player *egg = get_egg_by_id(token);
+	char *token = data + strlen("hatch_egg ");
+	t_egg *egg = get_egg_by_token(token);
+	if (xassert(egg != NULL, "no egg with given token"))
+		return ;
 	egg->can_connect = 1;
 	egg->last_meal_tick = game->curr_tick;
 	send_egg_hatched(player);
-	
 }
 
 void	do_fork(t_player *player)
@@ -774,29 +768,57 @@ void	do_fork(t_player *player)
 	srv_push_command(0, "do_fork_end", 42);
 }
 
-t_player	*lay_egg(t_player*player)
+/*
+** 16-symbol token, symbols in range [A : Z]
+*/
+#define TOKEN_SIZE 16
+
+char *create_token(void)
 {
-	t_player *egg = create_player(game->hatchery->id_counter++, player->team_id);
-	egg->is_egg = 1;
-	ft_lstadd(&game->hatchery->eggs, ft_lstnew(player, sizeof(t_player)));
+	char *token = ft_strnew(TOKEN_SIZE);
+	for (int i = 0; i < TOKEN_SIZE; i++) {
+		token[i] = get_random_from_to(65, 91);
+	}
+	return (token);
+}
+
+t_egg	*create_egg(t_player *parent)
+{
+	t_egg *egg = (t_egg *)ft_memalloc(sizeof(egg));
+	egg->id = game->hatchery->id_counter++;
+	egg->parent_id = parent->id;
+	egg->team_id = parent->team_id;
+	egg->token = create_token();
+	return (egg);
+}
+
+void	add_egg(t_egg *egg)
+{
+	ft_lstadd(&game->hatchery->eggs, ft_lstnew(egg, sizeof(t_egg)));
+	game->hatchery->eggs_num++;
+}
+
+t_egg	*lay_egg(t_player*player)
+{
+	t_egg *egg = create_egg(player);
+	add_egg(egg);
+
 	return egg;
 }
 
 void	do_fork_end(t_player *player)
 {
-	t_player *egg = lay_egg(player);
-	//enw #e #n X Y
+	t_egg *egg = lay_egg(player);
+	
 	t_buffer_write(game->buf, "ok");
 	
-	int buf_size = 20;
+	char *cmd = "hatch_egg ";
+	int buf_size = strlen(cmd) + strlen(egg->token);
 	char buf[buf_size];
 	char *curr_buf = buf;
 	ft_memset(buf, 0, buf_size);
-	char *cmd = "hatch_egg ";
-	char *token = ft_itoa(egg->id);
 	write_shift_pointer(&curr_buf, cmd);
-	write_shift_pointer(&curr_buf, token);
-	free(token);
+	write_shift_pointer(&curr_buf, egg->token);
 
 	srv_push_command(0, buf, 600);
 	srv_event("enw %d %d %d %d\n", egg->id, player->id,
@@ -809,8 +831,8 @@ void	connect_nbr(t_player *player)
 	t_list *tmp = game->hatchery->eggs;
 	
 	while (tmp) {
-		t_player *tmp_egg = (t_player *)tmp->content;
-		if (tmp_egg->team_id == player->id) {
+		t_egg *tmp_egg = (t_egg *)tmp->content;
+		if (tmp_egg->team_id == player->team_id && tmp_egg->can_connect) {
 			connect_nbr++;
 		}
 		tmp = tmp->next;
@@ -850,6 +872,8 @@ void	init_cmd()
 	g_cfg.cmd.duration[CMD_INCANTATION_END] = 300;
 	g_cfg.cmd.duration[CMD_FORK] = 42;
 	g_cfg.cmd.duration[CMD_CONNECT_NBR] = 0;
+	g_cfg.cmd.duration[CMD_FORK_END] = 42;
+	g_cfg.cmd.duration[CMD_HATCH_EGG] = 600;
 
 	g_cfg.cmd.name[CMD_AVANCE] = strdup("avance");
 	g_cfg.cmd.name[CMD_DROITE] = strdup("droite");
@@ -865,6 +889,8 @@ void	init_cmd()
 	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
 	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
 	g_cfg.cmd.name[CMD_RESTORE_RESOURCE] = strdup("restore_resource");
+	g_cfg.cmd.name[CMD_FORK_END] = strdup("fork_end");
+	g_cfg.cmd.name[CMD_HATCH_EGG] = strdup("hatch_egg");
 
 	g_cfg.cmd.f[CMD_AVANCE] = avance;
 	g_cfg.cmd.f[CMD_DROITE] = droite;
@@ -876,11 +902,13 @@ void	init_cmd()
 	g_cfg.cmd.f[CMD_INCANTATION_END] = incantation_end;
 	g_cfg.cmd.f[CMD_FORK] = do_fork;
 	g_cfg.cmd.f[CMD_CONNECT_NBR] = connect_nbr;
+	g_cfg.cmd.f[CMD_FORK_END] = do_fork_end;
 
 	g_cfg.cmd.f_arg[CMD_PREND] = prend;
 	g_cfg.cmd.f_arg[CMD_POSE] = pose;
 	g_cfg.cmd.f_arg[CMD_BROADCAST] = broadcast;
 	g_cfg.cmd.f_arg[CMD_RESTORE_RESOURCE] = restore_resource;
+	g_cfg.cmd.f_arg[CMD_HATCH_EGG] = hatch_egg;
 	
 	g_cfg.cmd.req_arg[CMD_AVANCE] = 0;
 	g_cfg.cmd.req_arg[CMD_DROITE] = 0;
@@ -895,6 +923,8 @@ void	init_cmd()
 	g_cfg.cmd.req_arg[CMD_FORK] = 0;
 	g_cfg.cmd.req_arg[CMD_CONNECT_NBR] = 0;
 	g_cfg.cmd.req_arg[CMD_RESTORE_RESOURCE] = 1;
+	g_cfg.cmd.req_arg[CMD_FORK_END] = 0;
+	g_cfg.cmd.req_arg[CMD_HATCH_EGG] = 1;
 }
 
 void clear_cmd()
@@ -913,6 +943,8 @@ void clear_cmd()
 	free(g_cfg.cmd.name[CMD_FORK]);
 	free(g_cfg.cmd.name[CMD_CONNECT_NBR]);
 	free(g_cfg.cmd.name[CMD_RESTORE_RESOURCE]);
+	free(g_cfg.cmd.name[CMD_FORK_END]);
+	free(g_cfg.cmd.name[CMD_HATCH_EGG]);
 	free(g_cfg.cmd.duration);
 	free(g_cfg.cmd.name);
 	free(g_cfg.cmd.f_arg);
