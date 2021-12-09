@@ -2,6 +2,7 @@
 #include "../server.h"
 #include "actions_client.h"
 #include "../logger.h"
+#include "../utils.h"
 
 extern t_game *game;
 
@@ -17,9 +18,9 @@ void	end_game(void)
 			mort(game->players[i]);
 		}
 	}
-	char *s = NULL;
+	char s[1024] = {0};
 	while (strcmp(s, "yes") && strcmp(s, "y")) {		
-		scanf("%as", s);
+		scanf("%s\n", s);
 	}
 	return ;
 }
