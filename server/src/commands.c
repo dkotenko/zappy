@@ -124,6 +124,8 @@ static void applyf_save_client(void *v)
 
 void commands_pop_client(int client_nb)
 {
+	if (g_commands_debug)
+		log_debug("commands_pop_client");
 	/* find and save all commands with `client_nb' */
 	t_command *commands_to_pop[MAX_PENDING_COMMANDS + 1];
 	t_command **ptr = commands_to_pop;
@@ -134,7 +136,7 @@ void commands_pop_client(int client_nb)
 	ft_btree_apply_prefix((t_btree *)commands.tree, applyf_save_client);
 
 	while (*ptr) {
-		ft_btree_avl_remove(commands.tree, *ptr, cmpf, delf);
+		commands.tree = ft_btree_avl_remove(commands.tree, *ptr, cmpf, delf);
 		++ptr;
 	}
 }

@@ -111,14 +111,14 @@ void	delete_player(t_player *player)
 	game->players[player->id] = NULL;
 	game->players_num--;
 	game->teams[player->team_id]->players_num--;
+	if (game->is_test)
+		goto cleanup;
+	bct_srv_event(tmp_player->curr_cell);
+
+cleanup:
 	free(player->inventory);
 	free(player);
 	free(tmp);
-
-	if (game->is_test)
-		return ;
-	bct_srv_event(tmp_player->curr_cell);
-	
 }
 
 
