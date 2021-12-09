@@ -46,8 +46,6 @@ typedef struct s_player
     int     id;
     int     level;
     int     orient;
-	int     is_egg;
-	int		can_connect;
 	int		is_incantating;
     int     team_id;
     int     last_meal_tick;
@@ -59,7 +57,7 @@ typedef struct s_team
 {
 	int         id;
     char        *name;
-    t_player    **players;
+    t_list      *players;
     int         max_level_count;
     int         players_num;
 } t_team;
@@ -85,10 +83,13 @@ typedef struct s_map
 
 typedef	struct s_egg
 {
-	int	id;
-	int	parent_id;
-	int	team_number;
-	
+	int	    id;
+	int	    parent_id;
+	int	    team_id;
+    char    *token;
+	int     last_meal_tick;
+    int		can_connect;
+    int     nourriture;
 } t_egg;
 
 typedef struct s_hatchery
@@ -121,12 +122,6 @@ typedef struct s_msg
     long long   timestamp;
 }   t_msg;
 
-typedef struct s_token
-{
-    char    *token;
-    int     team_id;
-} t_token;
-
 /*
  * map
  */
@@ -150,6 +145,7 @@ void	mock_srv_reply(int client_nb, char *msg);
 void	delete_player(t_player *player);
 void	starving_n_death(void);
 void	reply_except_list(t_list *list, int player_id);
+void	delete_egg(char *token);
 
 /*
  * json
@@ -166,9 +162,9 @@ t_cell	*get_random_cell(t_map *map);
 int		get_random_in_range(int max_number);
 int     get_random_from_to(int min_num, int max_num);
 
-void	add_visitor(t_cell *cell, t_player *player);
-t_player	*add_player(int player_id, int team_id);
-void	move_player_to_cell(t_player *player, t_cell *cell);
+t_list	    *add_visitor(t_cell *cell, t_player *player);
+t_player    *add_player(int player_id, int team_id);
+void	    move_player_to_cell(t_player *player, t_cell *cell);
 
 /*
 ** print

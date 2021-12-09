@@ -108,6 +108,7 @@ t_list					*ft_lstmap(t_list *lst, t_list *(*f)(t_list *elem));
 t_list					*ft_lstnew(void const *content, size_t content_size);
 t_list					*ft_lstpop(t_list **list, void *value);
 t_list					*ft_lstnew_pointer(void const *content, size_t content_size);
+t_list					*ft_lstfind(t_list *list, void *value);
 
 /*
 **	math
