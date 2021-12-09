@@ -13,6 +13,7 @@
 #include <signal.h>
 #include "libft.h"
 
+/*
 static void show_list(t_list *alst)
 {
 	t_list *tmp = alst;
@@ -29,13 +30,13 @@ static void show_list(t_list *alst)
 	}
 	printf("\n");
 }
+*/
 
 t_list	*ft_lstpop(t_list **list, void *value)
 {
 	t_list	*temp;
 	t_list	*prev;
 	
-	printf("ft_lstpop(%p)\n", value);
 	if (!(*list))
 		return NULL;
 	prev = *list;
@@ -43,7 +44,6 @@ t_list	*ft_lstpop(t_list **list, void *value)
 	{
 		*list = (*list)->next;
 		prev->next = NULL;
-		show_list(*list);
 		return prev;
 	}
 	temp = (*list)->next;
@@ -53,12 +53,10 @@ t_list	*ft_lstpop(t_list **list, void *value)
 		{
 			prev->next = temp->next;
 			temp->next = NULL;
-			show_list(*list);
 			return temp;
 		}
 		prev = temp;
 		temp = temp->next;
 	}
-	show_list(*list);
 	return NULL;
 }

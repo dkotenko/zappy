@@ -45,7 +45,7 @@ t_list *get_winners(void)
 	{
 		if (game->teams[i]->max_level_count >=6)
 		{
-			ft_lstadd(&list, ft_lstnew_pointer(game->teams[i], sizeof(*game->teams[i])));
+			ft_lstadd(&list, ft_lstnew_pointer(game->teams[i], sizeof(t_team)));
 		}
 	}
 	return list;
@@ -57,7 +57,8 @@ void	starve_players()
 		t_list *tmp = game->teams[i]->players;
 
 		while (tmp) {
-			t_player *player = (t_player *)tmp->content;
+			t_player *player_copy = (t_player *)tmp->content;
+			t_player *player = game->players[player_copy->id];
 			if (game->curr_tick - player->last_meal_tick >= TICKS_FOR_STARVE) {
 				player->inventory[NOURRITURE]--;
 				player->last_meal_tick = game->curr_tick;
@@ -77,7 +78,6 @@ void	starve_players()
 			if (player->inventory[0] == 0) {
 				mort(player);
 			}
-
 			tmp = tmp->next;
 		}
 	}

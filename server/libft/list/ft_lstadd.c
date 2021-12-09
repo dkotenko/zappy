@@ -13,6 +13,7 @@
 #include <signal.h>
 #include "libft.h"
 
+/*
 static void show_list(t_list *alst)
 {
 	t_list *tmp = alst;
@@ -29,15 +30,12 @@ static void show_list(t_list *alst)
 	}
 	printf("\n");
 }
-
+*/
 void	ft_lstadd(t_list **alst, t_list *new)
 {
-	printf("ft_lstadd(%p)\n", new->content);
-	show_list(*alst);
 	if (new)
 	{
 		new->next = *alst;
 		*alst = new;
 	}
-	show_list(*alst);
 }

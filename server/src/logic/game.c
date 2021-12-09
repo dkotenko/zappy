@@ -74,6 +74,27 @@ t_game	*create_game(map_initiator init_map, int is_test)
 	return (game);
 }
 
+void	free_player_node(t_list **node)
+{
+	t_player *player = (t_player *)(*node)->content;
+	free(player->inventory);
+	free(player);
+	free(*node);
+	*node = NULL;
+}
+
+t_player *get_player_from_list_by_id(t_list *list, int player_id)
+{
+	while (list) {
+		t_player *tmp_player = (t_player *)list->content;
+		if (player_id == tmp_player->id) {
+			return tmp_player;
+		}
+		list = list->next;
+	}
+	return list;
+}
+
  /*
     The winning team is the one that will have its 6 players reach the maximum level.
      */
@@ -98,15 +119,14 @@ void	delete_player(t_player *player)
 	game->players[player->id] = NULL;
 	game->players_num--;
 	game->teams[player->team_id]->players_num--;
-	ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
-	if (game->is_test)
-		goto cleanup;
-	bct_srv_event(tmp_player->curr_cell);
-
-cleanup:
-	free(player->inventory);
-	free(player);
-	free(tmp);
+	
+	if (!game->is_test) {
+		bct_srv_event(tmp_player->curr_cell);
+	}
+	free_player_node(&tmp);
+	tmp_player = get_player_from_list_by_id(game->teams[player->team_id]->players, player->id);
+	tmp = ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
+	free_player_node(&tmp);
 }
 
 
@@ -144,7 +164,9 @@ t_player	*add_player(int player_id, int team_id)
 	game->players[player->id] = player;
 	game->players_num++;
 	game->teams[player->team_id]->players_num++;
-	ft_lstadd(&game->teams[player->team_id]->players, player_node);
+	t_player *player_copy = (t_player *)ft_memalloc(sizeof(t_player));
+	ft_memcpy(player_copy, player, sizeof(t_player));
+	ft_lstadd(&game->teams[player->team_id]->players, ft_lstnew_pointer(player_copy, sizeof(t_player)));
 	return player;
 }
 
