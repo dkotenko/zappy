@@ -358,7 +358,48 @@ void	init_game(void)
 	}
 	g_tests_result = 0;
 	init_cmd();
-	lgc_init(1);
+	lgc_init(10, 1);
+}
+
+void	print_node(t_list *node)
+{
+	if (node == NULL) {
+		printf("node: %x\n", node);
+	} else {
+		printf("node: %x | next: %x | content: %s\n", node, node->next, (char*)(node->content));
+	}
+}
+
+void	print_list(t_list *list)
+{
+	printf("list start\n");
+	while (list) {
+		print_node(list);
+		list = list->next;
+	}
+	printf("list end\n\n");
+}
+
+void test_lstpop()
+{
+	char *s = "a";
+	char *ss = "aa";
+	char *sss = "aaa";
+	char *ssss = "aaaa";
+	t_list *node = ft_lstnew(s, strlen(s));
+	t_list *node1 = ft_lstnew(ss, strlen(ss));
+	t_list *node2 = ft_lstnew(sss, strlen(sss));
+	t_list *node3 = ft_lstnew(ssss, strlen(ssss));
+
+	t_list *list = NULL;
+	ft_lstadd(&list, node);
+	ft_lstadd(&list, node1);
+	ft_lstadd(&list, node2);
+	ft_lstadd(&list, node3);
+	print_list (list);
+	ft_lstpop(&list, ssss);
+	print_list (list);
+	
 }
 
 int main() {
@@ -374,10 +415,9 @@ int main() {
 	test_pose();
 	test_broadcast();
 	testcase();
-	*/
-	
 	test_player_delete();
-	exit(0);
+	*/
+	test_lstpop();
 
 	if (g_tests_result == 0) {
 		printf("%sTESTS PASSED SUCCESSFULLY%s\n",

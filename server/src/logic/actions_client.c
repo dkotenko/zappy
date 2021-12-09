@@ -1,4 +1,3 @@
-#include <signal.h>
 #include "zappy.h"
 #include "../server.h"
 #include "../logger.h"
@@ -183,6 +182,7 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 			t_buffer_write(game->buf, game->aux->resources[i]);
 		}
 	}
+	
 	while (temp) {
 		if ((t_player *)temp->content != player) {
 			if (printed) {
@@ -302,26 +302,30 @@ void	expulse(t_player *player)
 {
 	int	new_x = 0;
 	int new_y = 0;
-	t_list *temp = NULL;
 	
 	get_forward_coords(player, &new_x, &new_y);
+	log_debug("expulse start");
 	if (player->curr_cell->visitors_num > 1) { /* TODO check visitors_num is valid */
-		temp = ft_lstpop(&player->curr_cell->visitors, player);
-		game->map->cells[new_y][new_x]->visitors->next = player->curr_cell->visitors;
+		srv_event("pex %d\n", player->id);
+		t_list *temp = player->curr_cell->visitors;
+		while (temp) {
+			t_player *temp_visitor = (t_player *)temp->content;
+			if (temp_visitor != player) {
+				set_player_cell(temp_visitor, game->map->cells[new_y][new_x]);
+				t_buffer_write(game->buf, "deplacement");
+				reply_and_clean_buff(temp_visitor->id);
+				srv_event("ppo %d %d %d %d\n", /* TODO pass 'ppo' for all expulsed players */
+			  		temp_visitor->id,
+			  		temp_visitor->curr_cell->x, temp_visitor->curr_cell->y,
+			  		temp_visitor->orient);
+			}
+			temp = temp->next;
+		}
 		t_buffer_write(game->buf, "ok");
-		reply_and_clean_buff(player->id);
-		t_buffer_write(game->buf, "deplacement");
-		reply_except_list(player->curr_cell->visitors, player->id);
-
-		srv_event("pex %d\n"
-				  ""			/* TODO pass 'ppo' for all expulsed players */
-				  , player->id);
-		
 	} else {
 		t_buffer_write(game->buf, "ko");
-		reply_and_clean_buff(player->id);
 	}
-	player->curr_cell->visitors = temp;
+	reply_and_clean_buff(player->id);
 }
 
 
