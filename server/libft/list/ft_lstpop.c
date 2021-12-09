@@ -10,19 +10,40 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <signal.h>
 #include "libft.h"
+
+static void show_list(t_list *alst)
+{
+	t_list *tmp = alst;
+	int count = 0;
+	if (!tmp)
+		printf("[]");
+	while (tmp) {
+		printf("[%p]", tmp->content);
+		tmp = tmp->next;
+		if (++count == 100) {
+			printf("\n");
+			raise(SIGSEGV);
+		}
+	}
+	printf("\n");
+}
 
 t_list	*ft_lstpop(t_list **list, void *value)
 {
 	t_list	*temp;
 	t_list	*prev;
 	
+	printf("ft_lstpop(%p)\n", value);
 	if (!(*list))
 		return NULL;
 	prev = *list;
 	if (!ft_memcmp(prev->content, value, prev->content_size))
 	{
 		*list = (*list)->next;
+		prev->next = NULL;
+		show_list(*list);
 		return prev;
 	}
 	temp = (*list)->next;
@@ -32,10 +53,12 @@ t_list	*ft_lstpop(t_list **list, void *value)
 		{
 			prev->next = temp->next;
 			temp->next = NULL;
+			show_list(*list);
 			return temp;
 		}
 		prev = temp;
 		temp = temp->next;
 	}
+	show_list(*list);
 	return NULL;
 }

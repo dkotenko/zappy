@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "zappy.h"
 #include "../server.h"
 #include "../logger.h"
@@ -182,7 +183,6 @@ static void	print_voir_cell(t_player *player, t_cell *cell)
 			t_buffer_write(game->buf, game->aux->resources[i]);
 		}
 	}
-	
 	while (temp) {
 		if ((t_player *)temp->content != player) {
 			if (printed) {
@@ -844,19 +844,19 @@ void	connect_nbr(t_player *player)
 
 void	init_cmd()
 {
-	g_cfg.cmd.duration = (int *)malloc(sizeof(int) * CMD_NUMBER);
+	g_cfg.cmd.duration = (int *)ft_memalloc(sizeof(int) * CMD_NUMBER);
 	xassert(g_cfg.cmd.duration != NULL, "malloc");
 
-	g_cfg.cmd.name = (char **)malloc(sizeof(char *) * CMD_NUMBER);
+	g_cfg.cmd.name = (char **)ft_memalloc(sizeof(char *) * CMD_NUMBER);
 	xassert(g_cfg.cmd.name != NULL, "malloc");
 
-	g_cfg.cmd.f_arg = (action_arg *)malloc(sizeof(action_arg *) * CMD_NUMBER);
+	g_cfg.cmd.f_arg = (action_arg *)ft_memalloc(sizeof(action_arg *) * CMD_NUMBER);
 	xassert(g_cfg.cmd.f_arg != NULL, "malloc");
 
-	g_cfg.cmd.f = (action *)malloc(sizeof(action *) * CMD_NUMBER);
+	g_cfg.cmd.f = (action *)ft_memalloc(sizeof(action *) * CMD_NUMBER);
 	xassert(g_cfg.cmd.f != NULL, "malloc");
 
-	g_cfg.cmd.req_arg = (int *)malloc(sizeof(int) * CMD_NUMBER);
+	g_cfg.cmd.req_arg = (int *)ft_memalloc(sizeof(int) * CMD_NUMBER);
 	xassert(g_cfg.cmd.req_arg != NULL, "malloc");
 
 	g_cfg.cmd.duration[CMD_AVANCE] = 7;

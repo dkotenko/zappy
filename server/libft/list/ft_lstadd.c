@@ -10,13 +10,31 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <signal.h>
 #include "libft.h"
 
 void	ft_lstadd(t_list **alst, t_list *new)
 {
+	printf("ft_lstadd(%p)\n", new->content);
 	if (new)
 	{
 		new->next = *alst;
 		*alst = new;
 	}
+	
+	t_list *tmp = *alst;
+
+	int count = 0;
+	if (!tmp)
+		printf("[]");
+	while (tmp) {
+		printf("[%p]", tmp->content);
+		tmp = tmp->next;
+		if (++count == 100) {
+			printf("\n");
+			raise(SIGSEGV);
+		}
+
+	}
+	printf("\n");
 }

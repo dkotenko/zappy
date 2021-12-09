@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Dict, List
 from enum import Enum, auto
 from server import Command, Message
@@ -85,6 +86,7 @@ class Player:
     meet_targets = {}           # Dict[str, PlayerMeetInfo]
 
     def __init__(self, world_size):
+        random.seed()
         self.world_x = int(world_size[0])
         self.world_y = int(world_size[1])
 
@@ -160,14 +162,6 @@ class Player:
         # return Command(Command.Type.WAIT)
         if result == '' or not self.command_list:
             self.command_list = self._generate_collect_command_list()
-            # say about lvlup
-            if result == '' and self.my_info.lvl != 1:
-                tmp = [
-                    Command(Command.Type.SAY,
-                            self.name + ' took ' + str(self.my_info)),
-                    Command(Command.Type.GO)
-                ]
-                self.command_list = tmp + self.command_list
 
         if self.last_cmd and self.last_cmd.t == Command.Type.SEE \
            and result.startswith('{'):
@@ -203,9 +197,9 @@ class Player:
                 self.command_list = []
                 self.state = self.State.INCANTATION
                 return self._incantate('', [])
-            self.state = self.State.COLLECTING_FOOD
+            self.state = self.State.MEETING_READY
             self.command_list.clear()
-            return self._collect_food('')
+            return self._meet_ready('')
 
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
@@ -219,10 +213,23 @@ class Player:
             print('! wrong inventory result')
         self.inventory_food = int(splited_food[1])
 
+    def _get_random_turn_command(self) -> Command:
+        if random.random() > 0.5:
+            return Command(Command.Type.TURN_LEFT)
+        else:
+            return Command(Command.Type.TURN_RIGHT)
+
     def _collect_food(self, result: str) -> Command:
         if result == '':
+            self.last_cmd = ''
             self.inventory_food = 0
             self.command_list = [Command(Command.Type.INVENTORY)]
+            if self.my_info.lvl != 1:  # say about lvlup
+                tmp = [
+                    Command(Command.Type.SAY,
+                            self.name + ' took ' + str(self.my_info))
+                ]
+                self.command_list = tmp + self.command_list
 
         if self.last_cmd and self.last_cmd.t == Command.Type.INVENTORY:
             self._get_food_from_inventory_result(result)
@@ -248,12 +255,14 @@ class Player:
             self.inventory_food += 1
 
         if self.inventory_food >= MINIMAL_FOOD_BEFORE_MEETING:
-            self.state = self.State.MEETING_READY
+            self.state = self.State.COLLECTING
             self.command_list.clear()
-            return self._meet_ready('', [])
+            return self._collect('')
 
         if not self.command_list:
-            self.command_list = [Command(Command.Type.SEE)]
+            self.command_list = [self._get_random_turn_command(),
+                                 Command(Command.Type.SEE),
+                                 Command(Command.Type.GO)]
         cmd = self.command_list.pop(0)
         self.last_cmd = cmd
         return cmd
@@ -344,22 +353,6 @@ class Player:
 
         return cmd_list
 
-    # def _check_met(self, see_result: str) -> bool:
-    #     striped = see_result.strip('{}')
-    #     splited_comma = striped.split(',')
-    #     splited_space = splited_comma[0].split()
-    #     players_count = 1       # I am first
-    #     for i in splited_space:
-    #         if i == 'player':
-    #             players_count += 1
-    #     if players_count == GameRules.players_need_for_level(self.my_info.lvl):
-    #         if set(self.meet_list) == set(self.met_list):
-    #             print('self.meet_list: ' + str(set(self.meet_list)))
-    #             print('self.met_list: ' + str(set(self.met_list)))
-    #             print('ready to incantate')
-    #             return True
-    #     return False
-
     def _i_am_in_meetlist(self, data):
         splited = data.split(';')
         for s in splited:
@@ -373,7 +366,7 @@ class Player:
             if self.players_info.get(name):
                 self.players_info[name].meeting = True
 
-    def _meet_ready(self, result: str, messages: List[Message]) -> Command:
+    def _meet_ready(self, result: str, messages: List[Message] = []) -> Command:
         if not self.meet_targets.get(self.name):
             self.meet_targets[self.name] = PlayerMeetInfo(True, True)
         if result == '':
@@ -570,10 +563,9 @@ class Player:
             if m.t == Message.Type.ACTUAL_LEVEL:
                 self.my_info.lvl = m.data
                 print('new level: ' + str(self.my_info.lvl))
-                self.state = self.State.COLLECTING
-                # messages.remove(m)
+                self.state = self.State.COLLECTING_FOOD
                 messages.clear()
-                return self._collect('')
+                return self._collect_food('')
         if result == '':
             self.command_list.append(Command(Command.Type.INVENTORY))
             self._drop_stones()
@@ -582,10 +574,3 @@ class Player:
             return self.command_list.pop(0)  # drop stones and incantate
 
         return Command(Command.Type.WAIT)
-
-        # if result.startswith('niveau actuel'):
-        #     splited = result.split(':')
-        #     self.my_info.lvl = int(splited[1].strip())
-        #     self._remove_stones()
-        # self.state = self.state.COLLECTING
-        # return self._collect('')
