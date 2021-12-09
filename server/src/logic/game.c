@@ -247,9 +247,37 @@ void lgc_player_gone(int player_nb)
 	delete_player(get_player_by_id(player_nb));
 }
 
+void dump_visitors(int tick)
+{
+	const t_map *map = game->map;
+	t_list *tmp;
+	char filename[128] = "";
+	char buf[512] = {0};
+	char *p = buf;
+	sprintf(filename, "dump_visitors/%d.dump.txt", tick);
+	FILE *f = fopen(filename, "w");
+	
+	for (int i = 0; i < map->h; ++i) {
+		for (int j = 0; j < map->w; ++j) {
+			p = buf;
+			tmp = map->cells[i][j]->visitors;
+			if (!tmp)
+				p += sprintf(p, "[ ]");
+			while (tmp) {
+				p += sprintf(p, "[%d]", ((t_player *)tmp->content)->id);
+				tmp = tmp->next;
+			}
+			fprintf(f, "(%2d,%2d) %s ", i, j, buf);
+		}
+		fprintf(f, "\n");
+	}
+	fclose(f);
+}
+
 void lgc_update(void)
 {
 	game->curr_tick++;
+	/* dump_visitors(game->curr_tick); */
 	if (is_session_end()) {
 		end_game();
 	} else {

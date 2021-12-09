@@ -42,12 +42,30 @@ void	mort_egg(t_egg *egg)
 	delete_egg(egg->token);
 }
 
+static void show_visitors_for_cell(t_cell *cell)
+{
+	char buf[1024] = {0};
+	char *p = buf;
+	t_list *tmp = cell->visitors;
+	p += sprintf(p, "visitors of cell(%d, %d): ", cell->x, cell->y);
+	if (!tmp)
+		p += sprintf(p, "[]");
+	while (tmp) {
+		p += sprintf(p, "[%p (#%d)]", tmp->content, ((t_player *)tmp->content)->id);
+		tmp = tmp->next;
+	}
+	log_debug("%s", buf);
+}
 
 void	set_player_cell(t_player *player, t_cell *cell)
 {
-	log_debug("move visitor from cell(%d %d) to cell(%d %d)", 
+	log_debug("move visitor (%d) from cell(%d %d) to cell(%d %d)",
+			player->id,
 			player->curr_cell->x, player->curr_cell->y,
 			cell->x, cell->y);
+	show_visitors_for_cell(player->curr_cell);
+	show_visitors_for_cell(cell);
+	
 	t_list *temp = ft_lstpop(&player->curr_cell->visitors, player);
 	
 	player->curr_cell->visitors_num--;
