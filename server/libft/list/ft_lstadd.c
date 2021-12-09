@@ -13,17 +13,9 @@
 #include <signal.h>
 #include "libft.h"
 
-void	ft_lstadd(t_list **alst, t_list *new)
+static void show_list(t_list *alst)
 {
-	printf("ft_lstadd(%p)\n", new->content);
-	if (new)
-	{
-		new->next = *alst;
-		*alst = new;
-	}
-	
-	t_list *tmp = *alst;
-
+	t_list *tmp = alst;
 	int count = 0;
 	if (!tmp)
 		printf("[]");
@@ -34,7 +26,18 @@ void	ft_lstadd(t_list **alst, t_list *new)
 			printf("\n");
 			raise(SIGSEGV);
 		}
-
 	}
 	printf("\n");
+}
+
+void	ft_lstadd(t_list **alst, t_list *new)
+{
+	printf("ft_lstadd(%p)\n", new->content);
+	show_list(*alst);
+	if (new)
+	{
+		new->next = *alst;
+		*alst = new;
+	}
+	show_list(*alst);
 }
