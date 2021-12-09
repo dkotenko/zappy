@@ -58,7 +58,7 @@ HEADER_NAMES = $(BASE_PATH)/server.h \
 			$(LOGIC_PATH)/color.h \
 			$(LOGIC_PATH)/const.h \
 			$(LOGIC_PATH)/zappy.h \
-			$(LOGIC_PATH)/actions_client.c
+			$(LOGIC_PATH)/actions_client.h
 
 
 HEADER = $(HEADER_NAMES)
@@ -67,10 +67,10 @@ OBJ = $(SRC:.c=.o)
 
 
 
-all: $(NAME)
+all: $(LIBFT) $(NAME)
 
 $(NAME): $(LIBFT) $(OBJ)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) -L$(LIBFT_DIR) -lft
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) -L$(LIBFT_DIR) -lft -lm
 
 $(OBJ): $(HEADER)
 

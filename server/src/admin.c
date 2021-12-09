@@ -31,6 +31,7 @@ static void welcome(int client_nb)
 
 int admin_chat(int client_nb, char *message)
 {
+	char a[3000];
 	static int state = ADMIN_CHAT_STATE_PASSWORD;
 	
 	if (!message) {
@@ -49,6 +50,12 @@ int admin_chat(int client_nb, char *message)
 	case ADMIN_CHAT_STATE_DEFAULT:
 		if (strcmp(message, "stop server") == 0)
 			srv_stop();
+		else if (strcmp(message, "test") == 0) {
+			
+			memset(a, 'a', 3000);
+			a[2999] = 0;
+			srv_reply_client(client_nb, "%s\n", a);
+		}
 		else
 			srv_reply_client(client_nb, "Unknown command\n");
 		break ;

@@ -68,9 +68,10 @@ void	print_cell(t_cell *cell)
 void	print_player(t_player *player)
 {
 	printf("\nPLAYER INFO\n");
-	printf("Player:\tplayer_id: %d | team_id: %d | level: %d | orient: %d | is_egg: %d\n",
-		player->id, player->team_id, player->level, player->orient, player->is_egg);
+	printf("Player:\tplayer_id: %d | team_id: %d | level: %d | orient: %d\n",
+		player->id, player->team_id, player->level, player->orient);
 	print_inverntory(player->inventory);
+	printf("CURRENT PLAYER CELL:");
 	print_cell(player->curr_cell);
 	printf("\n");
 }

@@ -36,6 +36,7 @@ list/ft_lstiter.c \
 list/ft_lstmap.c \
 list/ft_lstnew.c \
 list/ft_lstpop.c \
+list/ft_lstfind.c \
 list/ft_lstnew_pointer.c \
 math/ft_abs.c \
 math/ft_ilen.c \

@@ -27,15 +27,19 @@ static void pnw(int client_nb)
 {
 	extern t_game *game;		/* defined in logic/game.c */
 
-	for (int i = 0; i < game->players_num; ++i) {
-		srv_reply_client(client_nb,
-						 "pnw %d %d %d %d %d %s\n",
-						 game->players[i]->id,
-						 game->players[i]->curr_cell->x,
-						 game->players[i]->curr_cell->y,
-						 game->players[i]->orient,
-						 game->players[i]->level,
-						 g_cfg.teams[game->players[i]->team_id]);
+	int c = 0;
+	for (int i = 0; i < game->players_size && c < game->players_num; ++i) {
+		if (game->players[i]) {
+			++c;
+			srv_reply_client(client_nb,
+						 	"pnw %d %d %d %d %d %s\n",
+						 	game->players[i]->id,
+						 	game->players[i]->curr_cell->x,
+						 	game->players[i]->curr_cell->y,
+						 	game->players[i]->orient,
+						 	game->players[i]->level,
+						 	g_cfg.teams[game->players[i]->team_id]);
+		}
 		srv_flush_client(client_nb);
 	}
 }
@@ -78,9 +82,9 @@ static void mct(int client_nb)
 	
 	for (int i = 0; i < g_cfg.height; ++i) {
 		for (int j = 0; j < g_cfg.width; ++j) {
-			if (lgc_get_cell_resources(i, j, resources) == 1)
+			if (lgc_get_cell_resources(j, i, resources) == 1)
 				srv_reply_client(client_nb, "bct %d %d %d %d %d %d %d %d %d\n",
-								 i, j, resources[0], resources[1], resources[2],
+								 j, i, resources[0], resources[1], resources[2],
 								 resources[3], resources[4], resources[5], resources[6]);
 		}
 		srv_flush_client(client_nb);

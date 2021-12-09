@@ -3,10 +3,16 @@
 
 # define INIT_HP 1260
 # define ADD_HP 126
+# define TICKS_FOR_STARVE 126
 # define RESOURCES_NUMBER 7
 # define INCANTATIONS_NUMBER 7
 # define RESOURCES_NUMBER_OF_PLAYERS 0
 # define PLAYER_MAX_LEVEL 8
+# define NOURRITURE_RESPAWN_TIME 100
+# define FOOD_RESPAWN 1
+# define FOOD_RESPAWN_TIME 500
+# define RESOURCE_RESPAWN 1
+# define RESOURCE_RESPAWN_TIME 1000
 
 enum e_richness
 {
@@ -30,7 +36,7 @@ enum e_resources
 
 enum e_orientation
 {
-    ORIENT_N,
+    ORIENT_N = 1,
     ORIENT_E,
     ORIENT_S,
     ORIENT_W

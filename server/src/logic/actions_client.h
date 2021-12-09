@@ -1,9 +1,8 @@
 #ifndef ACTIONS_CLIENT_H
 # define ACTIONS_CLIENT_H
 
-# define CMD_NUMBER 12
-
 # include "zappy.h"
+
 enum e_command
 {
 	CMD_AVANCE,
@@ -16,8 +15,13 @@ enum e_command
 	CMD_EXPULSE,
 	CMD_BROADCAST,
 	CMD_INCANTATION,
+	CMD_INCANTATION_END,
 	CMD_FORK,
-	CMD_CONNECT_NBR
+	CMD_CONNECT_NBR,
+	CMD_RESTORE_RESOURCE,
+	CMD_FORK_END,
+	CMD_HATCH_EGG,
+	CMD_NUMBER //used in malloc, must be last
 };
 
 typedef void	(*action)(t_player *);
@@ -43,6 +47,7 @@ void	gauche(t_player *player); //Повернуть налево
 void	inventory(t_player *player);
 void	voir(t_player *player);
 void	incantation(t_player *player);
+void	incantation_end(t_player *player);
 void	expulse(t_player *player);
 void	connect_nbr();
 void	do_fork(t_player *player);
@@ -60,7 +65,9 @@ int		get_quarter(int xr, int xe, int yr, int ye);
 void	starving_n_death(void);
 int		is_session_end(void);
 t_list *get_winners(void);
+void	end_game(void);
 void	mort(t_player *player);
+void	mort_egg(t_egg *egg);
 
 
 void	set_player_cell(t_player *player, t_cell *cell);

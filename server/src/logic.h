@@ -16,7 +16,7 @@
 # include "commands.h"
 
 /* Calls at the very beginning */
-void lgc_init(void);
+void lgc_init(int max_players, int is_test);
 
 /* Calls on new client connection */
 void lgc_new_player(int client_nb, char *team);

@@ -6,7 +6,7 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 16:36:19 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/10/08 13:21:01 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 11:12:59 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,19 +17,28 @@
 
 # include "logic/actions_client.h"
 
+# define T_MAX						1000
+# define MAX_PENDING_COMMANDS		10
+
+# define CIRCBUF_SIZE				64
+# define CIRCBUF_ITEM_SIZE			32
+
 typedef struct s_main_config {
 	int		port;
 	int		width;
 	int		height;
 	char	**teams; // pointer to first team in argv
 	int		teams_count; // size of `teams'
+	int		max_clients;
 	int		max_clients_at_team;
 	int		t;
 	int		quiet;
+	int		d;
 	t_dict	cmd;
 } t_main_config;
 
 extern t_main_config g_cfg;
+extern int g_player_count;
 
 /* on program start  */
 void srv_start(void);
@@ -45,7 +54,7 @@ void srv_client_died(int client_nb);
 int srv_update_t(int t);
 /* msg will be passed to all gfx clients */
 void srv_event(char *msg, ...) __attribute__ ((format (printf, 1, 2)));
-/* in result, calls lgc_execute_command(0, `cmd') after `after_t'  */
-void srv_push_command(char *cmd, int after_t);
+/* in result, calls lgc_execute_command(`client_nb', `cmd') after `after_t'  */
+void srv_push_command(int client_nb, char *cmd, int after_t);
 
 #endif

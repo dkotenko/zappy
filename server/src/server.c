@@ -6,17 +6,19 @@
 /*   By: clala <clala@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/16 19:05:05 by gmelisan          #+#    #+#             */
-/*   Updated: 2021/11/08 11:31:05 by gmelisan         ###   ########.fr       */
+/*   Updated: 2021/11/19 13:34:41 by gmelisan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <sys/select.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdlib.h>
+#define __STDC_WANT_LIB_EXT2__ 1 /* https://stackoverflow.com/questions/67157429/ */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -34,12 +36,6 @@
 #include "reception.h"
 #include "graphic.h"
 #include "admin.h"
-
-# define T_MAX						1000
-#define MAX_PENDING_COMMANDS		10
-
-#define CIRCBUF_SIZE				64
-#define CIRCBUF_ITEM_SIZE			32
 
 enum e_type {
 	FD_FREE,
@@ -62,6 +58,8 @@ typedef struct s_fd {
 
 typedef struct s_env {
 	t_fd *fds;					/* each client is represented as fd */
+	/* Warning: in whole program fd 0 means invalid fd, which is technially not correct.
+				Invalid fd is used for some logic, like in srv_push_command() */
 	int maxfd;					/* max fd in system, size of fds */
 	int max;					/* first argument of select (-1) */
 	int r;						/* return value of select */
@@ -75,7 +73,7 @@ typedef struct s_env {
 
 t_env env;
 
-
+int g_player_count;
 
 static void clean_fd(t_fd *fd)
 {
@@ -94,8 +92,7 @@ static void client_gone(int cs)
 	circbuf_clear(&env.fds[cs].circbuf_read);
 	circbuf_clear(&env.fds[cs].circbuf_write);
 	reception_remove_client(cs);
-	/* TODO */
-	/* commands_popnb(cs, MAX_PENDING_COMMANDS); */ 
+	commands_pop_client(cs);
 	log_info("Client #%d gone away", cs);
 }
 
@@ -129,9 +126,7 @@ static int client_handle_command(int client_id, char *command)
 	
 	int dur = g_cfg.cmd.duration[command_id];
 	if (dur == 0) {
-		cmd = command_new(env.t, g_cfg.cmd.name[command_id], client_id);
 		lgc_execute_command(client_id, command, command_id);
-		command_del(cmd);
 		return 0;
 	}
 	struct timeval t = tu2tv(dur);
@@ -145,6 +140,8 @@ static int client_handle_command(int client_id, char *command)
 	commands_push(cmd);
 	client->last_command = cmd;
 	++client->pending_commands;
+	/* log_warning("++client->pending_commands (%d, '%s') -> %d", client_id, command,
+						client->pending_commands); */
 	return 0;
 }
 
@@ -157,9 +154,12 @@ static void	client_read(int cs)
 	
 	r = recv(cs, buf, sizeof(buf), 0);
 	if (r <= 0) {
-		if (client->type == FD_CLIENT)
+		if (client->type == FD_CLIENT) {
+			--g_player_count;
 			lgc_player_gone(cs);
-		client_gone(cs);
+		} else if (client->type == FD_GFX) {
+			client_gone(cs);
+		}
 		return ;
 	}
 	circbuf_push(&client->circbuf_read, buf);
@@ -178,6 +178,7 @@ static void	client_read(int cs)
 		break ;
 	case RECEPTION_ROUTE_CLIENT:
 		client->fct_handle = client_handle_command;
+		++g_player_count;
 		lgc_new_player(cs, reception_find_client_team(cs));
 		break ;
 	case RECEPTION_ROUTE_GFX:
@@ -267,13 +268,14 @@ static void do_select()
 {
 	struct timeval tc;			/* time current */
 	static struct timeval to;	/* timeout */
+	struct timeval to_copy;		/* on linux `to' is zeroed after select, use it save copy for log_tick() */
 	struct timeval t;			/* tmp */
 	t_command *command;
 
 	memset(&to, 0, sizeof(to));
 	command = commands_min(); /* minimal by time, what we should execute after select */
 	if (commands_is_empty())
-		lgc_init();
+		lgc_init(env.maxfd, 0);
 	
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	if (commands_is_empty()) {	/* init */
@@ -289,19 +291,26 @@ static void do_select()
 			log_warning("Out of time on command execution");
 		}
 	}
+	memcpy(&to_copy, &to, sizeof(to));
 	env.r = select(env.max + 1, &env.fd_read, &env.fd_write, NULL, &to);
 	if (env.r == -1)
 		log_warning("select: %s", strerror(errno));
 	xassert(gettimeofday(&env.t, NULL) != -1, "gettimeofday");
 	if (env.r == 0) {			/* select woke up for command, not for read/write */
 		if (command->data == NULL) {
-			log_tick(&to);
+			log_tick(&to_copy);
 			lgc_update();
 			timeradd(&command->t, &env.tu, &t);
 			commands_push(command_new(t, NULL, 0));
 		} else {
 			lgc_execute_command(command->client_nb, command->data, -1);
-			--env.fds[command->client_nb].pending_commands;
+			if (command->client_nb) {
+				--env.fds[command->client_nb].pending_commands;
+				/* log_warning("--client->pending_commands (%d, '%s') -> %d", 
+					command->client_nb, command->data, env.fds[command->client_nb].pending_commands); */
+			}
+			/* if (env.fds[command->client_nb].pending_commands < 0)
+				raise(SIGSEGV); */
 		}
 		commands_pop(command);
 	}
@@ -353,12 +362,15 @@ static void srv_create()
 	int s;
 	struct sockaddr_in sin;
 	struct protoent *pe;
+	int true_val = 1;
 
 	xassert((pe = getprotobyname("tcp")) != NULL, "getprotobyname");
 	xassert((s = socket(PF_INET, SOCK_STREAM, pe->p_proto)) != -1, "socket");
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons(g_cfg.port);
+	/* https://stackoverflow.com/questions/10619952/how-to-completely-destroy-a-socket-connection-in-c */
+	xassert(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &true_val, sizeof(int)) != -1, "setsockopt");
 	xassert(bind(s, (struct sockaddr*)&sin, sizeof(sin)) != -1, "bind");
 	xassert(listen(s, 42) != -1, "listen");
 	log_info("Listen on port %d", g_cfg.port);
@@ -376,8 +388,10 @@ static void srv_init()
 	
 	xassert(getrlimit(RLIMIT_NOFILE, &rlp) != -1, "getrlimit");
 	env.maxfd = rlp.rlim_cur;
+	if (env.maxfd >= FD_SETSIZE)
+		env.maxfd = FD_SETSIZE - 1;
 	log_info("Maximum clients: %d", env.maxfd);
-	env.fds = (t_fd *)malloc(sizeof(t_fd) * env.maxfd);
+	env.fds = (t_fd *)ft_memalloc(sizeof(t_fd) * env.maxfd);
 	xassert(env.fds != NULL, "malloc");
 	for (int i = 0; i < env.maxfd; ++i) {
 		clean_fd(env.fds + i);
@@ -442,10 +456,30 @@ void srv_reply_client(int client_nb, char *msg, ...)
 	va_list ap;
 
 	va_start(ap, msg);
-	xassert(vasprintf(&buf, msg, ap) != -1, "vasprintf");
-	circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
-	buf[strlen(buf) - 1] = 0;
-	log_debug("srv -> #%d: '%s'", client_nb, buf);
+	int size = vasprintf(&buf, msg, ap);
+	xassert(size != -1, "vasprintf");
+	if (size > CIRCBUF_SIZE * CIRCBUF_ITEM_SIZE) {
+		char *start = buf;
+		int i = 0;
+		while (i < size - CIRCBUF_ITEM_SIZE) {
+			char *tmp = start + CIRCBUF_ITEM_SIZE;
+			char c = *tmp;
+			*tmp = '\0';
+			circbuf_push_string(&env.fds[client_nb].circbuf_write, start);
+			log_debug("srv -> #%d (chunk): '%s'", client_nb, start);
+			env.fds[client_nb].fct_write(client_nb);
+			*tmp = c;
+			start = tmp;
+			i += CIRCBUF_ITEM_SIZE;
+		}
+		circbuf_push_string(&env.fds[client_nb].circbuf_write, start);
+		log_debug("srv -> #%d (chunk): '%s'", client_nb, start);
+		env.fds[client_nb].fct_write(client_nb);
+	} else {
+		circbuf_push_string(&env.fds[client_nb].circbuf_write, buf);
+		buf[strlen(buf) - 1] = '\0';
+		log_debug("srv -> #%d: '%s'", client_nb, buf);
+	}
 	free(buf);
 	va_end(ap);
 }
@@ -482,15 +516,23 @@ int srv_update_t(int t)
 	return t;
 }
 
-void srv_push_command(char *cmd, int after_t)
+void srv_push_command(int client_nb, char *cmd, int after_t)
 {
 	struct timeval tc;
 	struct timeval t;
+	t_fd *client = &env.fds[client_nb];
 
 	xassert(gettimeofday(&tc, NULL) != -1, "gettimeofday");
 	t = tu2tv(after_t);
 	timeradd(&t, &tc, &t);
-	commands_push(command_new(t, cmd, 0));
+	t_command *command = command_new(t, strdup(cmd), client_nb);
+	commands_push(command);
+	if (client_nb) {
+		++client->pending_commands;
+		/* log_warning("++client->pending_commands (%d, '%s') -> %d", 
+					client_nb, cmd, client->pending_commands); */
+		client->last_command = command;
+	}
 }
 
 #undef CIRCBUF_SIZE

@@ -80,6 +80,7 @@ t_btree_avl		 *ft_btree_avl_create_node(void *content)
 	node->left = NULL;
 	node->right = NULL;
 	node->content = content;
+	node->height = 0;
 	return (node);
 }
 

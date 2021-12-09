@@ -42,18 +42,22 @@ class Command:
     def __str__(self):
         return str('[' + str(self.t) + ' "' + self.arg + '"]')
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class Message:
     class Type(Enum):
         VOICE = auto()
         DEPLACEMENT = auto()
-        ACTUAL_LEVEL = auto()   # not used
+        ACTUAL_LEVEL = auto()
+        ELEVATION = auto()
 
     t = None
     source = 0
     data = ''
 
-    def __init__(self, type_, source, data):
+    def __init__(self, type_, source=0, data=''):
         self.t = type_
         self.source = source
         self.data = data
@@ -108,9 +112,9 @@ class Server:
             pass
         if cmd.t == Command.Type.GO:
             s = 'avance'
-        if cmd.t == Command.Type.TURN_LEFT:
-            s = 'droite'
         if cmd.t == Command.Type.TURN_RIGHT:
+            s = 'droite'
+        if cmd.t == Command.Type.TURN_LEFT:
             s = 'gauche'
         if cmd.t == Command.Type.SEE:
             s = 'voir'
@@ -131,7 +135,7 @@ class Server:
             s = 'broadcast ' + cmd.arg
         if cmd.t == Command.Type.INCANTATE:
             s = 'incantation'
-            expected_reply = ['niveau actuel']
+            expected_reply = ['elevation en cours']
         if cmd.t == Command.Type.FORK:
             s = 'fork'
         if cmd.t == Command.Type.CONNECT_NBR:
@@ -151,8 +155,6 @@ class Server:
                 if ((r == i) or (i == '{}' and r.startswith('{'))
                         or (i == 'number' and canBeNumber(r))):
                     return r
-            if r.startswith('niveau actuel'):
-                return r
             print('message: ' + r)
             if r == 'mort':
                 print("I'm dead")
@@ -160,18 +162,20 @@ class Server:
             elif r.startswith('message'):
                 splited = r.split(',')
                 self.messages.append(Message(Message.Type.VOICE,
-                                             source=splited[0].split(' ')[1],
+                                             source=int(splited[0].split(' ')[1]),
                                              data=splited[1].strip()))
             elif r.startswith('deplacement'):
                 self.messages.append(Message(Message.Type.DEPLACEMENT,
-                                             source=r.split(' ')[1]))
-            elif r.startswith('niveau actuel:'):  # not used
+                                             source=int(r.split(' ')[1])))
+            elif r.startswith('niveau actuel:'):
                 self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
-                                             data=r.split(':')[1].strip()))
+                                             data=int(r.split(':')[1].strip())))
+            elif r.startswith('elevation en cours'):
+                self.messages.append(Message(Message.Type.ELEVATION))
             else:
                 print('unknown message: "' + r + '"')
                 break
-            if cmd == Command.Type.WAIT:
+            if cmd.t == Command.Type.WAIT:
                 return 'ok'
         return 'invalid'
 
