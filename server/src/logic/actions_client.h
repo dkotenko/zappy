@@ -19,8 +19,7 @@ enum e_command
 	CMD_FORK,
 	CMD_CONNECT_NBR,
 	CMD_RESTORE_RESOURCE,
-	CMD_FORK_END,
-	CMD_HATCH_EGG,
+	CMD_EGG_HATCHED,
 	CMD_NUMBER //used in malloc, must be last
 };
 
@@ -71,6 +70,9 @@ void	mort_egg(t_egg *egg);
 
 
 void	set_player_cell(t_player *player, t_cell *cell);
+t_egg	*get_egg_by_token(char *token);
+char	*get_team_by_player(int player_id);
+void 	delete_egg(t_egg *egg);
 
 
 #endif

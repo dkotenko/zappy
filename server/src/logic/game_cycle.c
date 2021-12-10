@@ -53,6 +53,35 @@ t_list *get_winners(void)
 
 void	starve_players()
 {
+	for (int id = 0; id < game->players_size; ++id) {
+		t_player *player = game->players[id];
+		if (!player)
+			continue ;
+		if (game->curr_tick - player->last_meal_tick >= TICKS_FOR_STARVE) {	
+			player->inventory[NOURRITURE]--;
+			player->last_meal_tick = game->curr_tick;
+			srv_event("pin %d %d %d %d %d %d %d %d %d %d\n",
+					player->id,
+					player->curr_cell->x,
+					player->curr_cell->y,
+					player->inventory[0],
+					player->inventory[1],
+					player->inventory[2],
+					player->inventory[3],
+					player->inventory[4],
+					player->inventory[5],
+					player->inventory[6]);
+		}
+
+		if (player->inventory[0] == 0) {
+			mort(player);
+		}
+	}
+}
+
+/*
+void	starve_players_()
+{
 	for (int i = 0; i < game->teams_num; i++) {
 		t_list *tmp = game->teams[i]->players;
 
@@ -82,6 +111,7 @@ void	starve_players()
 		}
 	}
 }
+*/
 
 void	starve_eggs()
 {
@@ -102,5 +132,5 @@ void	starve_eggs()
 void	starving_n_death(void)
 {
 	starve_players();
-	starve_eggs();
+	/* starve_eggs(); */
 }

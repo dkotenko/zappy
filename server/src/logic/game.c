@@ -74,14 +74,6 @@ t_game	*create_game(map_initiator init_map, int is_test)
 	return (game);
 }
 
-void	free_player_node(t_list **node)
-{
-	t_player *player = (t_player *)(*node)->content;
-	free(player->inventory);
-	free(player);
-	free(*node);
-	*node = NULL;
-}
 
 t_player *get_player_from_list_by_id(t_list *list, int player_id)
 {
@@ -100,35 +92,36 @@ t_player *get_player_from_list_by_id(t_list *list, int player_id)
      */
 void	delete_player(t_player *player)
 {
-	t_list *tmp = player->curr_cell->visitors;
-	t_player *tmp_player = NULL;
-	
-	while (tmp) {
-		tmp_player = (t_player *)tmp->content;
-		if (player == tmp_player) {
-			break ;
-		}
-		tmp = tmp->next;
-	}
-	xassert(tmp_player != NULL, "delete_player error: no player at cell");
-	tmp = ft_lstpop(&player->curr_cell->visitors, tmp_player);	
+	t_list *visitor;
+	t_player *player_in_teams;
+
+	/* get visitor node from player's cell */
+	visitor = ft_lstpop(&player->curr_cell->visitors, player);	
+	xassert(visitor != NULL, "delete_player error: no player at cell");
+
+	/* drop items */
 	for (int i = 1; i < RESOURCES_NUMBER; i++) {
-		tmp_player->curr_cell->inventory[i] += tmp_player->inventory[i];
+		player->curr_cell->inventory[i] += player->inventory[i];
+	}
+	if (!game->is_test) {
+		bct_srv_event(player->curr_cell);
+	}
+	
+	/* remove player from teams list */
+	player_in_teams = get_player_from_list_by_id(game->teams[player->team_id]->players, player->id);
+	if (player_in_teams) {
+		game->teams[player->team_id]->players_num--;
+		free(ft_lstpop(&game->teams[player->team_id]->players, player_in_teams));
+		free(player_in_teams->inventory);
+		free(player_in_teams);
 	}
 
+	/* remove real player*/
 	game->players[player->id] = NULL;
 	game->players_num--;
-	game->teams[player->team_id]->players_num--;
-	
-	if (!game->is_test) {
-		bct_srv_event(tmp_player->curr_cell);
-	}
-	free_player_node(&tmp);
-	tmp_player = get_player_from_list_by_id(game->teams[player->team_id]->players, player->id);
-	if (tmp_player) {
-		tmp = ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
-		free_player_node(&tmp);
-	}
+	free(player->inventory);
+	free(player);
+	free(visitor);
 }
 
 
@@ -144,6 +137,15 @@ t_player	*create_player(int player_id, int team_id)
 	player->inventory[0] += 10;
 	player->level = 1;
 	return (player);
+}
+
+static t_player	*copy_player(t_player *player)
+{
+	t_player *copy = (t_player *)ft_memalloc(sizeof(t_player));
+	ft_memcpy(copy, player, sizeof(t_player));
+	copy->inventory = (int *)ft_memalloc(sizeof(int) * RESOURCES_NUMBER);
+	ft_memcpy(copy->inventory, player->inventory, sizeof(int) * RESOURCES_NUMBER);
+	return copy;
 }
 
 t_player	*add_player(int player_id, int team_id)
@@ -166,9 +168,8 @@ t_player	*add_player(int player_id, int team_id)
 	game->players[player->id] = player;
 	game->players_num++;
 	game->teams[player->team_id]->players_num++;
-	t_player *player_copy = (t_player *)ft_memalloc(sizeof(t_player));
-	ft_memcpy(player_copy, player, sizeof(t_player));
-	ft_lstadd(&game->teams[player->team_id]->players, ft_lstnew_pointer(player_copy, sizeof(t_player)));
+	t_player *copy = copy_player(player);
+	ft_lstadd(&game->teams[player->team_id]->players, ft_lstnew_pointer(copy, sizeof(t_player)));
 	return player;
 }
 
@@ -193,22 +194,35 @@ void lgc_init(int max_players, int is_test)
 	log_info("logic: World setup completed");
 }
 
-int	get_team_id(char *team_name, int *is_egg)
+int	get_team_id(char *team_name/*, int *is_egg*/)
 {
 	for (int i = 0; i < g_cfg.teams_count; ++i)
 	{
 		if (strcmp(team_name, g_cfg.teams[i]) == 0)
 			return i;
 	}
-
+/*
 	t_list *hatchery_node = ft_lstfind(game->hatchery->eggs, team_name);
 	if (hatchery_node) {
 		*is_egg = 1;
 		return ((t_egg *)hatchery_node->content)->team_id;
 	}
+*/
 	return -1;
 }
 
+
+void delete_egg(t_egg *egg)
+{
+	log_debug("delete_egg: %p", egg);
+	free(ft_lstpop(&game->hatchery->eggs, egg));
+	game->hatchery->eggs_num--;
+	free(egg);
+}
+
+/* it crashes, so using deletion by t_egg* */
+
+/*
 void delete_egg(char *token)
 {
 	t_list *hatchery_node = ft_lstfind(game->hatchery->eggs, token);
@@ -218,18 +232,23 @@ void delete_egg(char *token)
 	free(egg);
 	free(hatchery_node);
 }
+*/
 
 void lgc_new_player(int player_nb, char *team)
 {
-	int is_egg = 0;
-	int team_id = get_team_id(team, &is_egg);
+	int team_id = get_team_id(team);
 	t_player *player = NULL;
 	xassert(team_id != -1, "team does not exist");
 	
-	player =  add_player(player_nb, team_id);
+	player = add_player(player_nb, team_id);
+
+	/* Deleting egg moved to reception */
+
+	/*
 	if (is_egg) {
 		delete_egg(team);
 	}
+	*/
 	
 	log_info("logic: Add player #%d (team '%s')", player_nb, team);
 
@@ -293,6 +312,10 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 	t_player *player = get_player_by_id(player_nb);
 	if (cmd_id == -1) {
 		cmd_id = lgc_get_command_id(cmd);
+		if (cmd_id == -1) {
+			log_warning("unknown command '%s'", cmd);
+			return ;
+		}
 	}
 	log_info("logic: Execute command '%s' from #%d", cmd, player_nb);
 	if (g_cfg.cmd.req_arg[cmd_id]) {
@@ -314,34 +337,10 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 
 int lgc_get_command_id(char *cmd)
 {
-	if (strcmp(cmd, "avance") == 0)
-		return CMD_AVANCE;
-	if (strcmp(cmd, "droite") == 0)
-		return CMD_DROITE;
-	if (strcmp(cmd, "gauche") == 0)
-		return CMD_GAUCHE;
-	if (strcmp(cmd, "voir") == 0)
-		return CMD_VOIR;
-	if (strcmp(cmd, "inventaire") == 0)
-		return CMD_INVENTAIRE;
-	if (strncmp(cmd, "prend", 5) == 0)
-		return CMD_PREND;
-	if (strncmp(cmd, "pose", 4) == 0)
-		return CMD_POSE;
-	if (strcmp(cmd, "expulse") == 0)
-		return CMD_EXPULSE;
-	if (strncmp(cmd, "broadcast", 9) == 0)
-		return CMD_BROADCAST;
-	if (strcmp(cmd, "incantation") == 0)
-		return CMD_INCANTATION;
-	if (strcmp(cmd, "incantation_end") == 0)
-		return CMD_INCANTATION_END;
-	if (strcmp(cmd, "fork") == 0)
-		return CMD_FORK;
-	if (strcmp(cmd, "connect_nbr") == 0)
-		return CMD_CONNECT_NBR;
-	if (strncmp(cmd, "restore_resource", 16) == 0)
-		return CMD_RESTORE_RESOURCE;
+	for (int i = 0; i < CMD_NUMBER; ++i) {
+		if (strncmp(cmd, g_cfg.cmd.name[i], strlen(g_cfg.cmd.name[i])) == 0)
+			return i;
+	}
 	return -1;
 }
 

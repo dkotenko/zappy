@@ -39,7 +39,7 @@ void	mort(t_player *player)
 void	mort_egg(t_egg *egg)
 {
 	srv_event("edi %d\n", egg->id);
-	delete_egg(egg->token);
+	delete_egg(egg);
 }
 
 static void show_visitors_for_cell(t_cell *cell)
@@ -733,13 +733,15 @@ void	incantation_end(t_player *player)
 	}
 }
 
+/*
 static void	write_shift_pointer(char **dest, char *src)
 {
 	ft_memcpy(*dest, src, strlen(src));
 	*dest += strlen(src);
 }
+*/
 
-
+/*
 static void send_egg_hatched(t_player *player)
 {
 	int buf_size = strlen(game->teams[player->team_id]->name) + 20;
@@ -758,7 +760,16 @@ static void send_egg_hatched(t_player *player)
 
 	srv_push_command(0, buf, 600);
 }
+*/
 
+/* used in reception */
+char	*get_team_by_player(int player_id)
+{
+	t_player *player = game->players[player_id];
+	return game->teams[player->team_id]->name;
+}
+
+/* also used in reception */
 t_egg	*get_egg_by_token(char *token)
 {
 	t_list *tmp = game->hatchery->eggs;
@@ -773,27 +784,11 @@ t_egg	*get_egg_by_token(char *token)
 	return NULL;
 }
 
-void	hatch_egg(t_player *player, char *data)
-{
-	char *token = data + strlen("hatch_egg ");
-	t_egg *egg = get_egg_by_token(token);
-	if (xassert(egg != NULL, "no egg with given token"))
-		return ;
-	egg->can_connect = 1;
-	egg->last_meal_tick = game->curr_tick;
-	send_egg_hatched(player);
-}
-
-void	do_fork(t_player *player)
-{
-	srv_event("pfk %d\n", player->id);
-	srv_push_command(0, "do_fork_end", 42);
-}
-
 /*
 ** 16-symbol token, symbols in range [A : Z]
 */
-#define TOKEN_SIZE 16
+#define TOKEN_SIZE		16
+
 
 char *create_token(void)
 {
@@ -804,9 +799,23 @@ char *create_token(void)
 	return (token);
 }
 
+/*
+char *create_token(void)
+{
+	char *token = ft_memalloc((TOKEN_SIZE + sizeof(TOKEN_PREFIX)) * sizeof(char));
+	char *p = token;
+	strcpy(p, TOKEN_PREFIX);
+	p += strlen(TOKEN_PREFIX);
+	for (int i = 0; i < TOKEN_SIZE; i++) {
+		p[i] = get_random_from_to(65, 91);
+	}
+	return (token);
+}
+*/
+
 t_egg	*create_egg(t_player *parent)
 {
-	t_egg *egg = (t_egg *)ft_memalloc(sizeof(egg));
+	t_egg *egg = (t_egg *)ft_memalloc(sizeof(t_egg));
 	egg->id = game->hatchery->id_counter++;
 	egg->parent_id = parent->id;
 	egg->team_id = parent->team_id;
@@ -814,37 +823,47 @@ t_egg	*create_egg(t_player *parent)
 	return (egg);
 }
 
-void	add_egg(t_egg *egg)
-{
-	ft_lstadd(&game->hatchery->eggs, ft_lstnew(egg, sizeof(t_egg)));
-	game->hatchery->eggs_num++;
-}
-
-t_egg	*lay_egg(t_player*player)
+t_egg	*lay_egg(t_player* player)
 {
 	t_egg *egg = create_egg(player);
-	add_egg(egg);
-
+	ft_lstadd(&game->hatchery->eggs, ft_lstnew_pointer(egg, sizeof(t_egg )));
+	game->hatchery->eggs_num++;
 	return egg;
 }
 
-void	do_fork_end(t_player *player)
+void	do_fork(t_player *player)
 {
+	char egg_hatch_command[TOKEN_SIZE + 32]; /* assume g_cfg.cmd.name[CMD_EGG_HATCHED] < 31  */
+	char *p = egg_hatch_command;
+	
 	t_egg *egg = lay_egg(player);
 	
-	t_buffer_write(game->buf, "ok");
-	
-	char *cmd = "hatch_egg ";
-	int buf_size = strlen(cmd) + strlen(egg->token);
-	char buf[buf_size];
-	char *curr_buf = buf;
-	ft_memset(buf, 0, buf_size);
-	write_shift_pointer(&curr_buf, cmd);
-	write_shift_pointer(&curr_buf, egg->token);
+	p += sprintf(p, "%s ", g_cfg.cmd.name[CMD_EGG_HATCHED]);
+	p += sprintf(p, "%s", egg->token);
 
-	srv_push_command(0, buf, 600);
+	srv_push_command(player->id, egg_hatch_command,
+					 g_cfg.cmd.duration[CMD_EGG_HATCHED]);
+	srv_event("pfk %d\n", player->id);
 	srv_event("enw %d %d %d %d\n", egg->id, player->id,
 		player->curr_cell->x, player->curr_cell->y);
+	t_buffer_write(game->buf, "ok"); /* check if he can lay egg */
+}
+
+void	egg_hatched(t_player *player, char *data)
+{
+	(void)player;
+	char *token = data + strlen(g_cfg.cmd.name[CMD_EGG_HATCHED]) + 1;
+	t_egg *egg = get_egg_by_token(token);
+	if (!egg) {
+		log_warning("egg with token '%s' not found", token);
+		return ;
+	}
+	srv_event("eht %d\n", egg->id);
+	egg->can_connect = 1;
+	egg->last_meal_tick = game->curr_tick;
+	/* send_egg_hatched(player); */
+	t_buffer_write(game->buf, "egg_hatched ");
+	t_buffer_write(game->buf, token);
 }
 
 void	connect_nbr(t_player *player)
@@ -893,9 +912,8 @@ void	init_cmd()
 	g_cfg.cmd.duration[CMD_INCANTATION] = 0;
 	g_cfg.cmd.duration[CMD_INCANTATION_END] = 300;
 	g_cfg.cmd.duration[CMD_FORK] = 42;
+	g_cfg.cmd.duration[CMD_EGG_HATCHED] = 600;
 	g_cfg.cmd.duration[CMD_CONNECT_NBR] = 0;
-	g_cfg.cmd.duration[CMD_FORK_END] = 42;
-	g_cfg.cmd.duration[CMD_HATCH_EGG] = 600;
 
 	g_cfg.cmd.name[CMD_AVANCE] = strdup("avance");
 	g_cfg.cmd.name[CMD_DROITE] = strdup("droite");
@@ -909,10 +927,9 @@ void	init_cmd()
 	g_cfg.cmd.name[CMD_INCANTATION] = strdup("incantation");
 	g_cfg.cmd.name[CMD_INCANTATION_END] = strdup("incantation_end");
 	g_cfg.cmd.name[CMD_FORK] = strdup("fork");
+	g_cfg.cmd.name[CMD_EGG_HATCHED] = strdup("egg_hatched");
 	g_cfg.cmd.name[CMD_CONNECT_NBR] = strdup("connect_nbr");
 	g_cfg.cmd.name[CMD_RESTORE_RESOURCE] = strdup("restore_resource");
-	g_cfg.cmd.name[CMD_FORK_END] = strdup("fork_end");
-	g_cfg.cmd.name[CMD_HATCH_EGG] = strdup("hatch_egg");
 
 	g_cfg.cmd.f[CMD_AVANCE] = avance;
 	g_cfg.cmd.f[CMD_DROITE] = droite;
@@ -924,13 +941,12 @@ void	init_cmd()
 	g_cfg.cmd.f[CMD_INCANTATION_END] = incantation_end;
 	g_cfg.cmd.f[CMD_FORK] = do_fork;
 	g_cfg.cmd.f[CMD_CONNECT_NBR] = connect_nbr;
-	g_cfg.cmd.f[CMD_FORK_END] = do_fork_end;
 
 	g_cfg.cmd.f_arg[CMD_PREND] = prend;
 	g_cfg.cmd.f_arg[CMD_POSE] = pose;
 	g_cfg.cmd.f_arg[CMD_BROADCAST] = broadcast;
 	g_cfg.cmd.f_arg[CMD_RESTORE_RESOURCE] = restore_resource;
-	g_cfg.cmd.f_arg[CMD_HATCH_EGG] = hatch_egg;
+	g_cfg.cmd.f_arg[CMD_EGG_HATCHED] = egg_hatched;
 	
 	g_cfg.cmd.req_arg[CMD_AVANCE] = 0;
 	g_cfg.cmd.req_arg[CMD_DROITE] = 0;
@@ -943,10 +959,9 @@ void	init_cmd()
 	g_cfg.cmd.req_arg[CMD_BROADCAST] = 1;
 	g_cfg.cmd.req_arg[CMD_INCANTATION] = 0;
 	g_cfg.cmd.req_arg[CMD_FORK] = 0;
+	g_cfg.cmd.req_arg[CMD_EGG_HATCHED] = 1;
 	g_cfg.cmd.req_arg[CMD_CONNECT_NBR] = 0;
 	g_cfg.cmd.req_arg[CMD_RESTORE_RESOURCE] = 1;
-	g_cfg.cmd.req_arg[CMD_FORK_END] = 0;
-	g_cfg.cmd.req_arg[CMD_HATCH_EGG] = 1;
 }
 
 void clear_cmd()
@@ -963,10 +978,9 @@ void clear_cmd()
 	free(g_cfg.cmd.name[CMD_INCANTATION]);
 	free(g_cfg.cmd.name[CMD_INCANTATION_END]);
 	free(g_cfg.cmd.name[CMD_FORK]);
+	free(g_cfg.cmd.name[CMD_EGG_HATCHED]);
 	free(g_cfg.cmd.name[CMD_CONNECT_NBR]);
 	free(g_cfg.cmd.name[CMD_RESTORE_RESOURCE]);
-	free(g_cfg.cmd.name[CMD_FORK_END]);
-	free(g_cfg.cmd.name[CMD_HATCH_EGG]);
 	free(g_cfg.cmd.duration);
 	free(g_cfg.cmd.name);
 	free(g_cfg.cmd.f_arg);

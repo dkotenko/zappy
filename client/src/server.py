@@ -178,7 +178,7 @@ class Server:
                                              data=int(r.split(':')[1].strip())))
             elif r.startswith('elevation en cours'):
                 self.messages.append(Message(Message.Type.ELEVATION))
-            elif r.startwith('egg_hatched'):
+            elif r.startswith('egg_hatched'):
                 splited = r.split()
                 self._fork(splited[1])
             else:
@@ -200,9 +200,10 @@ class Server:
     def _send(self, msg):
         self.s.send(bytes(msg + '\n', 'ascii'))
 
-    def _fork(self, token):
+    def _fork(self, token: str):
         pid = os.fork()
         if pid == 0:
-            os.execl(sys.argv[0], "-n", token, "-p", self.options.port)
+            print("run new client")
+            os.execl(sys.argv[0], sys.argv[0], "-n", token, "-p", str(self.options.port))
         else:
             print('started new client ({})'.format(pid))

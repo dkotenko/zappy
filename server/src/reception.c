@@ -19,6 +19,8 @@
 #include "logger.h"
 #include "graphic.h"
 #include "admin.h"
+#include "logic/zappy.h"
+#include "logic/actions_client.h"
 
 static t_reception reception;
 
@@ -132,7 +134,13 @@ int reception_chat(int client_nb, char *message)
 			admin_chat(client_nb, NULL);
 			return RECEPTION_ROUTE_ADMIN;
 		}
-		if ((team_index = get_team_index(message)) == -1) {
+		char *team = message;
+		t_egg *egg = get_egg_by_token(message);
+		if (egg) {
+			team = get_team_by_player(egg->parent_id);
+			delete_egg(egg);
+		}
+		if ((team_index = get_team_index(team)) == -1) {
 			reception.client_states[client_nb] = 0;
 			srv_reply_client(client_nb, "Invalid team name\n");
 			return RECEPTION_ROUTE_EXIT;

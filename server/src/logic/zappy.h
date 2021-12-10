@@ -145,7 +145,7 @@ void	mock_srv_reply(int client_nb, char *msg);
 void	delete_player(t_player *player);
 void	starving_n_death(void);
 void	reply_except_list(t_list *list, int player_id);
-void	delete_egg(char *token);
+/* void	delete_egg(char *token); */
 
 /*
  * json
