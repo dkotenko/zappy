@@ -92,7 +92,7 @@ t_player *get_player_from_list_by_id(t_list *list, int player_id)
 		}
 		list = list->next;
 	}
-	return list;
+	return NULL;
 }
 
  /*
@@ -125,8 +125,10 @@ void	delete_player(t_player *player)
 	}
 	free_player_node(&tmp);
 	tmp_player = get_player_from_list_by_id(game->teams[player->team_id]->players, player->id);
-	tmp = ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
-	free_player_node(&tmp);
+	if (tmp_player) {
+		tmp = ft_lstpop(&game->teams[player->team_id]->players, tmp_player);
+		free_player_node(&tmp);
+	}
 }
 
 
@@ -160,7 +162,7 @@ t_player	*add_player(int player_id, int team_id)
 	t_player *player = create_player(player_id, team_id);
 
 	player->last_meal_tick = game->curr_tick;
-	t_list *player_node = add_visitor(cell, player);
+	add_visitor(cell, player);
 	game->players[player->id] = player;
 	game->players_num++;
 	game->teams[player->team_id]->players_num++;
