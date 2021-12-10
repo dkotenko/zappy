@@ -5,6 +5,7 @@ import socket
 import fcntl
 import termios
 import array
+import os
 
 
 def canBeNumber(n):
@@ -52,6 +53,7 @@ class Message:
         DEPLACEMENT = auto()
         ACTUAL_LEVEL = auto()
         ELEVATION = auto()
+        EGG_HATCHED = auto()
 
     t = None
     source = 0
@@ -67,6 +69,10 @@ class Server:
 
     s = None  # socket
     messages = []
+    options = None
+
+    def __init__(self, options):
+        self.options = options
 
     class State(Enum):
         BIENVENUE = auto()
@@ -172,6 +178,9 @@ class Server:
                                              data=int(r.split(':')[1].strip())))
             elif r.startswith('elevation en cours'):
                 self.messages.append(Message(Message.Type.ELEVATION))
+            elif r.startwith('egg_hatched'):
+                splited = r.split()
+                self._fork(splited[1])
             else:
                 print('unknown message: "' + r + '"')
                 break
@@ -190,3 +199,10 @@ class Server:
 
     def _send(self, msg):
         self.s.send(bytes(msg + '\n', 'ascii'))
+
+    def _fork(self, token):
+        pid = os.fork()
+        if pid == 0:
+            os.execl(sys.argv[0], "-n", token, "-p", self.options.port)
+        else:
+            print('started new client ({})'.format(pid))

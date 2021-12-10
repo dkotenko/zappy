@@ -87,7 +87,7 @@ def prod_mode(server, world_size):
 
 
 def main(options):
-    server = Server()
+    server = Server(options)
     world_size = server.connect(options.hostname, options.port)
     if options.dev:
         dev_mode(server)
