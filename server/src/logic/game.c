@@ -214,9 +214,9 @@ int	get_team_id(char *team_name/*, int *is_egg*/)
 
 void delete_egg(t_egg *egg)
 {
-	log_debug("delete_egg: %p", egg);
 	free(ft_lstpop(&game->hatchery->eggs, egg));
 	game->hatchery->eggs_num--;
+	free(egg->token);
 	free(egg);
 }
 
