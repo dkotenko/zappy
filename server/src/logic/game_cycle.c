@@ -53,7 +53,8 @@ t_list *get_winners(void)
 
 void	starve_players()
 {
-	for (int id = 0; id < game->players_size; ++id) {
+	int count = 0;
+	for (int id = 0; id < game->players_size && count < game->players_num; ++id) {
 		t_player *player = game->players[id];
 		if (!player)
 			continue ;
@@ -76,6 +77,7 @@ void	starve_players()
 		if (player->inventory[0] == 0) {
 			mort(player);
 		}
+		++count;
 	}
 }
 
