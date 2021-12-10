@@ -870,10 +870,14 @@ void	connect_nbr(t_player *player)
 {
 	int	connect_nbr = 0;
 	t_list *tmp = game->hatchery->eggs;
-	
+	int max_eggs_num = g_cfg.max_clients_at_team - game->teams[player->team_id]->players_num;
+
 	while (tmp) {
 		t_egg *tmp_egg = (t_egg *)tmp->content;
 		if (tmp_egg->team_id == player->team_id && tmp_egg->can_connect) {
+			if (max_eggs_num <= connect_nbr) {
+				break ;
+			}
 			connect_nbr++;
 		}
 		tmp = tmp->next;
