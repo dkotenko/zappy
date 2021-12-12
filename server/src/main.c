@@ -35,8 +35,8 @@ static char *default_teams[] = {"team1", "team2", "team3"};
 
 t_main_config g_cfg = {
 	.port = 9876,
-	.width = 20,
-	.height = 20,
+	.width = 15,
+	.height = 12,
 	.teams = default_teams,
 	.teams_count = 3,
 	.max_clients = 18,

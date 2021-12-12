@@ -338,7 +338,9 @@ void lgc_execute_command(int player_nb, char *cmd, int cmd_id)
 int lgc_get_command_id(char *cmd)
 {
 	for (int i = 0; i < CMD_NUMBER; ++i) {
-		if (strncmp(cmd, g_cfg.cmd.name[i], strlen(g_cfg.cmd.name[i])) == 0)
+		int len = strlen(g_cfg.cmd.name[i]);
+		if (strncmp(cmd, g_cfg.cmd.name[i], len) == 0
+				&& (cmd[len] == '\0' || cmd[len] == ' '))
 			return i;
 	}
 	return -1;
