@@ -833,6 +833,12 @@ t_egg	*lay_egg(t_player* player)
 
 void	do_fork(t_player *player)
 {
+	 /* check if he can lay egg */
+	if (get_connect_nbr(player) == 0) {
+		t_buffer_write(game->buf, "ko");
+		return ;
+	}
+
 	char egg_hatch_command[TOKEN_SIZE + 32]; /* assume g_cfg.cmd.name[CMD_EGG_HATCHED] < 31  */
 	char *p = egg_hatch_command;
 	
@@ -846,7 +852,7 @@ void	do_fork(t_player *player)
 	srv_event("pfk %d\n", player->id);
 	srv_event("enw %d %d %d %d\n", egg->id, player->id,
 		player->curr_cell->x, player->curr_cell->y);
-	t_buffer_write(game->buf, "ok"); /* check if he can lay egg */
+	t_buffer_write(game->buf, "ok");
 }
 
 void	egg_hatched(t_player *player, char *data)
@@ -866,7 +872,7 @@ void	egg_hatched(t_player *player, char *data)
 	t_buffer_write(game->buf, token);
 }
 
-void	connect_nbr(t_player *player)
+int		get_connect_nbr(t_player *player)
 {
 	int	connect_nbr = 0;
 	t_list *tmp = game->hatchery->eggs;
@@ -882,6 +888,12 @@ void	connect_nbr(t_player *player)
 		}
 		tmp = tmp->next;
 	}
+	return connect_nbr;
+}
+
+void	connect_nbr(t_player *player)
+{
+	int	connect_nbr = get_connect_nbr(player);
 	char *num = ft_itoa(connect_nbr);
 	t_buffer_write(game->buf, num);
 	free(num);

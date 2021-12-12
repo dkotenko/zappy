@@ -144,6 +144,7 @@ class Server:
             expected_reply = ['elevation en cours']
         if cmd.t == Command.Type.FORK:
             s = 'fork'
+            expected_reply.append('ko')
         if cmd.t == Command.Type.CONNECT_NBR:
             s = 'connect_nbr'
             expected_reply = ['number']
