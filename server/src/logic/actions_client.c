@@ -841,7 +841,7 @@ void	do_fork(t_player *player)
 	p += sprintf(p, "%s ", g_cfg.cmd.name[CMD_EGG_HATCHED]);
 	p += sprintf(p, "%s", egg->token);
 
-	srv_push_command(player->id, egg_hatch_command,
+	srv_push_command(0, egg_hatch_command,
 					 g_cfg.cmd.duration[CMD_EGG_HATCHED]);
 	srv_event("pfk %d\n", player->id);
 	srv_event("enw %d %d %d %d\n", egg->id, player->id,
@@ -862,8 +862,7 @@ void	egg_hatched(t_player *player, char *data)
 	egg->can_connect = 1;
 	egg->last_meal_tick = game->curr_tick;
 	/* send_egg_hatched(player); */
-	t_buffer_write(game->buf, "egg_hatched ");
-	t_buffer_write(game->buf, token);
+	srv_reply_client(egg->parent_id, "egg_hatched %s\n", token);
 }
 
 void	connect_nbr(t_player *player)
