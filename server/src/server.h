@@ -34,6 +34,7 @@ typedef struct s_main_config {
 	int		t;
 	int		quiet;
 	int		d;
+	int		ssl;
 	t_dict	cmd;
 } t_main_config;
 

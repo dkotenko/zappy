@@ -22,16 +22,18 @@
 static char *default_teams[] = {"team1", "team2", "team3"};
 
 #define USAGE \
-	"Usage: %s [-q] [-h] [-d] -p <port> -x <width> -y <height> -c <nb> -t <t> -n <team> [<team>] [<team>] ...\n" \
+	"Usage: %s [-q] [-h] [-d] [-s] -p <port> -x <width> -y <height> -c <nb> -t <t> -n <team> [<team>] [<team>] ...\n" \
 	"  -q quiet mode\n" \
 	"  -d debug mode (log to file)\n" \
 	"  -h print usage\n" \
+	"  -s SSL secured mode for admin connection" \
 	"  -p port number, default 9876\n" \
 	"  -x world width\n" \
 	"  -y world height\n" \
 	"  -c number of clients authorized at the beginning of the game\n" \
 	"  -t time unit divider (the greater t is, the faster the game will go), default 1\n" \
 	"  -n team_name_1 team_name_2 ...\n"
+	
 
 t_main_config g_cfg = {
 	.port = 9876,
@@ -44,6 +46,7 @@ t_main_config g_cfg = {
 	.t = 1,
 	.d = 0,
 	.quiet = 0,
+	.ssl = 0,
 	.cmd = {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -85,6 +88,9 @@ static void parse_args(int argc, char **argv)
 		case 'd':
 			g_cfg.d = 1;
 			log_init();
+			break ;
+		case 's':
+			g_cfg.ssl = 1;
 			break ;
 		case 'p':
 			g_cfg.port = atoi(optarg);
