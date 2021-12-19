@@ -1,4 +1,5 @@
 import sys
+import signal
 from enum import Enum, auto
 import select
 import socket
@@ -6,6 +7,7 @@ import fcntl
 import termios
 import array
 import os
+from audio import Audio
 
 
 def canBeNumber(n):
@@ -15,6 +17,9 @@ def canBeNumber(n):
     except ValueError:
         return False
 
+def ctrl_c_handler(sig, frame):
+    os.system('killall afplay')
+    sys.exit(0)
 
 class Command:
 
@@ -73,6 +78,9 @@ class Server:
 
     def __init__(self, options):
         self.options = options
+        signal.signal(signal.SIGINT, ctrl_c_handler)
+        Audio.init(options)
+		
 
     class State(Enum):
         BIENVENUE = auto()
@@ -161,10 +169,17 @@ class Server:
             for i in expected_reply:
                 if ((r == i) or (i == '{}' and r.startswith('{'))
                         or (i == 'number' and canBeNumber(r))):
+                    if s.startswith('prend'):
+                        Audio.play(Audio.Sound.GET)
+                    elif s.startswith('pose'):
+                        Audio.play(Audio.Sound.PUT)
+                    elif s in ['avance', 'droite', 'gauche']:
+                        Audio.play(Audio.Sound.MOVE)
                     return r
             print('message: ' + r)
             if r == 'mort':
                 print("I'm dead")
+                Audio.play(Audio.Sound.MORT)
                 exit(0)
             elif r.startswith('message'):
                 splited = r.split(',')
@@ -179,6 +194,7 @@ class Server:
                                              data=int(r.split(':')[1].strip())))
             elif r.startswith('elevation en cours'):
                 self.messages.append(Message(Message.Type.ELEVATION))
+                Audio.play(Audio.Sound.INCAN)
             elif r.startswith('egg_hatched'):
                 splited = r.split()
                 self._fork(splited[1])
@@ -207,4 +223,5 @@ class Server:
             print("run new client")
             os.execl(sys.argv[0], sys.argv[0], "-n", token, "-p", str(self.options.port))
         else:
+            Audio.play(Audio.Sound.FORK)
             print('started new client ({})'.format(pid))

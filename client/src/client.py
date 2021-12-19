@@ -18,6 +18,16 @@ def parse_args():
                       action='store_true',
                       default=False,
                       help='Enable development mode')
+    parser.add_option('-m',
+                      dest='music',
+                      action='store_true',
+                      default=False,
+                      help='Enable ghost-n-goblin music')
+    parser.add_option('-s',
+                      dest='sound',
+                      action='store_true',
+                      default=False,
+                      help='Enable sound effects')
     (options, args) = parser.parse_args()
     if options.team is None or options.port is None:
         parser.print_usage()
