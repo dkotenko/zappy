@@ -8,7 +8,7 @@ from server import Server, Command
 
 
 def parse_args():
-    usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d]'
+    usage = 'Usage: %prog -n <team> -p <port> [-h <hostname>] [-d] [-m] [-s]'
     parser = OptionParser(add_help_option=False, usage=usage)
     parser.add_option('-n', dest='team', type='str')
     parser.add_option('-p', dest='port', type='int')

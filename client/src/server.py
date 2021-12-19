@@ -192,9 +192,9 @@ class Server:
             elif r.startswith('niveau actuel:'):
                 self.messages.append(Message(Message.Type.ACTUAL_LEVEL,
                                              data=int(r.split(':')[1].strip())))
+                Audio.play(Audio.Sound.INCAN)
             elif r.startswith('elevation en cours'):
                 self.messages.append(Message(Message.Type.ELEVATION))
-                Audio.play(Audio.Sound.INCAN)
             elif r.startswith('egg_hatched'):
                 splited = r.split()
                 self._fork(splited[1])
