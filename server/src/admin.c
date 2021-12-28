@@ -26,7 +26,8 @@ enum e_admin_chat_state {
 static void welcome(int client_nb)
 {
 	srv_reply_client(client_nb, "Welcome, admin. You can use following commands:\n");
-	srv_reply_client(client_nb, "stop server - shutting down the server\n");
+	srv_reply_client(client_nb, "1) stop server - shutting down the server\n");
+	srv_reply_client(client_nb, "2) time n - set server time divider in range [1:1000]\n");
 }
 
 int admin_chat(int client_nb, char *message)
@@ -55,6 +56,14 @@ int admin_chat(int client_nb, char *message)
 			memset(a, 'a', 3000);
 			a[2999] = 0;
 			srv_reply_client(client_nb, "%s\n", a);
+		}
+		else if (strncmp(message, "time ", 5) == 0) {
+			int time = atoi(message + 5);
+			if ((time = srv_update_t(time)) == -1) {
+				srv_reply_client(client_nb, "sbp\n");
+				return 0;
+			}
+			srv_event("sgt %d\n", time);
 		}
 		else
 			srv_reply_client(client_nb, "Unknown command\n");
